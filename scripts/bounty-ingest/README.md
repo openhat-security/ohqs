@@ -92,9 +92,18 @@ RUNHUG_MODEL="meta-llama/Llama-3.3-70B-Instruct" ./runhug-deploy.sh   # RunPod s
 ## After a run
 
 - `catalog/contracts.yaml` has the latest contracts in the catalog schema.
-- **Submit a PR** with the updated file. The maintainer re-indexes so
-  `/v1/bounties?class=contract` starts answering with real data — until then the
-  app shows the "contracts aren't scraped yet" notice.
+- **Maintainer**: load + embed them so the live site serves them (idempotent,
+  vectors are preserved):
+  ```bash
+  node seed-contracts.mjs --in data/contracts-raw.json --out ../../dist/d1/seed_contracts.sql
+  cd ../../deploy/worker && wrangler d1 execute ohqs --remote --file=../../dist/d1/seed_contracts.sql    # inserts contract rows only
+  cd ../../scripts/bounty-ingest && ./embed-edge.sh contract                                           # vectorizes them in chunks
+  ```
+  `/v1/bounties?class=contract` then lists/searches them; the site's Contracts
+  tab shows the data (with the contributor banner). Re-runs are safe — records
+  are `INSERT OR REPLACE`, FTS is rebuilt for touched ids, vectors untouched.
+- **Contributors**: submit a PR with the updated `catalog/contracts.yaml` so it
+  gets seeded; the app's Contracts tab shows the data.
 
 ## Known gaps / where to contribute
 

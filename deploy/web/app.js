@@ -118,7 +118,7 @@ function setBountyClass(cls) {
   document.querySelectorAll("#bounty-class button").forEach(function (b) {
     b.classList.toggle("active", b.getAttribute("data-class") === bountyClass);
   });
-  document.getElementById("bounty-search-row").hidden = bountyClass === "contract";
+  document.getElementById("bounty-search-row").hidden = false;
   document.getElementById("bounty-note").hidden = true;
   document.getElementById("bounty-note").innerHTML = "";
   document.getElementById("bounty-results").innerHTML = "";
@@ -136,49 +136,27 @@ window.runBountySearch = async function () {
   src.textContent = "searching…";
 
   if (bountyClass === "contract") {
-    // Contracts aren't ingested yet — this is the contributor call-to-action.
-    src.textContent = "";
+    // Contracts: show the contributor banner, then list real program data below.
     nota.hidden = false;
     const h = document.createElement("p");
     h.className = "label";
-    h.textContent = "Help wanted · a contributor with a GPU";
+    h.textContent = "Help wanted · a contributor with a GPU keeps this fresh";
     nota.appendChild(h);
     const p1 = document.createElement("p");
-    p1.textContent = "Contracts (the individual programs inside marketplaces) aren't scraped yet. We're out of compute budget and burned through the AI credits.";
+    p1.textContent = "Listing scraped from free sources (bounty-targets-data, bbscope). Refresh daily or weekly; an LLM pass cleans the scopes via runhug — shoutout @chaseleto and any GPU contributor. Proxies / dummy creds: @adamsiwiec1.";
     nota.appendChild(p1);
-    const p2 = document.createElement("p");
-    p2.innerHTML =
-      "Looking for someone with a proper GPU — shoutout to " +
-      "<a href='https://github.com/chaseleto' target='_blank' rel='noopener'>@chaseleto</a> " +
-      "and any willing contributor — to scrape and ingest these bounties on a schedule.";
-    nota.appendChild(p2);
     const ul = document.createElement("ul");
     ul.className = "links";
-    const row = (label, href, extra) => {
+    const row = (label, href) => {
       const li = document.createElement("li");
-      if (href) {
-        const a = document.createElement("a");
-        a.href = href;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.textContent = label;
-        li.appendChild(a);
-      } else {
-        li.textContent = label;
-      }
-      if (extra) li.appendChild(document.createTextNode(extra));
+      const a = document.createElement("a");
+      a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = label;
+      li.appendChild(a);
       ul.appendChild(li);
     };
-    row("runhug — the repeatable script that deploys a GPU model (RunPod, pennies / your own box) →", "https://github.com/adamsiwiec1/runhug");
-    row("reusable Playwright scrape + ingest pipeline (scripts/bounty-ingest) →", "https://github.com/openhat-security/ohqs/tree/main/scripts/bounty-ingest");
-    row("Run it daily, or at least weekly, to keep the bounty DB current.", null);
+    row("runhug — repeatable GPU deploy script →", "https://github.com/adamsiwiec1/runhug");
+    row("pipeline (scripts/bounty-ingest) →", "https://github.com/openhat-security/ohqs/tree/main/scripts/bounty-ingest");
     nota.appendChild(ul);
-    const p3 = document.createElement("p");
-    p3.innerHTML =
-      "Need proxies or dummy credentials per platform to scrape? Reach out to " +
-      "<a href='https://github.com/adamsiwiec1' target='_blank' rel='noopener'>@adamsiwiec1</a>.";
-    nota.appendChild(p3);
-    return;
   }
 
   try {
@@ -186,7 +164,7 @@ window.runBountySearch = async function () {
       "/v1/bounties?class=" + encodeURIComponent(bountyClass) +
       "&q=" + encodeURIComponent(q)
     );
-    if (r.note) {
+    if (r.note && bountyClass !== "contract") {
       nota.hidden = false;
       nota.appendChild(document.createTextNode(r.note));
       const a = document.createElement("a");
@@ -214,11 +192,11 @@ window.runBountySearch = async function () {
       }
       box.appendChild(li);
     });
-    if (!r.note && (!r.records || !r.records.length)) {
+    if (!r.records || !r.records.length) {
       const li = document.createElement("li");
-      li.textContent = q
-        ? "no " + label + " match “" + q + "”"
-        : "no " + label + " listed.";
+      li.textContent = bountyClass === "contract"
+        ? (q ? "no contracts match “" + q + "”" : "no contracts ingested yet.")
+        : (q ? "no " + label + " match “" + q + "”" : "no " + label + " listed.");
       box.appendChild(li);
     }
   } catch (e) {

@@ -142,8 +142,11 @@ export default {
 
     // /v1/index/embed — costs Workers AI credits, so an admin token is required
     // and the per-IP rate limit is strict. Set ADMIN_TOKEN via
-    //   wrangler secrets put ADMIN_TOKEN
+    //   wrangler secret put ADMIN_TOKEN
     // and pass it as:  Authorization: Bearer <token>
+    // Chunked: ?offset=&count= (kept small, ~40, because a single Worker
+    // invocation is limited to ~50 D1 subrequests). Run repeatedly to cover the
+    // whole table; embed-edge.sh loops it. ?kind=contract filters by kind.
     if (path === "/v1/index/embed" && method === "POST") {
       const auth = request.headers.get("Authorization") ?? "";
       const expected = env.ADMIN_TOKEN;
@@ -153,7 +156,15 @@ export default {
       const model = url.searchParams.get("model") || EMBED_MODEL;
       const embedder = env.AI;
       if (!embedder) return err("AI binding not configured", 503);
-      const { results } = await env.D1.prepare(`SELECT id, name, kind, summary, tags, body FROM records`).all<{ id: string; name: string; kind: string; summary: string; tags: string; body: string }>();
+      const offset = Math.max(0, parseInt(url.searchParams.get("offset") ?? "0", 10) || 0);
+      const count = Math.min(Math.max(1, parseInt(url.searchParams.get("count") ?? "32", 10) || 32), 40);
+      const kind = url.searchParams.get("kind") || "";
+      let q = `SELECT id, name, kind, summary, tags, body FROM records`;
+      const where: string[] = [];
+      if (kind) where.push(`kind = '${kind.replace(/[^a-z0-9_-]/gi, "")}'`);
+      if (where.length) q += " WHERE " + where.join(" AND ");
+      q += " ORDER BY id LIMIT ? OFFSET ?";
+      const { results } = await env.D1.prepare(q).bind(count, offset).all<{ id: string; name: string; kind: string; summary: string; tags: string; body: string }>();
       const recs = (results ?? []).map((r) => ({
         id: r.id,
         text: [r.name, r.kind, r.summary, r.tags, r.body].filter((x) => x).join(" "),

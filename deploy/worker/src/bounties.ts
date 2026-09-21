@@ -59,6 +59,10 @@ export function isPlatform(r: { kind?: unknown; [k: string]: unknown }): boolean
   return r.kind === "platform";
 }
 
+export function isContract(r: { kind?: unknown; [k: string]: unknown }): boolean {
+  return r.kind === "contract";
+}
+
 export function matchesClass(
   r: { id: string; kind?: unknown; [k: string]: unknown },
   cls: BountyClass,

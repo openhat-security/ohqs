@@ -80,17 +80,18 @@ If you provide an OpenAI-compatible model, `ohqs` can use it to draft the plan. 
 
 The Bounties tab splits bounty/VDP listings into **marketplaces** (HackerOne,
 Bugcrowd, Immunefi, …), **programs** (single-org: MSRC, Apple, CERTs, …), and
-**contracts** (the individual programs inside marketplaces).
+**contracts** (the individual programs inside marketplaces — live, ~930+ on the
+Bounties tab now).
 
-Contracts aren't scraped yet. We don't have the compute and we're out of AI
-credits, so we're recruiting a contributor **with a proper GPU** to scrape and
-ingest them on a schedule and keep the script reusable.
+Contracts come from free sources (bounty-targets-data, bbscope) refreshed on a
+schedule; the LLM scope-cleaning pass runs on a contributor's GPU.
 
 - Cadence: **daily, or at least weekly**.
 - Powered by [`runhug`](https://github.com/adamsiwiec1/runhug) — deploy a good
   HF model on RunPod in minutes, run it for pennies, or run it locally.
-- Scraped with **Playwright**. See `scripts/bounty-ingest/` for the repeatable
-  `runhug` script, scraper, and ingest pipeline.
+- Pipeline: `scripts/bounty-ingest/` (scrape-all → ingest → seed-contracts →
+  embed-edge).
+- Calling @chaseleto and any GPU contributor to keep the refresh going.
 - Need proxies or dummy credentials per platform? Reach out to **@adamsiwiec1**.
 
 ## CLI

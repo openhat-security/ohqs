@@ -5,7 +5,7 @@
 // rather than keyword-matched. Lexical FTS is the fallback when vectors are
 // missing or the embedder fails.
 
-import { matchesClass, isPlatform, BountyClass, CONTRACT_NOTE } from "./bounties";
+import { matchesClass, isPlatform, isContract, BountyClass, CONTRACT_NOTE } from "./bounties";
 
 export interface SearchRecord {
   id: string;
@@ -160,6 +160,18 @@ async function semanticRank(
   return { records, embedder: meta.name };
 }
 
+// hasClassVectors reports whether any persisted vectors exist for the given
+// class (e.g. "contract-%") so search knows whether semantic ranking can make
+// sense of that class. Contracts are added without vectors until a maintainer
+// runs the embed pass; ranking only over other classes' vectors would silently
+// return zero contract matches, so we skip semantic and go lexical instead.
+async function hasClassVectors(db: D1Database, prefix: string): Promise<boolean> {
+  const { results } = await db
+    .prepare(`SELECT COUNT(*) AS n FROM vectors WHERE id LIKE ?`).bind(prefix + "%")
+    .all<{ n: number }>();
+  return (results?.[0]?.n as number) > 0;
+}
+
 // Search returns {records, source} mirroring the Go /v1/search body. Catalog
 // search deliberately excludes kind "platform" rows so bounty/VDP listings
 // only surface through listBounties/searchBounties (the Bounties tab).
@@ -172,7 +184,7 @@ export async function search(
   const q = (query || "").trim();
   if (!q) return { q, source: "none", records: [] };
   const effLimit = limit > 0 ? limit : 20;
-  const notBounty: Predicate = (r) => !isPlatform(r);
+  const notBounty: Predicate = (r) => !isPlatform(r) && !isContract(r);
 
   // Semantic-first: interpret the query against the whole catalog.
   const sem = await semanticRank(db, ai, q, effLimit, notBounty);
@@ -201,9 +213,10 @@ export interface BountiesResult {
 }
 
 // searchBounties is the Bounties tab query: only kind "platform" rows, split
-// into marketplaces vs single-org programs. An empty query lists the whole
-// class alphabetically so the tab is browsable without typing. Contracts
-// aren't ingested yet — the endpoint reports that honestly.
+// into marketplaces vs single-org programs, plus kind "contract" rows for the
+// individual programs inside marketplaces. An empty query lists the whole
+// class alphabetically so the tab is browsable without typing. When no
+// contracts have been ingested yet, the endpoint reports that honestly.
 export async function searchBounties(
   db: D1Database,
   ai: Ai | null,
@@ -213,10 +226,27 @@ export async function searchBounties(
 ): Promise<BountiesResult> {
   const q = (query || "").trim();
   const effLimit = limit > 0 ? limit : 200;
-  const match: Predicate = (r) => matchesClass(r, cls);
+  const match: Predicate = cls === "contract"
+    ? (r) => isContract(r)
+    : (r) => matchesClass(r, cls);
 
-  if (cls === "contract") {
-    return { q, class: cls, source: "none", records: [], note: CONTRACT_NOTE };
+  if (cls === "contract" && !q) {
+    const { results } = await db
+      .prepare(`SELECT data FROM records WHERE kind = 'contract' ORDER BY name LIMIT ?`)
+      .bind(effLimit)
+      .all<{ data: string }>();
+    const recs: SearchRecord[] = [];
+    for (const row of results ?? []) {
+      if (!row.data) continue;
+      try {
+        const r = JSON.parse(row.data) as SearchRecord;
+        if (match(r)) recs.push(r);
+      } catch {
+        /* skip malformed row */
+      }
+    }
+    const note = recs.length === 0 ? CONTRACT_NOTE : undefined;
+    return { q, class: cls, source: note ? "none" : "list", records: recs, note };
   }
 
   if (!q) {
@@ -239,8 +269,13 @@ export async function searchBounties(
     return { q, class: cls, source: "list", records: recs.slice(0, effLimit) };
   }
 
-  const sem = await semanticRank(db, ai, q, effLimit, match);
-  if (sem) return { q, class: cls, source: `semantic (${sem.embedder})`, records: sem.records };
+  const sem = cls === "contract" && !(await hasClassVectors(db, "contract-"))
+    ? null
+    : await semanticRank(db, ai, q, effLimit, match);
+  if (sem) {
+    const note = cls === "contract" && sem.records.length === 0 ? CONTRACT_NOTE : undefined;
+    return { q, class: cls, source: `semantic (${sem.embedder})`, records: sem.records, note };
+  }
 
   const need = significantTokens(q);
   if (need.length === 0) return { q, class: cls, source: "lexical", records: [] };
@@ -249,5 +284,6 @@ export async function searchBounties(
   let ids = await matchRecords(db, need.join(" AND "), pool);
   if (ids.length === 0) ids = await matchRecords(db, need.join(" OR "), pool);
   const records = await fetchFiltered(db, ids, match, effLimit);
-  return { q, class: cls, source: "lexical", records };
+  const note = cls === "contract" && records.length === 0 ? CONTRACT_NOTE : undefined;
+  return { q, class: cls, source: "lexical", records, note };
 }
