@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ohqs — catalog & playbook</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <strong>ohqs</strong>
+    <span>OpenHat Quick Start — authorized playbooks only · edge API</span>
+  </div>
+  <nav>
+    <a class="tab active" data-tab="catalog" href="#catalog">Catalog</a>
+    <a class="tab" data-tab="bounties" href="#bounties">Bounties</a>
+    <a class="tab" data-tab="playbook" href="#playbook">Playbook</a>
+  </nav>
+</header>
+<main>
+
+  <section class="card page" data-page="catalog">
+    <p class="label">Catalog search</p>
+    <div class="row search">
+      <div class="grow">
+        <input id="search-q" type="text" placeholder="I want to find leaked secrets in the source…">
+      </div>
+      <button type="button" onclick="runSearch()">Search</button>
+    </div>
+    <p id="search-source" class="meta">Type a query to see sources.</p>
+    <ul class="links" id="search-results"></ul>
+    <p class="actions" id="search-to-playbook" hidden>
+      <button type="button" class="btn ghost" onclick="goPlaybookWithQuery()">Build playbook from this query →</button>
+    </p>
+  </section>
+
+  <section class="card page" data-page="bounties" hidden>
+    <p class="label">Bug bounties &amp; VDPs</p>
+    <p class="meta">Kept separate from the catalog. A <strong>marketplace</strong> is an aggregator you join to pick programs; a <strong>program</strong> is a single organization's own bounty or disclosure channel.</p>
+    <div class="seg" id="bounty-class">
+      <button type="button" class="btn ghost active" data-class="marketplace">Marketplaces</button>
+      <button type="button" class="btn ghost" data-class="program">Programs</button>
+    </div>
+    <div class="row search">
+      <div class="grow">
+        <input id="bounty-q" type="text" placeholder="web3 audit, government CERT, WordPress… (blank lists all)">
+      </div>
+      <button type="button" onclick="runBountySearch()">Search</button>
+    </div>
+    <p id="bounty-source" class="meta"></p>
+    <ul class="links" id="bounty-results"></ul>
+  </section>
+
+  <section class="card page" data-page="playbook" hidden>
+    <p class="label">Playbook generator</p>
+    <p class="meta">Deterministic template planner — zero LLM. Same gate as the CLI: authorized + written scope only.</p>
+    <label for="rely-situation">Situation</label>
+    <textarea id="rely-situation" placeholder="Describe the target and context — e.g. vibe-coded Next.js SaaS with Clerk auth…"></textarea>
+    <div id="rely-gate" hidden>
+      <div class="row">
+        <div>
+          <label for="rely-scope">Scope (written authorization — program/contract/hosts)</label>
+          <input id="rely-scope" type="text" placeholder="HackerOne program app.example.com www api">
+        </div>
+        <div>
+          <label for="rely-target">Target (optional)</label>
+          <input id="rely-target" type="text" placeholder="https://app.example.com">
+        </div>
+      </div>
+      <label class="inline" for="rely-authed">Authorized
+        <select id="rely-authed">
+          <option value="false">no</option>
+          <option value="true">yes — I have written permission</option>
+        </select>
+      </label>
+      <div class="actions">
+        <button type="button" onclick="runRecommend()">Build playbook</button>
+        <button type="button" class="btn ghost" id="rely-md" onclick="downloadMarkdown()" hidden>Download .md</button>
+      </div>
+      <p id="rely-status" class="meta"></p>
+    </div>
+    <div id="rely-out"></div>
+  </section>
+
+  <section class="card" id="index-card">
+    <p class="label">Index</p>
+    <p id="index-status" class="meta">loading…</p>
+    <p class="meta">
+      <label class="inline">API base override
+        <input id="api-base" type="text" placeholder="https://…">
+      </label>
+      <span class="hint">Optional. Only set if you run your own API.</span>
+    </p>
+  </section>
+
+</main>
+<script src="/app.js" defer></script>
+</body>
+</html>

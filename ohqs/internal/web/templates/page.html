@@ -62,11 +62,30 @@
     <div class="row">
       <div>
         <label for="openai_base_url">LLM base URL</label>
-        <input id="openai_base_url" name="openai_base_url" type="text" placeholder="http://127.0.0.1:8000/v1" value="{{.OpenAIBaseURL}}">
+        <input id="openai_base_url" name="openai_base_url" type="text" list="base-url-presets" placeholder="http://127.0.0.1:8000/v1" value="{{.OpenAIBaseURL}}">
+        <datalist id="base-url-presets">
+          <option value="http://127.0.0.1:8001/v1">Local (Unsloth / llama.cpp server, port 8001)</option>
+          <option value="http://127.0.0.1:11434/v1">Ollama</option>
+          <option value="http://127.0.0.1:11434/v1/models-openai">Ollama (old /v1 path)</option>
+          <option value="https://api.openai.com/v1">OpenAI</option>
+          <option value="http://127.0.0.1:8080/v1">Local (vLLM / LM Studio)</option>
+        </datalist>
       </div>
       <div>
-        <label for="openai_model">Model <span class="meta">(optional for single-model endpoints)</span></label>
-        <input id="openai_model" name="openai_model" type="text" placeholder="leave blank for Unsloth/llama.cpp; e.g. gpt-4o-mini for OpenAI" value="{{.OpenAIModel}}">
+        <label>Quick endpoint <span class="meta">(radio fills the base URL)</span></label>
+        <div class="radios" id="llm-radios">
+          <label><input type="radio" name="llm-endpoint" value="http://127.0.0.1:8001/v1">Local (8001)</label>
+          <label><input type="radio" name="llm-endpoint" value="http://127.0.0.1:11434/v1">Ollama</label>
+          <label><input type="radio" name="llm-endpoint" value="" checked>Custom</label>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="openai_model">Model <span class="meta">(leave blank for single-model endpoints)</span></label>
+        <input id="openai_model" name="openai_model" type="text" list="model-presets" placeholder="blank for Unsloth/llama.cpp; e.g. gpt-4o-mini for OpenAI" value="{{.OpenAIModel}}">
+        <datalist id="model-presets"></datalist>
+        <p class="meta" id="model-list-note">Click into the model box to pick from discovered models.</p>
       </div>
     </div>
     <div class="row">
@@ -298,6 +317,51 @@
     d.textContent = s == null ? "" : String(s);
     return d.innerHTML;
   }
+
+  // Populate the model datalist from servers discovered at the current base URL,
+  // plus the recommended local GGUF models (they are what `models install` runs).
+  function refreshModelList() {
+    var dl = document.getElementById("model-presets");
+    var note = document.getElementById("model-list-note");
+    var base = (document.getElementById("openai_base_url").value || "").trim();
+    if (!dl || !base) return;
+    dl.innerHTML = "";
+    if (note) note.textContent = "detecting models at " + esc(base) + "…";
+    Promise.all([
+      fetchJSON("/v1/models/remote?base=" + encodeURIComponent(base)).catch(function () { return { items: [], note: "discovery failed" }; }),
+      fetchJSON("/v1/models").catch(function () { return { fits: [] }; })
+    ]).then(function (out) {
+      var remote = out[0].items || [];
+      var fits = out[1].fits || [];
+      var all = {}; // id -> label
+      remote.forEach(function (id) { all[id] = id; });
+      if (all[""] === undefined) all[""] = "(blank — single-model endpoint)";
+      fits.forEach(function (f) { if (!(f.model.id in all)) all[f.model.id] = f.model.id + " (recommended)"; });
+      Object.keys(all).forEach(function (id) {
+        var opt = document.createElement("option");
+        opt.value = id === "" ? "" : id;
+        opt.label = all[id];
+        dl.appendChild(opt);
+      });
+      if (note) {
+        note.textContent = remote.length
+          ? ("discovered " + remote.length + " served model" + (remote.length === 1 ? "" : "s") + " — pick one above")
+          : (out[0].note || "no models discovered — type a served name or leave blank");
+      }
+    });
+  }
+
+  var radios = document.querySelectorAll("#llm-radios input[name=llm-endpoint]");
+  radios.forEach(function (r) {
+    r.addEventListener("change", function () {
+      var base = document.getElementById("openai_base_url");
+      base.value = r.value;
+      refreshModelList();
+    });
+  });
+  var baseInput = document.getElementById("openai_base_url");
+  if (baseInput) baseInput.addEventListener("change", refreshModelList);
+  window.addEventListener("load", refreshModelList);
 
   function fetchJSON(url, opts) {
     return fetch(url, opts).then(function (r) {

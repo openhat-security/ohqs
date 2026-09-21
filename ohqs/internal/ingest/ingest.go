@@ -33,7 +33,7 @@ var KnownSources = map[string]string{
 	"awesome-osint":        "https://raw.githubusercontent.com/jivoi/awesome-osint/master/README.md",
 }
 
-var itemRe = regexp.MustCompile(`(?m)^\s*\*\s*\[([^\]]+)\]\((https?://[^)\s]+)\)(?:\s*[—-]\s*(.*))?$`)
+var itemRe = regexp.MustCompile(`(?m)^\s*(?:-|\*|\+)\s+\[([^\]]+)\]\((https?://[^)\s]+)\)(?:\s*[—-]\s*(.*))?$`)
 
 // Fetch downloads a raw list. It rejects pages that do not look like markdown.
 func Fetch(ctx context.Context, rawURL string) (string, error) {
@@ -206,7 +206,7 @@ func slug(s string) string {
 		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
 			b.WriteRune(r)
 			lastDash = false
-		case strings.ContainsRune(" -_.", r):
+		case strings.ContainsRune(" -_.", r), r == '/':
 			if !lastDash && b.Len() > 0 {
 				b.WriteByte('-')
 				lastDash = true

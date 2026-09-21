@@ -16,6 +16,7 @@ import (
 	"github.com/openhat/quick-start/internal/appconfig"
 	"github.com/openhat/quick-start/internal/browser"
 	"github.com/openhat/quick-start/internal/catalog"
+	"github.com/openhat/quick-start/internal/d1seed"
 	"github.com/openhat/quick-start/internal/deps"
 	"github.com/openhat/quick-start/internal/export"
 	"github.com/openhat/quick-start/internal/history"
@@ -333,7 +334,57 @@ func indexCmd() *cobra.Command {
 	index.Flags().StringVar(&dbPath, "db", "", "write the database to this path instead of data/ohqs.sqlite")
 	index.Flags().BoolVar(&vacuum, "vacuum", false, "VACUUM the database after building (smaller release asset)")
 	index.AddCommand(indexDownloadCmd())
+	index.AddCommand(indexD1Cmd())
 	return index
+}
+
+// indexD1Cmd writes a Cloudflare D1 seed (schema + full record JSON + FTS5 +
+// persisted vectors) from the local catalog and index, so the edge Worker can
+// serve the same search/models API off Cloudflare's SQLite.
+func indexD1Cmd() *cobra.Command {
+	var out string
+	cmd := &cobra.Command{
+		Use:   "d1",
+		Short: "Write a Cloudflare D1 seed SQL (schema + records + FTS + vectors)",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			cfg, err := appconfig.Resolve()
+			if err != nil {
+				return err
+			}
+			cat, err := load()
+			if err != nil {
+				return err
+			}
+			var store *index.Store
+			if cfg.IndexExists() {
+				store, err = index.Open(cfg.IndexPath)
+				if err != nil {
+					return err
+				}
+				defer store.Close()
+			}
+			if out == "" {
+				out = filepath.Join(cat.Root, "dist", "d1", "seed.sql")
+			}
+			if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+				return err
+			}
+			f, err := os.Create(out)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			if err := d1seed.Seed(f, cat, store); err != nil {
+				return err
+			}
+			fmt.Printf("wrote D1 seed (%d records) -> %s\n", len(cat.Records), out)
+			fmt.Printf("load it with:  wrangler d1 execute <db> --remote --file=%s\n", out)
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&out, "out", "", "output file (default dist/d1/seed.sql)")
+	return cmd
 }
 
 func indexDownloadCmd() *cobra.Command {

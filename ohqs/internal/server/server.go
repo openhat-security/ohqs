@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -278,6 +281,15 @@ func New(cat *catalog.Catalog, store *index.Store) http.Handler {
 		h := models.Detect()
 		writeJSON(w, modelsResponse{Host: h, Fits: models.Recommend(h, 6)})
 	})
+	// remoteModels lists the served models at a loopback OpenAI-compatible
+	// endpoint so the UI can offer a real dropdown. Discovery is restricted to
+	// local hosts; pointing the forms at a remote base URL still works for
+	// generation, it just cannot be auto-discovered here.
+	r.Get("/v1/models/remote", func(w http.ResponseWriter, req *http.Request) {
+		base := strings.TrimSpace(req.URL.Query().Get("base"))
+		items, note := discoverRemoteModels(base)
+		writeJSON(w, remoteModelsResponse{Base: base, Items: items, Note: note})
+	})
 	r.Post("/v1/deps", func(w http.ResponseWriter, req *http.Request) {
 		var body planner.Request
 		if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
@@ -309,6 +321,55 @@ type searchResult struct {
 type modelsResponse struct {
 	Host models.HostInfo         `json:"host"`
 	Fits []models.Recommendation `json:"fits"`
+}
+
+type remoteModelsResponse struct {
+	Base  string   `json:"base"`
+	Items []string `json:"items"`
+	Note  string   `json:"note,omitempty"`
+}
+
+// discoverRemoteModels lists model ids served at an OpenAI-compatible endpoint.
+// Only loopback hosts are allowed (no SSRF from the browser UI). Returns the
+// sorted ids plus a human note when discovery is skipped.
+func discoverRemoteModels(base string) (ids []string, note string) {
+	u, err := url.Parse(base)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return nil, "enter a base URL like http://127.0.0.1:8001/v1 (local) to auto-fill the model list"
+	}
+	host := u.Hostname()
+	if host != "127.0.0.1" && host != "localhost" && host != "::1" {
+		return nil, "discovery is local-only; type the served model name for a remote endpoint"
+	}
+	endpoint := strings.TrimRight(base, "/") + "/models"
+	client := &http.Client{Timeout: 6 * time.Second}
+	resp, err := client.Get(endpoint)
+	if err != nil {
+		return nil, "no model server reachable at that base URL"
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Sprintf("model server returned %s", resp.Status)
+	}
+	var body struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&body); err != nil {
+		return nil, "endpoint did not answer /models as JSON"
+	}
+	seen := map[string]bool{}
+	for _, m := range body.Data {
+		if m.ID != "" {
+			seen[m.ID] = true
+		}
+	}
+	for id := range seen {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids, ""
 }
 
 // download fetches the release-built index into a temp file and swaps it in

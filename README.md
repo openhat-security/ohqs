@@ -27,6 +27,10 @@ Prefer the terminal?
 
 YAML records are the source of truth. `ohqs index` builds a local SQLite FTS index; `ohqs index --semantic` persists vector embeddings for semantic reranking, and `ohqs index download` fetches that vectorized index from the release so you skip local embedding. Given a situation, `ohqs` matches a playbook, retrieves relevant catalog tools (semantically reranked when vectors exist), and (optionally) asks an OpenAI-compatible model to draft the plan. You can export `commands.sh` / `FINDINGS.md`, install missing tools, and open an isolated test browser.
 
+`ohqs ingest --from awesome-web-security` bulk-imports entries from a curated awesome-list-style source into `catalog/ingested.yaml` (de-duplicated, kind-tagged) for review — then `ohqs index` picks them up. See `ohqs ingest --help` for the built-in sources and `--url` / `--kind` / `--limit` / `--dry-run`.
+
+`ohqs ingest github` crawls the GitHub Search API into the same review file: `--topics c2,reconnaissance` (one query per topic, sorted by stars), `--q "<full query>"` for ad-hoc searches, or `--all` for the built-in red/blue/offensive topic set. Results carry the repo description as the summary and topics as tags, and are de-duped against the current catalog. Set `GITHUB_TOKEN` for higher rate limits.
+
 ```mermaid
 flowchart LR
   yaml[catalog YAML] --> fts[SQLite FTS]
@@ -78,6 +82,69 @@ The UI listens on **http://127.0.0.1:8787**.
 
 JSON API on the same process: `GET /healthz`, `GET /v1/search?q=`, `GET /v1/index`, `POST /v1/index/rebuild`, `POST /v1/index/download`, `GET /v1/tools/{id}`, `GET /v1/models`, `POST /v1/recommend`, `POST /v1/deps`, `GET /v1/history`.
 
+## Cloudflare + Vercel
+
+The catalog can run as a **Cloudflare Worker backed by D1** (Cloudflare's SQLite) with a **static frontend on Vercel**. The Worker serves the same search/models API shape as the local Go server; the Vercel page is a browser-only search UI talking to it over CORS.
+
+Live:
+
+- **API:** https://ohqs.ukryty.workers.dev
+- **UI:** https://web-chi-olive-63.vercel.app
+- **Search preview:** https://web-chi-olive-63.vercel.app/?q=command+and+control
+
+```bash
+# 1. Cloudflare D1 — one setup
+cd deploy/worker
+npm install
+npx wrangler login     # or CLOUDFLARE_API_TOKEN
+npx wrangler d1 create ohqs        # prints a database_id; paste into wrangler.toml
+
+# 2. Seed it from your local index (schema + records + FTS5 + vectors)
+cd ../..                          # repo root
+make build
+./bin/ohqs index d1               # -> dist/d1/seed.sql
+npx wrangler d1 execute ohqs --remote --file=dist/d1/seed.sql --remote
+
+# 3. Deploy the API worker
+cd deploy/worker
+npm run deploy                    # npx wrangler deploy
+
+# 4. Admin token (required to embed vectors at the edge, since it costs credits)
+printf '%s' "generate-a-strong-token" | npx wrangler secrets put ADMIN_TOKEN
+
+# 5. Optional: build matching vectors at the edge (Workers AI) for semantic rerank
+curl -X POST -H "Authorization: Bearer <token>" https://<your-worker>.workers.dev/v1/index/embed
+
+# 6. Deploy the frontend
+cd deploy/web
+npx vercel --prod
+```
+
+The Worker endpoints mirror the local API: `GET /v1/search?q=&limit=`, `GET /v1/index`, `GET /v1/models?ramgb=&vramgb=`, `GET /v1/tools/{id}`, `POST /v1/index/embed` (auto-populates `vectors` so search reranks semantically, labeled `semantic (<embedder>)`), and `POST /v1/recommend` — the deterministic template planner (no LLM) with the same gate as the CLI's `ohqs recommend`: `authorized: true` plus a written `scope`. Set the Worker URL in the frontend's "API base override" field (or edit `API_BASE_DEFAULT` in `deploy/web/app.js`).
+
+```bash
+curl -X POST https://ohqs.ukryty.workers.dev/v1/recommend \
+  -H "Content-Type: application/json" \
+  -d '{"situation":"vibe-coded Next.js SaaS with two roles","scope":"authorized client acme-inc","authorized":true,"target":"https://store.acme.example"}'
+# add ?fmt=markdown for the renderable playbook instead of the Plan JSON
+```
+
+Notes:
+
+- `wrangler.toml` ships the live D1 id — run `wrangler d1 create ohqs` only if you want a fresh database, then update the id (or override with a machine-local `wrangler.dev.toml`).
+- The seed stores each record's full JSON in a `data` column so the edge returns identical record shapes; FTS5 lives in a separate `records_fts` table, and vectors are JSON float arrays (schema diverges from the local BLOB layout for portability).
+- No vectors yet in the local index? `ohqs index d1` still emits the records + FTS seed; run `/v1/index/embed` once the Worker is live so the edge does its own embedding.
+
+### Abuse / DDoS posture
+
+Workers traffic is already behind Cloudflare's network-layer DDoS filtering. On top of that the worker itself:
+
+- **Rate limits per IP** via a Durable Object (query → 60/min, tools → 120/min, embed → 2/min, recommend → 10/min). Responses over the limit return `429` with a `Retry-After` header; the frontend surfaces this. The RATE_LIMITER binding + `[[migrations]]` for the `RateLimiter` class are in `deploy/worker/wrangler.toml`.
+- **Gates `/v1/index/embed` behind `ADMIN_TOKEN`** (`Authorization: Bearer <token>`), since each embed run spends Workers AI credits across all 479 records. Without the tuple it returns `401`.
+- **Sets strict response headers** on every endpoint: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, plus CORS.
+
+Optional extras in the Cloudflare dashboard under your workers.dev domain: a WAF managed rule set for SQLi/XSS on `/v1/*`, bot fight mode, and a cache rule to never cache API responses. The Worker is deliberately set for `GET`/`POST`/`OPTIONS` only — anything else returns `405`.
+
 ## CLI
 
 Build first (`make build` or `make start`). Then:
@@ -121,6 +188,9 @@ Same UI and API as `make start`.
 | `index` | Rebuild `data/ohqs.sqlite` (lexical) |
 | `index --semantic` | Same, plus persist vector embeddings (needs Ollama `nomic-embed-text` or `HF_TOKEN`) |
 | `index download` | Fetch the prebuilt, already-vectorized index from the project release |
+| `index d1` | Write a Cloudflare D1 seed SQL (`dist/d1/seed.sql`) from the local index — schema + full record JSON + FTS5 + vectors |
+| `ingest` | Bulk-import a curated awesome-list source into `catalog/ingested.yaml` for review (`--from`, `--url`, `--kind`, `--limit`, `--dry-run`) |
+| `ingest github` | Crawl the GitHub Search API by topic/query into `catalog/ingested.yaml` (`--topics`, `--q`, `--all`, `--per-query`, `--no-archived`) |
 | `models list` | Recommended local GGUF models with a GPU/RAM fit check |
 | `models install <id>` | Unsloth-managed install: venv + GGUF weights (checked against your GPU/RAM) |
 | `models serve <id>` | Run the installed GGUF as a local OpenAI-compatible endpoint |
@@ -185,7 +255,7 @@ Both are agents/personas made for pentest triage and bug-hunt workflows; the res
 
 ## License
 
-First-party `ohqs` code, catalog YAML, scripts, and docs are **MIT**. Anyone may use, copy, modify, and distribute them **without warranty**. See [LICENSE](LICENSE).
+First-party `ohqs` code, the `deploy/` worker and frontend, catalog YAML, scripts, and docs are **GPLv3**. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
 
 Upstream tools, guides, and extensions under `third-party-resources/` keep **their own licenses**. This repo does not relicense Metasploit, Wireshark, SecLists, or any other checkout. See [NOTICE](NOTICE) and each project's `LICENSE`.
 

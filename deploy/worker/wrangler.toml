@@ -1,0 +1,33 @@
+name = "ohqs"
+main = "src/index.ts"
+compatibility_date = "2024-11-27"
+compatibility_flags = ["nodejs_compat"]
+
+# D1: the catalog SQLite. `wrangler d1 create ohqs` prints an id; paste it here.
+# Then load the seed:  ohqs index d1 && wrangler d1 execute ohqs --remote --file=dist/d1/seed.sql
+# (commit a placeholder here; the real id stays machine-local or in env vars /
+#  secrets. Wrangler also accepts an override in a `wrangler.dev.toml`.)
+[[d1_databases]]
+binding = "D1"
+database_name = "ohqs"
+database_id = "02b0de26-4217-4b51-ac2b-380c09207b7c"
+
+# Workers AI (optional): embeds the query at the edge for semantic rerank when
+# the index was built with a matching embed model. Leave out if you don't want
+# the AI binding; search then falls back to lexical FTS.
+[ai]
+binding = "AI"
+
+# Per-IP rate limiting for abuse protection. The class lives in src/ratelimit.ts
+# and is exported from src/index.ts. Remote deployments need the migration to
+# be applied once (wrangler does this automatically on deploy).
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiter"]
+
+[observability]
+enabled = true

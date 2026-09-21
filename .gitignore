@@ -15,3 +15,8 @@ amass.txt
 .env
 .DS_Store
 *.exe
+deploy/worker/.wrangler/
+deploy/worker/wrangler.dev.toml
+deploy/worker/node_modules/
+deploy/web/node_modules/
+deploy/web/.vercel/
