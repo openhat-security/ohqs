@@ -7,7 +7,7 @@
 // completes.
 //
 // Run:  node ingest.mjs --base http://127.0.0.1:8001/v1 --model meta-llama/Llama-3.3-70B-Instruct \
-//                       --in data/contracts-raw.json --out ../../../catalog/contracts.yaml
+//                       --in data/contracts-raw.json --out ../../catalog/contracts.yaml
 
 const { readFile, writeFile } = await import("node:fs/promises");
 
@@ -17,7 +17,7 @@ for (let i = 2; i < process.argv.length; i++) {
   args[m[0]] = m[1] ?? process.argv[++i];
 }
 const from = args["--in"] || "data/contracts-raw.json";
-const to = args["--out"] || "../../../catalog/contracts.yaml";
+const to = args["--out"] || "../../catalog/contracts.yaml";
 const base = args["--base"] || "";
 const model = args["--model"] || "";
 

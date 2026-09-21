@@ -1,83 +1,110 @@
 # Bounty-contract ingest (contributor project)
 
 The **Bounties → Contracts** tab on the app site lists individual bug bounty
-programs (e.g. "Stripe" on HackerOne). Those are hosted inside marketplaces and
-are **not scraped yet** — we don't have the compute and we're out of AI credits.
+programs (e.g. "Stripe" on HackerOne). **`catalog/contracts.yaml` is generated
+from free public sources** so the directory can be indexed into
+`/v1/bounties?class=contract`.
 
 **We're looking for a contributor with a proper GPU** (calling @chaseleto) to
-scrape and ingest these on a schedule, and to keep this script reusable so
-anyone else with a GPU can run it too.
+keep the ingest cadence going and to run the LLM normalization pass. Anyone can
+run the free scrape source right now — no credentials needed.
 
 - **Daily, or at least weekly** — keeping the bounty DB fresh matters.
-- If you need **proxies or dummy credentials** per platform to scrape, reach
-  out to **@adamsiwiec1**.
+- The scrape sources need **no tokens**. Optional extras (bbscope creds, an
+  Apify token) are documented below. If you need **proxies or dummy
+  credentials** for gated platforms, reach out to **@adamsiwiec1**.
+
+## Free sources used (all free, no paid actors)
+
+| Source | Covers | Auth | Notes |
+| --- | --- | --- | --- |
+| `bounty-targets-data` (arkadiyt) | HackerOne, Bugcrowd, Intigriti, YesWeHack, Federacy (~940 programs) | none | auto-updated dataset, the default; fetch from raw GitHub into JSON |
+| `bbscope` CLI (sw33tLie) | HackerOne, Bugcrowd, Intigriti, YesWeHack, Immunefi | researcher creds (Immunefi none) | polls + stores in Postgres, tracks scope changes over time; `bbscope-pull.sh` |
+| Apify actor `filakovsky/hackerone-scraper` | HackerOne **hacktivity** (disclosed reports) | `APIFY_TOKEN` (free Apify account) | free tier ≈ 1000 items/run (< 0.2 CU); best-effort, runs under 1 min |
+| `openbugbounty` | openbugbounty.org non-profit VDPs | none | bot-protected pages; best-effort, opt-in |
+
+The paid Apify actors in the original wish list (ParseForge/`$7.69/1k`,
+GetAScraper/`$3.99/1k`, Anshuman Atrey/`$5/1k`, TheScrapeLab, automation-lab,
+Bug Bounty Finder) bill **per 1,000 records**, so we deliberately skip them —
+the free sources above already cover their platforms.
 
 ## How it works
 
 ```
-runhug-deploy.sh   →   scrape.mjs          →   ingest.mjs
-(runhug GPU)            (Playwright)           (LLM normalize)
-                            ↓                        ↓
-                       raw JSON rows          catalog/contracts.yaml
+scrape-all.sh        →   scrape-all.mjs       →   ingest.mjs
+(bbscope-pull.sh)*        (free source fetch)      (LLM normalize)
+                              ↓                        ↓
+                         data/contracts-raw.json  catalog/contracts.yaml
 ```
 
-The "repeatable runhug script" is `runhug-deploy.sh`. It uses
+`runhug-deploy.sh` is the "repeatable runhug script": it uses
 [`runhug`](https://github.com/adamsiwiec1/runhug) to find a good Hugging Face
-model and deploy it — either:
-
-- **your own GPU** (`RUNHUG_LOCAL=1`): no spend, runs locally; or
-- **RunPod serverless vLLM** (billed per second, "run it for pennies"): others
-  without a GPU can contribute remotely.
+model and deploy it — either locally with `RUNHUG_LOCAL=1` (your own GPU) or
+serverless on RunPod (billed per second, "pennies"). If no model endpoint is
+reachable the pipeline still completes with the deterministic normalizer.
 
 ## Setup
 
 ```bash
-# runhug CLI: find the best HF model, deploy to Runpod in minutes
-curl -fsSL https://raw.githubusercontent.com/adamsiwiec1/runhug/main/scripts/install.sh | bash   # or see the runhug repo
+# base pipeline needs only Node 18+ (fetch).
 
-# scraper deps (Playwright)
-cd scripts/bounty-ingest
-npm init -y && npm i playwright && npx playwright install chromium
+# optional 1: bbscope CLI (Programs + scopes + change tracking)
+go install github.com/sw33tLie/bbscope/v2@latest   # first run makes ~/.bbscope.yaml
+
+# optional 2: Apify hacktivity feed (free-tier)
+bash scripts/bounty-ingest/scripts/install.sh   # n/a — just export APIFY_TOKEN from apify.com free account
 ```
 
 ## Run
 
 ```bash
-# your own GPU
-RUNHUG_LOCAL=1 ./runhug-deploy.sh
+cd scripts/bounty-ingest
 
-# or deploy a model serverless (cheap, pennies)
-RUNHUG_MODEL="meta-llama/Llama-3.3-70B-Instruct" ./runhug-deploy.sh
+# zero-cred default: pull ~940 programs from bounty-targets-data -> catalog/contracts.yaml
+./scrape-all.sh
 
-# gated platforms: dummy credentials + proxy (via @adamsiwiec1)
-BOUNTY_CREDS='{"hackerone":{"user":"u","pass":"p","proxy":"http://…"}}' ./runhug-deploy.sh
+# add bbscope (needs creds; Immunefi is free): BOUNTY_SOURCES=bounty-targets,bbscope ./bbscope-pull.sh
+BOUNTY_SOURCES=bounty-targets,bbscope ./scrape-all.sh
+
+# add the hacktivity feed (research/trending disclosures)
+BOUNTY_SOURCES=apify-hacktivity APIFY_TOKEN=… ./scrape-all.sh --reports
 ```
 
-Tuning:
+Env | Default | Meaning
+--- | --- | ---
+`BOUNTY_SOURCES` | `bounty-targets` | comma list: `bounty-targets,bbscope,apify-hacktivity,openbugbounty`
+`APIFY_TOKEN` | — | free Apify token for the hacktivity actor
+`APIFY_MAX_ITEMS` | `1000` | hacktivity items per run (free tier ceiling ~1000)
+`BB_H1_USER`/`BB_H1_TOKEN` | — | HackerOne API token for bbscope
+`BB_BC_TOKEN` | — | Bugcrowd `_bugcrowd_session` for bbscope
+`BB_IT_TOKEN` | — | Intigriti researcher token for bbscope
+`BB_YWH_EMAIL`/`BB_YWH_PASS` | — | YesWeHack login for bbscope
+`CONTRACTS_YAML` | `../../catalog/contracts.yaml` | where the generated file goes
 
-| env | default | meaning |
-| --- | --- | --- |
-| `RUNHUG_MODEL` | `meta-llama/Llama-3.3-70B-Instruct` | HF model to deploy (fit it to your VRAM) |
-| `RUNHUG_LOCAL` | `0` | `1` = use your local GPU instead of RunPod |
-| `BOUNTY_CREDS` | `{}` | per-platform dummy accounts + proxy |
-| `BOUNTY_PLATFORMS` | all | only scrape some (e.g. `hackerone,immunefi`) |
-| `BOUNTY_CONCURRENCY` | `2` | parallel browser contexts (be polite) |
+To run the LLM pass against a GPU model (recommended for cleaning scope
+strings, like bbscope's own LLM-cleanup feature):
+
+```bash
+./runhug-deploy.sh                # local GPU
+RUNHUG_MODEL="meta-llama/Llama-3.3-70B-Instruct" ./runhug-deploy.sh   # RunPod serverless
+```
 
 ## After a run
 
-`catalog/contracts.yaml` now has new `kind: contract` records matching the
-catalog schema. **Submit a PR** with the changes. The maintainer re-indexes so
-`/v1/bounties?class=contract` starts answering with real data — until then the
-app shows a "contracts aren't scraped yet" notice.
+- `catalog/contracts.yaml` has the latest contracts in the catalog schema.
+- **Submit a PR** with the updated file. The maintainer re-indexes so
+  `/v1/bounties?class=contract` starts answering with real data — until then the
+  app shows the "contracts aren't scraped yet" notice.
 
 ## Known gaps / where to contribute
 
-- **Per-platform adapters** live in `scrape.mjs` (`run(domain, page)`). HackerOne,
-  Intigriti, Synack, Bugcrowd gate directories behind logins — selectors are the
-  TODO integration point.
-- **Ingest quality**: `ingest.mjs` batches rows through the deployed model to
-  normalize scope/payout. Improve the prompt or add structured output.
-- Expect **selectors to rot** as marketplaces ship UI changes; PRs welcome.
+- **bounty-targets-data subset**: reflects only open programs the dataset tracks
+  (HackerOne ~450, Bugcrowd ~280, Intigriti ~150, YesWeHack ~60, Federacy 1).
+- **bbscope** adds Immunefi + full scope change-tracking but needs researcher
+  creds (Immunefi is free). Dummy accounts / proxies: @adamsiwiec1.
+- **Apify free tier**: only the hacktivity feed is free; program actors are
+  pay-per-event and excluded.
+- Selector/page changes on openbugbounty will need patching in `scrape-all.mjs`.
 
 Citing the runhug mantra: find the best HF model → deploy on RunPod in minutes →
-run it for pennies. Every run keeps the bounty DB current.
+run it for pennies. And the contract database: every run refreshes it for free.

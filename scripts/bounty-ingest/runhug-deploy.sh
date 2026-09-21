@@ -28,7 +28,7 @@ cd "$(dirname "$0")"
 MODEL="${RUNHUG_MODEL:-meta-llama/Llama-3.3-70B-Instruct}"
 LOCAL="${RUNHUG_LOCAL:-0}"
 RAW_DATA="${RAW_DATA:-data/contracts-raw.json}"
-OUT_YAML="${OUT_YAML:-../../../catalog/contracts.yaml}"
+OUT_YAML="${OUT_YAML:-../../catalog/contracts.yaml}"
 
 echo "== runhug bounty-ingest =="
 echo "model : $MODEL"
@@ -62,11 +62,11 @@ fi
 
 [ -n "$BASE" ] && echo "-> OpenAI base: $BASE"
 
-echo "-> scraping bounty marketplaces (Playwright)"
-node scrape.mjs --out "$RAW_DATA"
-
-echo "-> LLM ingest pass -> $OUT_YAML"
-node ingest.mjs ${BASE:+--base "$BASE"} --model "$MODEL" --in "$RAW_DATA" --out "$OUT_YAML"
+echo "-> scraping bounty contracts from free sources"
+BOUNTY_SOURCES="${BOUNTY_SOURCES:-bounty-targets,bbscope}" \
+  BASE_URL="$BASE" \
+  RUNHUG_MODEL="$MODEL" \
+  ./scrape-all.sh
 
 echo
 echo "== done =="
