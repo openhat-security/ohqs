@@ -1,229 +1,190 @@
-# OpenHat Quick Start (`ohqs`)
+# OpenHat Quick Start (ohqs)
 
-OpenHat workstation catalog and **`ohqs`**: search tools, guides, extensions, and bounty platforms, then get a step-by-step playbook for **authorized** pentests and bug bounties.
+OpenHat is a workstation catalog and playbook builder for authorized security testing.
 
-`ohqs` is not an exploit generator. It plans detection, triage, and reporting. You must state written authorization and scope before it will build a plan.
+`ohqs` helps you find security tools, guides, extensions, and bounty platforms, then turns a situation + written scope into a step-by-step testing playbook.
 
-The company is OpenHat. The binary is `ohqs`. First-party code lives in [`ohqs/`](ohqs/). Catalog YAML stays in [`catalog/`](catalog/). Upstream checkouts live in [`third-party-resources/`](third-party-resources/).
+**It is not an exploit generator.** Playbooks focus on detection, triage, validation, and reporting.
 
-## Quick start
+Only use `ohqs` against systems you are explicitly authorized to test.
+
+## Try it now
+
+Live app: **https://web-ukryty-6366.vercel.app**
+
+1. Enter what you're testing
+2. Enter your written scope
+3. Confirm that you have authorization
+4. Click **Build playbook**
+
+The app will suggest relevant tools and steps for the engagement.
+
+## Quick start locally
 
 ```bash
-git clone <this-repo> && cd quick-start   # catalog + ohqs only — do not use --recurse-submodules
-make                                      # build, install ohqs on PATH, index, open the UI
+git clone <this-repo>
+cd quick-start
+make
 ```
 
-Open **http://127.0.0.1:8787**, type a situation + scope, tick the authorization checkbox, then **Build playbook**. From the plan you can download `commands.sh`, install missing tools, run commands, and open the isolated test browser.
+Then open **http://127.0.0.1:8787**.
+
+That's it. `make` builds `ohqs`, installs it on your PATH, builds the local search index, and starts the UI.
 
 Prefer the terminal?
 
 ```bash
-./bin/ohqs search nuclei                                 # what should I use/read for this?
-./bin/ohqs recommend --authorized --scope "..." --situation "..." [--llm]
+./bin/ohqs search nuclei
+./bin/ohqs recommend \
+  --authorized \
+  --scope "authorized client scope" \
+  --situation "vibe-coded Next.js SaaS with authentication"
 ./bin/ohqs show gitleaks
 ```
 
 ## How it works
 
-YAML records are the source of truth. `ohqs index` builds a local SQLite FTS index; `ohqs index --semantic` persists vector embeddings for semantic reranking, and `ohqs index download` fetches that vectorized index from the release so you skip local embedding. Given a situation, `ohqs` matches a playbook, retrieves relevant catalog tools (semantically reranked when vectors exist), and (optionally) asks an OpenAI-compatible model to draft the plan. You can export `commands.sh` / `FINDINGS.md`, install missing tools, and open an isolated test browser.
+The catalog is stored as YAML in `catalog/`.
 
-`ohqs ingest --from awesome-web-security` bulk-imports entries from a curated awesome-list-style source into `catalog/ingested.yaml` (de-duplicated, kind-tagged) for review — then `ohqs index` picks them up. See `ohqs ingest --help` for the built-in sources and `--url` / `--kind` / `--limit` / `--dry-run`.
+`ohqs` indexes that catalog locally and uses it to match a situation to relevant tools and playbooks.
 
-`ohqs ingest github` crawls the GitHub Search API into the same review file: `--topics c2,reconnaissance` (one query per topic, sorted by stars), `--q "<full query>"` for ad-hoc searches, or `--all` for the built-in red/blue/offensive topic set. Results carry the repo description as the summary and topics as tags, and are de-duped against the current catalog. Set `GITHUB_TOKEN` for higher rate limits.
-
-```mermaid
-flowchart LR
-  yaml[catalog YAML] --> fts[SQLite FTS]
-  fts --> match[playbook match]
-  match --> plan[template or LLM plan]
-  plan --> export[commands.sh]
-  plan --> install[ohqs install]
-  plan --> browser[isolated browser]
+```
+catalog YAML
+     ↓
+local search index
+     ↓
+playbook matching
+     ↓
+reviewed plan
+     ↓
+commands / findings / tools
 ```
 
-Worked examples: [EXAMPLES.md](EXAMPLES.md). How to add records: [CONTRIBUTING.md](CONTRIBUTING.md).
+Semantic search can also be enabled with vector embeddings.
 
-## Clone and submodules
+If you provide an OpenAI-compatible model, `ohqs` can use it to draft the plan. The authorization and scope gates still apply.
 
-A default clone is **catalog + `ohqs` only**. The 58 upstream trees under `third-party-resources/` are git submodules and are **not** downloaded unless you ask. Do not use `--recurse-submodules` — that pulls Metasploit, Wireshark, SecLists, and everything else.
+## What you can do
 
-```bash
-git clone <this-repo>            # catalog + ohqs only — do not use --recurse-submodules
-make submodules                  # optional: shallow-fetch everything
-./bin/ohqs submodules            # same
-./bin/ohqs submodules gitleaks   # one catalog id
-```
-
-`ohqs install` for a playbook fetches only the tools that plan needs. See [third-party-resources/README.md](third-party-resources/README.md).
-
-## Browser UI
-
-One command from the repo root:
-
-```bash
-make                 # build, put ohqs on PATH, index, open the UI
-make stop
-make help
-make test
-```
-
-`./scripts/ohqs.sh` is the same flow if you prefer a shell script.
-
-The UI listens on **http://127.0.0.1:8787**.
-
-| Action | What it does |
-| --- | --- |
-| Build playbook | Requires situation, written scope, and the authorization checkbox |
-| Draft the plan with your model | Bring your own OpenAI-compatible endpoint + API key; saved locally (see [Local models](#local-models)) |
-| Download commands.sh | Exports the current plan as a reviewed script |
-| Install missing tools | Background job; survives a tab or server restart |
-| Run commands | Runs a reviewed `commands.sh` as a durable job |
-| Open test browser | Isolated Firefox/Waterfox/Chrome with extensions pre-installed |
-
-JSON API on the same process: `GET /healthz`, `GET /v1/search?q=`, `GET /v1/index`, `POST /v1/index/rebuild`, `POST /v1/index/download`, `GET /v1/tools/{id}`, `GET /v1/models`, `POST /v1/recommend`, `POST /v1/deps`, `GET /v1/history`.
-
-## Cloudflare + Vercel
-
-The catalog can run as a **Cloudflare Worker backed by D1** (Cloudflare's SQLite) with a **static frontend on Vercel**. The Worker serves the same search/models API shape as the local Go server; the Vercel page is a browser-only search UI talking to it over CORS.
-
-Live:
-
-- **API:** https://ohqs.ukryty.workers.dev
-- **UI:** https://web-chi-olive-63.vercel.app
-- **Search preview:** https://web-chi-olive-63.vercel.app/?q=command+and+control
-
-```bash
-# 1. Cloudflare D1 — one setup
-cd deploy/worker
-npm install
-npx wrangler login     # or CLOUDFLARE_API_TOKEN
-npx wrangler d1 create ohqs        # prints a database_id; paste into wrangler.toml
-
-# 2. Seed it from your local index (schema + records + FTS5 + vectors)
-cd ../..                          # repo root
-make build
-./bin/ohqs index d1               # -> dist/d1/seed.sql
-npx wrangler d1 execute ohqs --remote --file=dist/d1/seed.sql --remote
-
-# 3. Deploy the API worker
-cd deploy/worker
-npm run deploy                    # npx wrangler deploy
-
-# 4. Admin token (required to embed vectors at the edge, since it costs credits)
-printf '%s' "generate-a-strong-token" | npx wrangler secrets put ADMIN_TOKEN
-
-# 5. Optional: build matching vectors at the edge (Workers AI) for semantic rerank
-curl -X POST -H "Authorization: Bearer <token>" https://<your-worker>.workers.dev/v1/index/embed
-
-# 6. Deploy the frontend
-cd deploy/web
-npx vercel --prod
-```
-
-The Worker endpoints mirror the local API: `GET /v1/search?q=&limit=`, `GET /v1/index`, `GET /v1/models?ramgb=&vramgb=`, `GET /v1/tools/{id}`, `POST /v1/index/embed` (auto-populates `vectors` so search reranks semantically, labeled `semantic (<embedder>)`), and `POST /v1/recommend` — the deterministic template planner (no LLM) with the same gate as the CLI's `ohqs recommend`: `authorized: true` plus a written `scope`. Set the Worker URL in the frontend's "API base override" field (or edit `API_BASE_DEFAULT` in `deploy/web/app.js`).
-
-```bash
-curl -X POST https://ohqs.ukryty.workers.dev/v1/recommend \
-  -H "Content-Type: application/json" \
-  -d '{"situation":"vibe-coded Next.js SaaS with two roles","scope":"authorized client acme-inc","authorized":true,"target":"https://store.acme.example"}'
-# add ?fmt=markdown for the renderable playbook instead of the Plan JSON
-```
-
-Notes:
-
-- `wrangler.toml` ships the live D1 id — run `wrangler d1 create ohqs` only if you want a fresh database, then update the id (or override with a machine-local `wrangler.dev.toml`).
-- The seed stores each record's full JSON in a `data` column so the edge returns identical record shapes; FTS5 lives in a separate `records_fts` table, and vectors are JSON float arrays (schema diverges from the local BLOB layout for portability).
-- No vectors yet in the local index? `ohqs index d1` still emits the records + FTS seed; run `/v1/index/embed` once the Worker is live so the edge does its own embedding.
-
-### Abuse / DDoS posture
-
-Workers traffic is already behind Cloudflare's network-layer DDoS filtering. On top of that the worker itself:
-
-- **Rate limits per IP** via a Durable Object (query → 60/min, tools → 120/min, embed → 2/min, recommend → 10/min). Responses over the limit return `429` with a `Retry-After` header; the frontend surfaces this. The RATE_LIMITER binding + `[[migrations]]` for the `RateLimiter` class are in `deploy/worker/wrangler.toml`.
-- **Gates `/v1/index/embed` behind `ADMIN_TOKEN`** (`Authorization: Bearer <token>`), since each embed run spends Workers AI credits across all 479 records. Without the tuple it returns `401`.
-- **Sets strict response headers** on every endpoint: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`, plus CORS.
-
-Optional extras in the Cloudflare dashboard under your workers.dev domain: a WAF managed rule set for SQLi/XSS on `/v1/*`, bot fight mode, and a cache rule to never cache API responses. The Worker is deliberately set for `GET`/`POST`/`OPTIONS` only — anything else returns `405`.
+- Search the security catalog
+- Build playbooks for authorized engagements
+- Export a reviewed `commands.sh`
+- Install tools required by a playbook
+- Run reviewed commands locally
+- Open an isolated test browser
+- Use local or hosted OpenAI-compatible models
+- Browse the catalog through the web UI
 
 ## CLI
 
-Build first (`make build` or `make start`). Then:
+Build first with `make`:
 
 ```bash
 ./bin/ohqs serve
 ```
 
-Same UI and API as `make start`.
+Useful commands:
 
 ```bash
-./bin/ohqs index
+# Search the catalog
 ./bin/ohqs search nuclei
+
+# Inspect a catalog entry
 ./bin/ohqs show gitleaks
+
+# Build an authorized playbook
 ./bin/ohqs recommend \
   --authorized \
   --scope "HackerOne program example.com, in-scope www and api" \
-  --situation "vibe-coded Next.js SaaS with auth and a chat feature" \
-  --target https://app.example.com \
-  --path ./client-repo \
-  --export ./ohqs-out/client
+  --situation "Next.js SaaS with auth and a chat feature" \
+  --target https://app.example.com
+
+# Draft with your configured model
 ./bin/ohqs recommend --authorized --scope "..." --situation "..." --llm
+
+# Check dependencies
 ./bin/ohqs deps --authorized --scope "..." --situation "..."
+
+# Install tools needed by a playbook
 ./bin/ohqs install --authorized --scope "..." --situation "..."
+
+# Open the isolated browser
 ./bin/ohqs browser
-./bin/ohqs run ./ohqs-out/client/commands.sh
-./bin/ohqs setup
-./bin/ohqs configure
-./bin/ohqs install-cli
-./bin/ohqs submodules            # optional: fetch all third-party trees
-./bin/ohqs submodules gitleaks   # or just one catalog id
 ```
+
+## Command reference
 
 | Command | Purpose |
 | --- | --- |
-| `serve` | HTML UI + JSON API on `127.0.0.1:8787` |
-| `search <query>` | Catalog search — lexical FTS + tags by default, vector rerank when vectors exist (see `--semantic`/`--no-semantic`) |
-| `show <id>` | One catalog record as JSON |
-| `recommend` | Build a playbook (requires `--authorized` and `--scope`) |
-| `recommend --llm` | Same gates; draft the plan via an OpenAI-compatible model |
-| `index` | Rebuild `data/ohqs.sqlite` (lexical) |
-| `index --semantic` | Same, plus persist vector embeddings (needs Ollama `nomic-embed-text` or `HF_TOKEN`) |
-| `index download` | Fetch the prebuilt, already-vectorized index from the project release |
-| `index d1` | Write a Cloudflare D1 seed SQL (`dist/d1/seed.sql`) from the local index — schema + full record JSON + FTS5 + vectors |
-| `ingest` | Bulk-import a curated awesome-list source into `catalog/ingested.yaml` for review (`--from`, `--url`, `--kind`, `--limit`, `--dry-run`) |
-| `ingest github` | Crawl the GitHub Search API by topic/query into `catalog/ingested.yaml` (`--topics`, `--q`, `--all`, `--per-query`, `--no-archived`) |
-| `models list` | Recommended local GGUF models with a GPU/RAM fit check |
-| `models install <id>` | Unsloth-managed install: venv + GGUF weights (checked against your GPU/RAM) |
-| `models serve <id>` | Run the installed GGUF as a local OpenAI-compatible endpoint |
-| `deps` | Host OS + which plan tools are already installed |
-| `install` | Clone/build missing tools for the matched playbook |
-| `install-cli` | Copy `ohqs` onto PATH |
-| `submodules` | Opt-in shallow fetch of third-party trees (all, or catalog ids) |
-| `browser` | Isolated test browser with extensions |
-| `run` | Execute a reviewed `commands.sh` |
-| `setup` | Kali / Exegol / BlackArch notes |
-| `configure` | Show resolved paths, toolchain, and LLM endpoint (key not printed) |
-| `configure --save --openai-*` | Persist your endpoint/key/model to `data/config.json` (local, gitignored) |
+| `serve` | Start the local UI and API |
+| `search <query>` | Search the catalog |
+| `show <id>` | Show a catalog record |
+| `recommend` | Build an authorized playbook |
+| `recommend --llm` | Draft a playbook with your model |
+| `index` | Build the local search index |
+| `index --semantic` | Build the index with embeddings |
+| `index download` | Download the prebuilt vectorized index |
+| `ingest` | Import entries from a curated source |
+| `ingest github` | Import GitHub projects for catalog review |
+| `models list` | Show models that fit your hardware |
+| `models install <id>` | Install a supported local model |
+| `models serve <id>` | Serve a local model |
+| `deps` | Check installed dependencies |
+| `install` | Install missing playbook tools |
+| `browser` | Open the isolated test browser |
+| `run` | Run a reviewed `commands.sh` |
+| `setup` | Show Kali / Exegol / BlackArch setup notes |
+| `configure` | Show local configuration |
+| `submodules` | Opt-in fetch of upstream resources |
 
-Recommend Kali Linux, Exegol (macOS/Docker), or a BlackArch overlay. See [third-party-resources/os/README.md](third-party-resources/os/README.md).
+## Browser UI
 
-## Local models (bring your own key)
+The local UI runs at **http://127.0.0.1:8787**.
 
-Plans are drafted by **your** model. Bring your own API key and OpenAI-compatible endpoint — nothing leaves your machine. Hosted APIs often refuse security-research **planning** prompts, so we recommend serving an open-weight model with **[Unsloth](https://github.com/openhat/unsloth)** (placeholder — companion repo). Any OpenAI-compatible server also works: OpenAI, vLLM, llama.cpp, LM Studio, Cursor, etc.
+From the UI you can:
 
-Save your config once (stored locally in `data/config.json`, which is gitignored — the key never leaves your machine). For a single-model server (Unsloth/vLLM/llama.cpp) it's just base URL + API key — the model name is optional:
+- Build an authorized playbook
+- Search the catalog
+- Draft a plan with your own model
+- Download `commands.sh`
+- Install missing tools
+- Run reviewed commands
+- Open the isolated test browser
+
+The JSON API is available from the same process:
+
+```
+GET  /healthz
+GET  /v1/search?q=
+GET  /v1/index
+GET  /v1/tools/{id}
+GET  /v1/models
+POST /v1/recommend
+POST /v1/deps
+GET  /v1/history
+```
+
+## Local models
+
+`ohqs` can use any OpenAI-compatible endpoint.
+
+Your model is responsible for drafting the plan; `ohqs` provides the catalog, authorization gate, scope, and execution workflow.
+
+For a local server:
 
 ```bash
 ./bin/ohqs configure --save \
   --openai-base-url http://127.0.0.1:8000/v1 \
-  --openai-api-key  sk-local
+  --openai-api-key sk-local
+```
+
+Then:
+
+```bash
 ./bin/ohqs recommend --authorized --scope "..." --situation "..." --llm
 ```
 
-Add `--openai-model <name>` when your endpoint serves multiple models or requires a specific served name (vLLM, or the hosted OpenAI API — which defaults to `gpt-4o-mini`). When the model is blank, `ohqs` omits it from the request so single-model servers use whatever they have loaded.
-
-In the **browser UI**, tick "Draft the plan with your model" and enter the base URL and API key (model optional). The key is saved locally on submit; the Install / Run / Export / Browser buttons reuse it without re-entering, and it is never rendered back into the page or written to history.
-
-Precedence for each field: `--openai-*` flag (or UI field) > `data/config.json` > `OHQS_OPENAI_*` / `OPENAI_API_KEY` env > default. So env vars still work if you prefer them:
+Environment variables work too:
 
 ```bash
 export OHQS_OPENAI_BASE_URL=http://127.0.0.1:8000/v1
@@ -231,51 +192,105 @@ export OHQS_OPENAI_API_KEY=sk-local
 export OHQS_OPENAI_MODEL=your-model
 ```
 
-Until the Unsloth companion repo exists, see [docs/UNSLOTH-REPO-PLAN.md](docs/UNSLOTH-REPO-PLAN.md) for Unsloth + Runpod setup. The model is asked for an authorized engagement plan (detection, triage, reporting), not exploit payloads. If the model response cannot be parsed, `ohqs` falls back to the template playbook.
+Configuration is stored locally in `data/config.json`, which is gitignored.
 
-### Managed local models (fit-aware)
-
-`ohqs recommend` and `ohqs models list` recommend GGUF models that fit your GPU/RAM, including the project-tested security personas:
-
-```bash
-./bin/ohqs models list                       # fit check + which model fits your hardware
-./bin/ohqs models install <id>               # Unsloth-managed: venv + GGUF download (refuses if it does not fit; --force to bypass)
-./bin/ohqs models serve <id>                 # OpenAI-compatible endpoint on 127.0.0.1:8001/v1
-./bin/ohqs configure --save \
-  --openai-base-url http://127.0.0.1:8001/v1 \
-  --openai-api-key sk-local --openai-model <id>
-```
-
-Featured personas (also listed under `## Local LLM fit` at the end of every `ohqs recommend`):
-
-- `ravenx` — `deadbydawn101/RavenX-CyberAgent-Qwen3.6-35B-A3B-...GGUF`, 35B-A3B MoE, ~24 GB VRAM class.
-- `defiant-fable` — `DavidAU/Qwen3.5-9B-The-Defiant-Fable-...GGUF`, 9B, ~8 GB VRAM class.
-
-Both are agents/personas made for pentest triage and bug-hunt workflows; the rest of the catalog (Qwen3 instruct / Coder) are solid general fallbacks. You are responsible for checking each model's license before use.
-
-## License
-
-First-party `ohqs` code, the `deploy/` worker and frontend, catalog YAML, scripts, and docs are **GPLv3**. This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See [LICENSE](LICENSE).
-
-Upstream tools, guides, and extensions under `third-party-resources/` keep **their own licenses**. This repo does not relicense Metasploit, Wireshark, SecLists, or any other checkout. See [NOTICE](NOTICE) and each project's `LICENSE`.
-
-## Layout
-
-- [`ohqs/`](ohqs/) — Go module (`cmd/ohqs`, `internal/`)
-- [`catalog/`](catalog/) — YAML source of truth
-- [`REFERENCES.md`](REFERENCES.md) — the catalog inventory: tools, guides, extensions, platforms (each links to its upstream)
-- [`third-party-resources/`](third-party-resources/) — git submodules ([index](third-party-resources/README.md)); **not cloned by default**
-- [`.gitmodules`](.gitmodules) — upstream URLs and pinned commits
-- [`docs/UNSLOTH-REPO-PLAN.md`](docs/UNSLOTH-REPO-PLAN.md) — temporary companion-repo plan
-
-See [Clone and submodules](#clone-and-submodules) above. `.gitmodules` sets `shallow = true`.
-
----
+The model is prompted for an authorized security-testing plan, not exploit payloads. If the model response cannot be parsed, `ohqs` falls back to its deterministic template playbook.
 
 ## Catalog
 
-Everything `ohqs` knows about — browser extensions, tools, guides and cheat sheets, reference docs, operating systems, bug bounty platforms, and external scan indexes — is inventoried in **[REFERENCES.md](REFERENCES.md)**, each linked to its upstream home.
+The catalog contains:
 
-Records are YAML in [`catalog/`](catalog/); upstream checkouts live under [`third-party-resources/`](third-party-resources/).
+- Security tools
+- Browser extensions
+- Guides and cheat sheets
+- Reference documentation
+- Operating systems
+- Bug bounty platforms
+- Scan indexes and other security resources
 
-**Use the catalog from the CLI**: `ohqs search <query>` (or the browser UI search box) answers "what should I use / read for this?", and `ohqs recommend` picks the matching playbook, tools, and steps.
+The YAML records in `catalog/` are the source of truth.
+
+The catalog inventory is documented in `REFERENCES.md`.
+
+Search it with:
+
+```bash
+./bin/ohqs search <query>
+```
+
+or use the search box in the web UI.
+
+## Upstream resources
+
+The repository can optionally include upstream security-tool repositories under `third-party-resources/`.
+
+They are not cloned by default.
+
+A normal clone is enough to use the catalog and `ohqs`:
+
+```bash
+git clone <this-repo>
+```
+
+To fetch upstream resources later:
+
+```bash
+make submodules
+```
+
+Or fetch a specific catalog entry:
+
+```bash
+./bin/ohqs submodules gitleaks
+```
+
+**Do not use `--recurse-submodules`** unless you intentionally want to download the upstream trees.
+
+See `third-party-resources/README.md` for details.
+
+## Ingesting more resources
+
+You can import additional resources into a review file before adding them to the index.
+
+Curated sources:
+
+```bash
+./bin/ohqs ingest --from awesome-web-security
+```
+
+GitHub:
+
+```bash
+./bin/ohqs ingest github --topics c2,reconnaissance
+```
+
+Imported records are written to `catalog/ingested.yaml`.
+
+They are de-duplicated and tagged for review before indexing.
+
+Run `./bin/ohqs ingest --help` for all available options.
+
+## Examples & contributing
+
+- `EXAMPLES.md` — worked examples
+- `CONTRIBUTING.md` — adding catalog records
+- `REFERENCES.md` — catalog inventory
+- `third-party-resources/README.md` — upstream resources
+
+## Project layout
+
+```
+ohqs/                    Go application
+catalog/                 YAML catalog
+third-party-resources/   Optional upstream repositories
+REFERENCES.md            Catalog inventory
+docs/                    Additional documentation
+```
+
+## License
+
+First-party ohqs code, catalog data, scripts, documentation, and the frontend are **GPLv3**.
+
+Upstream projects under `third-party-resources/` retain their own licenses. This repository does not relicense projects such as Metasploit, Wireshark, or SecLists.
+
+See `LICENSE` and `NOTICE`.
