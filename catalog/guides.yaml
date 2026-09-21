@@ -1,0 +1,230 @@
+items:
+  - id: hacktricks
+    name: HackTricks
+    kind: guide
+    summary: Methodology wiki for web, cloud, AD, and more.
+    when_to_use: You need a checklist for a technology you just fingerprinted.
+    tags: [methodology]
+    homepage: https://book.hacktricks.wiki/
+    submodule_path: third-party-resources/guides/hacktricks
+    how: Search the local clone or the website for the tech name. Follow testing steps, not every payload dump.
+    look_for: The section that matches your stack.
+    interpret: Use as a coverage reminder.
+  - id: wstg
+    name: OWASP WSTG
+    kind: guide
+    summary: Web Security Testing Guide.
+    when_to_use: Structured web test coverage.
+    tags: [methodology, owasp]
+    homepage: https://github.com/OWASP/wstg
+    how: Map playbook steps to WSTG-IDs in the report.
+    look_for: Categories you have not touched yet.
+    interpret: Not every test applies to every app.
+  - id: asvs
+    name: OWASP ASVS
+    kind: guide
+    summary: Application Security Verification Standard.
+    tags: [owasp, requirements]
+    homepage: https://github.com/OWASP/ASVS
+    how: Use as a requirements checklist for SMB reports.
+    look_for: Failed controls that match your evidence.
+    interpret: ASVS is a bar, not an exploit list.
+  - id: llm-top10
+    name: OWASP GenAI LLM Top 10
+    kind: guide
+    summary: Current LLM application risk list (2026 project).
+    tags: [llm, owasp, ai-slop]
+    homepage: https://owasp.org/www-project-top-10-for-large-language-model-applications/
+    docs_urls:
+      - https://github.com/GenAI-Security-Project/GenAI-LLM-Top10
+    how: Map garak/promptfoo notes to LLM01–LLM10.
+    look_for: Injection, leakage, unsafe output handling, excessive agency.
+    interpret: Need application impact, not just a model quirk.
+  - id: cheatsheetseries
+    name: OWASP CheatSheetSeries
+    kind: guide
+    summary: Short how-tos per topic (auth, XSS, etc.).
+    tags: [owasp]
+    homepage: https://github.com/OWASP/CheatSheetSeries
+    submodule_path: third-party-resources/guides/CheatSheetSeries
+    how: Open the sheet for the issue class you are reporting (helps write the fix).
+    look_for: Remediation language for the customer.
+    interpret: Use in the report fix section.
+  - id: seclists
+    name: SecLists
+    kind: guide
+    summary: Wordlists. Not a reading guide.
+    tags: [wordlists]
+    homepage: https://github.com/danielmiessler/SecLists
+    submodule_path: third-party-resources/guides/SecLists
+    build: data
+    how: Point ffuf/gobuster at Discovery/Web-Content lists. Do not index the whole tree into sqlite.
+    look_for: n/a
+    interpret: n/a
+  - id: payloadsallthethings
+    name: PayloadsAllTheThings
+    kind: guide
+    summary: Technique notes. Use as reference, not as something ohqs will dump wholesale.
+    tags: [reference]
+    homepage: https://github.com/swisskyrepo/PayloadsAllTheThings
+    submodule_path: third-party-resources/guides/PayloadsAllTheThings
+    how: Read the chapter for the bug class after you have a hypothesis.
+    look_for: Context that matches your app.
+    interpret: ohqs will not copy payload packs into plans.
+  - id: awesome-pentest
+    name: awesome-pentest
+    kind: guide
+    summary: Curated tool lists.
+    tags: [index]
+    homepage: https://github.com/enaqx/awesome-pentest
+    submodule_path: third-party-resources/guides/awesome-pentest
+    how: Discover tools to add to catalog via PR.
+    look_for: Missing catalog entries.
+    interpret: Lists go stale; verify the project is alive.
+  - id: mastg
+    name: OWASP MASTG
+    kind: guide
+    summary: Mobile application security testing guide.
+    tags: [mobile, owasp]
+    homepage: https://github.com/OWASP/mastg
+    how: Use when the engagement is Android/iOS, not a web SPA.
+    look_for: MASVS controls that apply.
+    interpret: Pair with the android/ios cheat sheets already vendored.
+  - id: nextjs-clerk
+    name: Next.js + Clerk assessment checklist
+    kind: guide
+    summary: Manual coverage for vibe-coded Next.js apps using Clerk — middleware, webhooks, IDOR, XSS sinks.
+    when_to_use: Client assessment of a Next.js SaaS with Clerk auth before a rebuild proposal.
+    tags: [nextjs, clerk, auth, authz, xss, ai-slop, saas]
+    vuln_classes: [A01-broken-access-control, A03-injection, A05-security-misconfiguration, A07-identification-authentication-failures]
+    homepage: https://clerk.com/docs
+    docs_urls:
+      - https://clerk.com/docs/references/nextjs/clerk-middleware
+      - https://clerk.com/docs/webhooks/overview
+    how: |
+      Repo: grep for CLERK_, auth(), currentUser(), clerkMiddleware, createRouteMatcher.
+      Middleware: list every /app and /api path — is it inside the matcher?
+      API routes: never trust body.userId or body.orgId from the client; use auth() server-side.
+      Webhooks: must verify Svix headers before processing.
+      Client bundle: NEXT_PUBLIC_ only — no secret key in client JS (check .next/static or source maps).
+      Browser: two Clerk users — swap session cookie only between your test accounts; compare object IDs in URLs.
+    look_for: |
+      Missing middleware on /api/* or app routes.
+      getAuth() missing on server actions and route handlers.
+      Publicly readable .env or CLERK_SECRET_KEY in git history.
+      IDOR — User B reads/edits User A's resource by changing id in URL or JSON body.
+      dangerouslySetInnerHTML, innerHTML, markdown render without DOMPurify.
+      Webhook route with no signature check.
+      Wildcard CORS on API routes returning PII.
+    interpret: Each confirmed issue needs evidence in evidence/ and a fix the client can implement in a rebuild. Severity drives the takedown/rebuild recommendation — not availability attacks.
+  - id: ad-cheat-sheet
+    name: Active Directory Exploitation Cheat Sheet
+    kind: guide
+    summary: Enumeration and common AD techniques checklist.
+    tags: [ad, windows, methodology]
+    homepage: https://github.com/S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet
+    submodule_path: third-party-resources/guides/Active-Directory-Exploitation-Cheat-Sheet
+    how: Use as coverage for authorized AD/internal engagements. Follow the customer's RoE for credential attacks.
+    look_for: Steps you have not covered yet.
+    interpret: A checklist, not a runbook to copy blindly.
+  - id: android-pt-cheat-sheet
+    name: Android Penetration Testing Cheat Sheet
+    kind: guide
+    summary: Android app test checklist.
+    tags: [mobile, android]
+    homepage: https://github.com/ivan-sincek/android-penetration-testing-cheat-sheet
+    submodule_path: third-party-resources/guides/android-penetration-testing-cheat-sheet
+    how: Pair with OWASP MASTG when the engagement is an Android app.
+    look_for: MASVS controls that apply.
+    interpret: Device jailbreak/root steps are lab setup, not findings.
+  - id: ios-pt-cheat-sheet
+    name: iOS Penetration Testing Cheat Sheet
+    kind: guide
+    summary: iOS app test checklist.
+    tags: [mobile, ios]
+    homepage: https://github.com/ivan-sincek/ios-penetration-testing-cheat-sheet
+    submodule_path: third-party-resources/guides/ios-penetration-testing-cheat-sheet
+    how: Pair with OWASP MASTG when the engagement is an iOS app.
+    look_for: ATS, keychain, URL scheme, and jailbreak-detection notes that apply.
+    interpret: Same as Android — lab setup is not a finding.
+  - id: awesome-hacking
+    name: Awesome Hacking
+    kind: guide
+    summary: Collection of awesome-lists for security research.
+    tags: [index]
+    homepage: https://github.com/Hack-with-Github/Awesome-Hacking
+    submodule_path: third-party-resources/guides/Awesome-Hacking
+    how: Discover tools to add to this catalog via PR.
+    look_for: Missing catalog entries.
+    interpret: Lists go stale; verify the project is alive.
+  - id: awesome-bug-bounty
+    name: awesome-bug-bounty
+    kind: guide
+    summary: Curated bug bounty programs and write-ups.
+    tags: [bounty, index]
+    homepage: https://github.com/djadmin/awesome-bug-bounty
+    submodule_path: third-party-resources/guides/awesome-bug-bounty
+    how: Find program write-ups and methodology posts.
+    look_for: Techniques that match your current target.
+    interpret: Write-ups are ideas, not copy-paste plans.
+  - id: awesome-bug-bounty-tips
+    name: awesome-bug-bounty-tips
+    kind: guide
+    summary: Short hunter tips collected from public write-ups.
+    tags: [bounty, index]
+    homepage: https://github.com/ajdumanhug/awesome-bug-bounty-tips
+    submodule_path: third-party-resources/guides/awesome-bug-bounty-tips
+    how: Skim for the bug class you are testing.
+    look_for: Tips that match the stack.
+    interpret: Verify against the live app; tips age quickly.
+  - id: bug-bounty-anlominus
+    name: Bug-Bounty (Anlominus)
+    kind: guide
+    summary: Bug bounty checklists, OWASP notes, and hunting resources.
+    tags: [bounty, checklist]
+    homepage: https://github.com/AnLoMinus/Bug-Bounty
+    submodule_path: third-party-resources/guides/Bug-Bounty
+    how: Use the checklist sections as coverage reminders.
+    look_for: Categories you have not touched.
+    interpret: Not every item applies to every program.
+  - id: bug-bounty-resources
+    name: Bug-Bounty-Resources
+    kind: guide
+    summary: Curated tools, guides, and tips for bounty hunting.
+    tags: [bounty, index]
+    homepage: https://github.com/securitycipher/Bug-Bounty-Resources
+    submodule_path: third-party-resources/guides/Bug-Bounty-Resources
+    how: Browse content/ for the topic you need.
+    look_for: Tools not yet in this catalog.
+    interpret: Confirm the project is still maintained.
+  - id: cheatsheet-god
+    name: Cheatsheet-God
+    kind: guide
+    summary: Large bookmark collection of security cheatsheets.
+    tags: [index, reference]
+    homepage: https://github.com/OlivierLaflamme/Cheatsheet-God
+    submodule_path: third-party-resources/guides/Cheatsheet-God
+    how: Search for the technology you just fingerprinted.
+    look_for: A sheet that matches the stack.
+    interpret: Use as a pointer, then read the upstream source.
+  - id: gtfobins
+    name: GTFOBins
+    kind: guide
+    summary: Unix binaries that can be abused when you already have a shell.
+    tags: [linux, privesc, reference]
+    homepage: https://gtfobins.github.io/
+    submodule_path: third-party-resources/guides/GTFOBins.github.io
+    how: Use after you have an authorized shell and a privilege-escalation hypothesis.
+    look_for: A binary that is allowed by sudo/SUID and matches a GTFOBins page.
+    interpret: Only relevant on internal/Linux engagements with written approval.
+  - id: book-of-secret-knowledge
+    name: The Book of Secret Knowledge
+    kind: guide
+    summary: Lists of manuals, cheatsheets, tools, and one-liners.
+    tags: [index, reference]
+    homepage: https://github.com/trimstray/the-book-of-secret-knowledge
+    submodule_path: third-party-resources/guides/the-book-of-secret-knowledge
+    how: Browse for a tool or one-liner that fits the current step.
+    look_for: Commands you understand before running.
+    interpret: Do not run unfamiliar one-liners on a customer network.
+

@@ -1,0 +1,48 @@
+id: ai-slop-web
+title: AI-generated web app (authorized)
+match:
+  - ai
+  - slop
+  - vibe
+  - cursor
+  - copilot
+  - next.js
+  - nextjs
+  - generated
+  - llm
+  - rag
+  - chat
+  - agent
+steps:
+  - id: scope
+    title: Confirm scope and stack
+    purpose: Only test what is authorized. Note frameworks, auth, and whether there is an LLM feature.
+    tool_ids: []
+  - id: secrets
+    title: Scan the repo or source maps for secrets
+    purpose: AI-generated apps often commit .env files, API keys, and debug tokens.
+    tool_ids: [gitleaks, trufflehog]
+  - id: sast
+    title: Static scan for missing authz and injection
+    purpose: Look for routes without checks, string-built SQL, wildcard CORS, eval/innerHTML.
+    tool_ids: [semgrep, opengrep]
+  - id: deps
+    title: Check dependencies and hallucinated packages
+    purpose: AI tools invent package names. Confirm lockfile vs registry and known CVEs.
+    tool_ids: [trivy, osv-scanner]
+  - id: live-map
+    title: Map the live app
+    purpose: Confirm what is actually deployed vs what the repo claims.
+    tool_ids: [httpx, katana, nuclei]
+  - id: access
+    title: Exercise authn/authz
+    purpose: Two roles if you have them. Look for IDOR on generated CRUD.
+    tool_ids: [pwnfox, cookie-editor, zaproxy]
+  - id: llm-surface
+    title: If there is a model or agent, probe application-layer LLM risks
+    purpose: Prompt injection, secret leakage in replies, unsafe tool-calling. Only against in-scope endpoints.
+    tool_ids: [garak, promptfoo]
+  - id: report
+    title: Write findings
+    purpose: Evidence, impact, fix. Use the export report stub.
+    tool_ids: []

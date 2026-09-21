@@ -1,0 +1,17 @@
+bin/
+data/config.json
+data/*.sqlite
+data/jobs/
+data/history/
+data/browser-profiles/
+data/snapshots/
+ohqs-out/
+dist/
+evidence/
+live.txt
+subs.txt
+endpoints.txt
+amass.txt
+.env
+.DS_Store
+*.exe

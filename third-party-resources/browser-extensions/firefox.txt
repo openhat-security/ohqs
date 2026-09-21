@@ -1,0 +1,7 @@
+https://addons.mozilla.org/en-US/firefox/addon/foxyproxy-standard/
+https://addons.mozilla.org/en-US/firefox/addon/pwnfox/
+https://addons.mozilla.org/en-US/firefox/addon/cookie-editor/
+https://addons.mozilla.org/en-US/firefox/addon/owasp-penetration-testing-kit/
+https://addons.mozilla.org/en-US/firefox/addon/wappalyzer/
+https://addons.mozilla.org/en-US/firefox/addon/hacktools/
+https://addons.mozilla.org/en-US/firefox/addon/multi-account-containers/

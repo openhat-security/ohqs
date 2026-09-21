@@ -1,0 +1,99 @@
+OpenHat Quick Start (ohqs)
+==========================
+
+First-party code in this repository (the `ohqs/` Go module, `catalog/` YAML,
+`scripts/`, Makefile, and first-party documentation) is licensed under the MIT
+License. See LICENSE.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+This repository is a workstation catalog and planner for authorized security
+testing. It does not grant permission to test systems you do not own or do not
+have written authorization to assess.
+
+
+Third-party projects
+--------------------
+
+Checkouts under third-party-resources/ remain under their own licenses. This
+repository does not relicense them. See each project's LICENSE (or equivalent)
+in its tree. Upstream homes:
+
+Browser extensions
+  CyberInject                 https://github.com/CyberNilsen/CyberInject
+  Dependency-Confusion-Hunter https://github.com/KingOfBugbounty/Dependency-Confusion-Hunter
+  Firefox-Security-Toolkit    https://github.com/mazen160/Firefox-Security-Toolkit
+  keyFinder                   https://github.com/momenbasel/keyFinder
+  PenScope                    https://github.com/spider12223/PenScope
+  pentestkit (OWASP PTK)      https://github.com/DenisPodgurskii/pentestkit
+  S3BucketList                https://github.com/AlecBlance/S3BucketList
+  Trufflehog-Chrome-Extension https://github.com/trufflesecurity/Trufflehog-Chrome-Extension
+  URILoot                     https://github.com/rsingh0x/URILoot
+  WebExplode                  https://github.com/MacallanTheRoot/WebExplode
+  XnlReveal                   https://github.com/xnl-h4ck3r/XnlReveal
+
+Guides
+  Active-Directory-Exploitation-Cheat-Sheet
+                              https://github.com/S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet
+  android-penetration-testing-cheat-sheet
+                              https://github.com/ivan-sincek/android-penetration-testing-cheat-sheet
+  Awesome-Hacking             https://github.com/Hack-with-Github/Awesome-Hacking
+  awesome-bug-bounty          https://github.com/djadmin/awesome-bug-bounty
+  awesome-bug-bounty-tips     https://github.com/ajdumanhug/awesome-bug-bounty-tips
+  awesome-pentest             https://github.com/enaqx/awesome-pentest
+  Bug-Bounty                  https://github.com/AnLoMinus/Bug-Bounty
+  Bug-Bounty-Resources        https://github.com/securitycipher/Bug-Bounty-Resources
+  CheatSheetSeries            https://github.com/OWASP/CheatSheetSeries
+  Cheatsheet-God              https://github.com/OlivierLaflamme/Cheatsheet-God
+  GTFOBins                    https://github.com/GTFOBins/GTFOBins.github.io
+  hacktricks                  https://github.com/HackTricks-wiki/hacktricks
+  ios-penetration-testing-cheat-sheet
+                              https://github.com/ivan-sincek/ios-penetration-testing-cheat-sheet
+  PayloadsAllTheThings        https://github.com/swisskyrepo/PayloadsAllTheThings
+  SecLists                    https://github.com/danielmiessler/SecLists
+  the-book-of-secret-knowledge
+                              https://github.com/trimstray/the-book-of-secret-knowledge
+
+Tools
+  amass                       https://github.com/owasp-amass/amass
+  Arjun                       https://github.com/s0md3v/Arjun
+  assetfinder                 https://github.com/tomnomnom/assetfinder
+  beef                        https://github.com/beefproject/beef
+  commix                      https://github.com/commixproject/commix
+  dirsearch                   https://github.com/maurosoria/dirsearch
+  evilginx2                   https://github.com/kgretzky/evilginx2
+  feroxbuster                 https://github.com/epi052/feroxbuster
+  ffuf                        https://github.com/ffuf/ffuf
+  gitleaks                    https://github.com/gitleaks/gitleaks
+  gobuster                    https://github.com/OJ/gobuster
+  httpx                       https://github.com/projectdiscovery/httpx
+  katana                      https://github.com/projectdiscovery/katana
+  metasploit-framework        https://github.com/rapid7/metasploit-framework
+  mitmproxy                   https://github.com/mitmproxy/mitmproxy
+  nikto                       https://github.com/sullo/nikto
+  nuclei                      https://github.com/projectdiscovery/nuclei
+  open-kritt                  https://github.com/Kritt-ai/open-kritt
+  osv-scanner                 https://github.com/google/osv-scanner
+  reconmap                    https://github.com/reconmap/reconmap
+  sqlmap                      https://github.com/sqlmapproject/sqlmap
+  subfinder                   https://github.com/projectdiscovery/subfinder
+  SwiftnessX                  https://github.com/ehrishirajsharma/SwiftnessX
+  trivy                       https://github.com/aquasecurity/trivy
+  trufflehog                  https://github.com/trufflesecurity/trufflehog
+  vajra                       https://github.com/r3curs1v3-pr0xy/vajra
+  w3af                        https://github.com/andresriancho/w3af
+  wireshark                   https://www.wireshark.org/
+  wpscan                      https://github.com/wpscanteam/wpscan
+  www-project-zap             https://owasp.org/www-project-zap/
+  zaproxy                     https://github.com/zaproxy/zaproxy
+
+Go module dependencies of ohqs (see ohqs/go.mod) are used under their own
+licenses, including:
+
+  github.com/go-chi/chi/v5
+  github.com/spf13/cobra
+  gopkg.in/yaml.v3
+  modernc.org/sqlite
+
+Store-listed browser extensions and external SAST/DAST/SCA products linked from
+catalog/ are not vendored here and remain the property of their authors.

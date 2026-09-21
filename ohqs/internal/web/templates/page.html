@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ohqs</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header>
+  <strong>ohqs</strong>
+  <span>OpenHat Quick Start — authorized playbooks only
+    {{if .Host.Name}} · {{.Host.Name}} ({{.Host.GOOS}}/{{.Host.GOARCH}}){{end}}</span>
+</header>
+<main>
+  <section class="card" id="search-card">
+    <p class="label">Catalog search</p>
+    <p class="meta">Answers "what should I use / read for this?" — reranks with the vector index when it has embeddings.</p>
+    <div class="row search">
+      <div class="grow">
+        <input id="search-q" type="text" placeholder="nuclei, sql injection jwt auth, firefox proxy, hackerone…">
+      </div>
+      <button type="button" onclick="runSearch()">Search</button>
+    </div>
+    <p id="search-source" class="meta"></p>
+    <ul class="links" id="search-results"></ul>
+  </section>
+
+  <section class="card" id="index-card">
+    <p class="label">Index</p>
+    <p class="meta">The catalog is indexed into <code>data/ohqs.sqlite</code>. Rebuild it here, or download the vectorized build from the project release.</p>
+    <p id="index-status" class="meta">loading…</p>
+    <div class="actions">
+      <button type="button" class="btn ghost" onclick="rebuildIndex()">Rebuild index</button>
+      <button type="button" class="btn ghost" onclick="downloadIndex()">Download release index (with vectors)</button>
+    </div>
+  </section>
+
+  <form class="card" method="post" action="/">
+    <label for="situation">Situation</label>
+    <textarea id="situation" name="situation" required placeholder="vibe-coded Next.js SaaS with auth and a chat feature">{{.Situation}}</textarea>
+    <label for="scope">Scope (written authorization / program / hosts)</label>
+    <textarea id="scope" name="scope" required placeholder="HackerOne program example.com; www and api in scope">{{.Scope}}</textarea>
+    <div class="row">
+      <div>
+        <label for="target">Target URL or domain</label>
+        <input id="target" name="target" type="text" placeholder="https://www.example.com" value="{{.Target}}">
+      </div>
+      <div>
+        <label for="path">Local source path (SAST / secrets)</label>
+        <input id="path" name="path" type="text" placeholder="." value="{{.Path}}">
+      </div>
+    </div>
+    <label class="check">
+      <input type="checkbox" name="authorized" value="1" {{if .Authorized}}checked{{end}} required>
+      I am authorized to test the stated scope
+    </label>
+    <label class="check">
+      <input type="checkbox" name="use_llm" value="1" {{if .UseLLM}}checked{{end}}>
+      Draft the plan with your model (bring your own OpenAI-compatible endpoint)
+    </label>
+    <div class="row">
+      <div>
+        <label for="openai_base_url">LLM base URL</label>
+        <input id="openai_base_url" name="openai_base_url" type="text" placeholder="http://127.0.0.1:8000/v1" value="{{.OpenAIBaseURL}}">
+      </div>
+      <div>
+        <label for="openai_model">Model <span class="meta">(optional for single-model endpoints)</span></label>
+        <input id="openai_model" name="openai_model" type="text" placeholder="leave blank for Unsloth/llama.cpp; e.g. gpt-4o-mini for OpenAI" value="{{.OpenAIModel}}">
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="openai_api_key">API key {{if .OpenAIKeySet}}<span class="meta">(saved locally — leave blank to keep it){{else}}<span class="meta">(saved locally on this machine only){{end}}</span></label>
+        <input id="openai_api_key" name="openai_api_key" type="password" autocomplete="off" placeholder="{{if .OpenAIKeySet}}•••••• saved{{else}}sk-… or any token your endpoint expects{{end}}">
+      </div>
+    </div>
+    <p class="meta">Bring your own key and endpoint. We recommend serving an open-weight model with <a href="https://github.com/openhat/unsloth">Unsloth</a>; any OpenAI-compatible server works too (OpenAI, vLLM, llama.cpp, LM Studio, Cursor). Config is saved to <code>data/config.json</code> on this machine and is gitignored — nothing leaves your machine.</p>
+    <div class="actions">
+      <button type="submit">Build playbook</button>
+    </div>
+  </form>
+
+  {{if .LLMNote}}<p class="error">{{.LLMNote}}</p>{{end}}
+
+  {{if .History}}
+  <section class="card">
+    <p class="label">Playbook history</p>
+    <p class="meta">CLI <code>recommend</code> / <code>deps</code> / <code>install</code> and web/API builds. Open one to reload the form and playbook.</p>
+    <ul class="jobs">
+      {{range .History}}
+      <li>
+        <a href="/?history={{.ID}}">
+          <span class="src src-{{.Source}}">{{.Source}}</span>
+          {{.When}} UTC · {{.PlaybookTitle}}
+          {{if .Target}} · {{.Target}}{{end}}
+          <span class="muted"> — {{.Goal}}</span>
+        </a>
+      </li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+
+  {{if .Jobs}}
+  <section class="card">
+    <p class="label">Jobs</p>
+    <p class="meta">Install and command runs keep going if you close this tab or restart the UI. Open a job to attach to its log.</p>
+    <ul class="jobs">
+      {{range .Jobs}}
+      <li><a href="/?job={{.ID}}"><span class="st-{{.Status}}">{{.Status}}</span> {{.Type}} · {{.ID}} · {{.Playbook}}</a></li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+
+  {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+
+  {{if .Job}}
+  <section class="card" id="job" data-id="{{.Job.ID}}" data-status="{{.Job.Status}}">
+    <p class="label">{{.Job.Type}} job</p>
+    <p class="meta"><code>{{.Job.ID}}</code> · <span id="job-status" class="st-{{.Job.Status}}">{{.Job.Status}} · {{.Job.Completed}}/{{.Job.Total}}</span>
+      {{if .Job.Error}} — {{.Job.Error}}{{end}}</p>
+    <div id="job-install" {{if ne .Job.Type "install"}}hidden{{end}}>
+      <p id="job-eta" class="eta">{{.Job.ETAText}}</p>
+      <p id="job-beer" class="beer" {{if not .Job.Beer}}hidden{{end}}>This many packages is a whole evening. Go grab a beer. We'll keep compiling.</p>
+      <p class="label">Now</p>
+      <p id="job-current">{{if .Job.Current}}{{.Job.Current}}{{else}}—{{end}}</p>
+      <p class="label">Still to install</p>
+      <ul class="remain" id="job-remaining">
+        {{range .Job.Remaining}}<li>{{.}}</li>{{end}}
+      </ul>
+      <ul class="pkgs" id="job-pkgs">
+        {{range .Job.Packages}}<li class="st-{{.Status}}">{{.Status}} · {{.Name}}</li>{{end}}
+      </ul>
+    </div>
+    <pre class="log" id="job-log">{{.Job.Log}}</pre>
+    <div class="actions">
+      <button type="button" class="btn ghost" id="job-stop">Stop</button>
+      <button type="button" class="btn ghost" id="job-resume">Resume</button>
+    </div>
+  </section>
+  {{end}}
+
+  {{if .Plan}}
+  <section class="card">
+    <p class="meta"><strong>{{.Plan.PlaybookTitle}}</strong> · {{.Plan.Playbook}}</p>
+    <p><strong>Goal:</strong> {{.Plan.Goal}}</p>
+    <p><strong>Scope:</strong> {{.Plan.Scope}}</p>
+    <div class="tools">
+      {{range .Plan.Tools}}<span>{{.Name}}</span>{{end}}
+    </div>
+    <div class="actions">
+      <form method="post" action="/export">
+        <input type="hidden" name="situation" value="{{.Situation}}">
+        <input type="hidden" name="scope" value="{{.Scope}}">
+        <input type="hidden" name="target" value="{{.Target}}">
+        <input type="hidden" name="path" value="{{.Path}}">
+        <input type="hidden" name="authorized" value="1">
+        {{if .UseLLM}}<input type="hidden" name="use_llm" value="1">{{end}}
+        <input type="hidden" name="openai_base_url" value="{{.OpenAIBaseURL}}">
+        <input type="hidden" name="openai_model" value="{{.OpenAIModel}}">
+        <button class="btn ghost" type="submit">Download commands.sh</button>
+      </form>
+      <form method="post" action="/deps">
+        <input type="hidden" name="situation" value="{{.Situation}}">
+        <input type="hidden" name="scope" value="{{.Scope}}">
+        <input type="hidden" name="target" value="{{.Target}}">
+        <input type="hidden" name="path" value="{{.Path}}">
+        <input type="hidden" name="authorized" value="1">
+        {{if .UseLLM}}<input type="hidden" name="use_llm" value="1">{{end}}
+        <input type="hidden" name="openai_base_url" value="{{.OpenAIBaseURL}}">
+        <input type="hidden" name="openai_model" value="{{.OpenAIModel}}">
+        <button class="btn ghost" type="submit">Check dependencies</button>
+      </form>
+      <form method="post" action="/install">
+        <input type="hidden" name="situation" value="{{.Situation}}">
+        <input type="hidden" name="scope" value="{{.Scope}}">
+        <input type="hidden" name="target" value="{{.Target}}">
+        <input type="hidden" name="path" value="{{.Path}}">
+        <input type="hidden" name="authorized" value="1">
+        {{if .UseLLM}}<input type="hidden" name="use_llm" value="1">{{end}}
+        <input type="hidden" name="openai_base_url" value="{{.OpenAIBaseURL}}">
+        <input type="hidden" name="openai_model" value="{{.OpenAIModel}}">
+        <button class="btn ghost" type="submit">Install missing tools</button>
+      </form>
+      <form method="post" action="/run">
+        <input type="hidden" name="situation" value="{{.Situation}}">
+        <input type="hidden" name="scope" value="{{.Scope}}">
+        <input type="hidden" name="target" value="{{.Target}}">
+        <input type="hidden" name="path" value="{{.Path}}">
+        <input type="hidden" name="authorized" value="1">
+        {{if .UseLLM}}<input type="hidden" name="use_llm" value="1">{{end}}
+        <input type="hidden" name="openai_base_url" value="{{.OpenAIBaseURL}}">
+        <input type="hidden" name="openai_model" value="{{.OpenAIModel}}">
+        <button type="submit">Run commands</button>
+      </form>
+      <form method="post" action="/browser">
+        <input type="hidden" name="situation" value="{{.Situation}}">
+        <input type="hidden" name="scope" value="{{.Scope}}">
+        <input type="hidden" name="target" value="{{.Target}}">
+        <input type="hidden" name="path" value="{{.Path}}">
+        <input type="hidden" name="authorized" value="1">
+        {{if .UseLLM}}<input type="hidden" name="use_llm" value="1">{{end}}
+        <input type="hidden" name="openai_base_url" value="{{.OpenAIBaseURL}}">
+        <input type="hidden" name="openai_model" value="{{.OpenAIModel}}">
+        <button class="btn ghost" type="submit">Open test browser</button>
+      </form>
+    </div>
+  </section>
+
+  {{if .Browser}}
+  <section class="card">
+    <p class="label">Test browser</p>
+    <p class="meta">{{.Browser.Browser}} · {{.Browser.Family}} · extensions are already installed</p>
+    <p>Profile <code>{{.Browser.Profile}}</code></p>
+    <p>Relaunch with <code>{{.Browser.Launcher}}</code></p>
+    {{if .Browser.URLs}}
+    <ul class="links">
+      {{range .Browser.URLs}}<li><a href="{{.}}" target="_blank" rel="noopener">{{.}}</a></li>{{end}}
+    </ul>
+    {{end}}
+    <p class="meta">{{.Browser.Note}}</p>
+  </section>
+  {{end}}
+
+  {{if .Deps}}
+  <section class="card">
+    <p class="label">Dependencies for this playbook</p>
+    <p class="meta">{{.Deps.Host.Name}} · tools go to <code>{{.Deps.Host.Prefix}}</code>. Already-installed commands are left alone. Only missing source tools are shallow-cloned.</p>
+    <table class="deps">
+      <thead><tr><th>Status</th><th>Tool</th><th>Detail</th></tr></thead>
+      <tbody>
+        {{range .Deps.Items}}
+        <tr>
+          <td class="st-{{.Status}}">{{.Status}}</td>
+          <td>{{.Name}}</td>
+          <td>{{if .Where}}{{.Where}}{{end}}{{if .Note}} {{.Note}}{{end}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </section>
+  {{end}}
+
+  {{range .Plan.Steps}}
+  <article class="step">
+    <h3>{{.N}}. {{.Title}}</h3>
+    <p><span class="label">Purpose</span><br>{{.Purpose}}</p>
+    {{if .Tools}}<p><span class="label">Tools</span><br>{{range $i, $t := .Tools}}{{if $i}}, {{end}}{{$t.Name}}{{end}}</p>{{end}}
+    {{if .How}}<p><span class="label">How</span><br>{{.How}}</p>{{end}}
+    {{if .Links}}
+    <p class="label">Install / store</p>
+    <ul class="links">
+      {{range .Links}}
+      <li><a href="{{.URL}}" target="_blank" rel="noopener">{{.Label}}</a>{{if .Note}} — {{.Note}}{{end}}</li>
+      {{end}}
+    </ul>
+    {{end}}
+    {{if .Commands}}
+    <p class="label">Commands</p>
+    {{range .Commands}}<pre>{{.}}</pre>{{end}}
+    {{end}}
+    {{if .LookFor}}<p><span class="label">Look for</span><br>{{.LookFor}}</p>{{end}}
+    {{if .Next}}<p><span class="label">Next</span><br>{{.Next}}</p>{{end}}
+  </article>
+  {{end}}
+
+  <section class="card">
+    <p class="label">Coverage</p>
+    <ul>
+      {{range .Plan.Checklist}}<li>{{.}}</li>{{end}}
+    </ul>
+  </section>
+  {{end}}
+<section class="card" id="models-card">
+    <p class="label">Local model fit</p>
+    <p class="meta">Recommended GGUF models sized against this machine (GPU/VRAM-aware). Install + serve via the CLI, then tick "Draft the plan with your model" above and point the base URL at it.</p>
+    <p id="models-host" class="meta"></p>
+    <table class="deps" id="models-table">
+      <thead><tr><th>Model</th><th>Params</th><th>Quant</th><th>Size</th><th>Fit</th><th>Why</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="meta">
+      <code>ohqs models install &lt;id&gt;</code> &nbsp;<code>ohqs models serve &lt;id&gt;</code> &nbsp;
+      <code>configure --save --openai-base-url http://127.0.0.1:8001/v1 --openai-model &lt;id&gt;</code>
+    </p>
+  </section>
+</main>
+<script>
+(function () {
+  var job = document.getElementById("job");
+  var searchQ = document.getElementById("search-q");
+  if (searchQ) searchQ.addEventListener("keydown", function (ev) { if (ev.key === "Enter") runSearch(); });
+
+  function esc(s) {
+    var d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+  }
+
+  function fetchJSON(url, opts) {
+    return fetch(url, opts).then(function (r) {
+      if (!r.ok) return r.text().then(function (t) { throw new Error(t || r.status); });
+      return r.json();
+    });
+  }
+
+  window.runSearch = function () {
+    var q = (document.getElementById("search-q").value || "").trim();
+    var box = document.getElementById("search-results");
+    var src = document.getElementById("search-source");
+    if (!q) return;
+    box.innerHTML = "";
+    src.textContent = "searching…";
+    fetchJSON("/v1/search?q=" + encodeURIComponent(q)).then(function (r) {
+      src.textContent = r.source ? ("ranked by " + r.source) : "";
+      box.innerHTML = "";
+      (r.records || []).forEach(function (rec) {
+        var li = document.createElement("li");
+        var a = document.createElement("a");
+        a.href = "/v1/tools/" + encodeURIComponent(rec.id);
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.innerHTML = "<strong>" + esc(rec.name) + "</strong> <span class='muted'>(" + esc(rec.kind) + " · " + esc(rec.id) + ")</span> — " + esc(rec.summary);
+        li.appendChild(a);
+        box.appendChild(li);
+      });
+      if (!r.records || !r.records.length) {
+        var li = document.createElement("li");
+        li.textContent = "no matches for “" + q + "”";
+        box.appendChild(li);
+      }
+    }).catch(function (e) {
+      src.textContent = "search failed: " + esc(e.message);
+    });
+  };
+
+  function paintIndex(st) {
+    var el = document.getElementById("index-status");
+    if (!st.exists) {
+      el.innerHTML = "no index yet — click <em>Rebuild index</em> or <em>Download release index</em>.";
+      return;
+    }
+    var vector = st.has_vectors ? ("vectors ✓ (" + esc(st.embedder || "?") + ")") : "lexical only";
+    el.innerHTML = st.records + " records · " + vector + " · " + esc(st.mod_time || st.path);
+  }
+
+  function refreshIndex() {
+    fetchJSON("/v1/index").then(paintIndex).catch(function () {
+      var el = document.getElementById("index-status");
+      if (el) el.textContent = "index status unavailable";
+    });
+  }
+
+  window.rebuildIndex = function () {
+    var el = document.getElementById("index-status");
+    el.textContent = "rebuilding…";
+    fetchJSON("/v1/index/rebuild", { method: "POST" }).then(paintIndex).catch(function (e) {
+      el.textContent = "rebuild failed: " + esc(e.message);
+    });
+  };
+
+  window.downloadIndex = function () {
+    var el = document.getElementById("index-status");
+    el.textContent = "downloading release index… (can take a while)";
+    fetchJSON("/v1/index/download", { method: "POST" }).then(paintIndex).catch(function (e) {
+      el.textContent = "download failed: " + esc(e.message);
+    });
+  };
+
+  window.addEventListener("load", refreshIndex);
+
+  fetchJSON("/v1/models").then(function (r) {
+    var host = document.getElementById("models-host");
+    if (host) host.textContent = r.host.label + " (RAM " + r.host.ramgb + " GB · GPU " + r.host.vramgb + " GB)";
+    var tbody = document.querySelector("#models-table tbody");
+    (r.fits || []).forEach(function (rec) {
+      var tr = document.createElement("tr");
+      var star = rec.model.recommended ? " ★" : "";
+      var fit = rec.fits ? "fits" : ("need +" + Math.round(rec.shortgb) + " GB");
+      var eff = rec.model.activeb > 0 ? rec.model.activeb : rec.model.paramsb;
+      tr.innerHTML =
+        "<td>" + esc(rec.model.id + star) + "</td>" +
+        "<td>" + esc(eff + "B (" + rec.model.family + ")") + "</td>" +
+        "<td>" + esc(rec.quant) + "</td>" +
+        "<td>~" + rec.requiredgb.toFixed(1) + " GB</td>" +
+        "<td class=\"st-" + (rec.fits ? "ok" : "need") + "\">" + esc(fit) + "</td>" +
+        "<td>" + esc(rec.model.why) + "</td>";
+      tbody.appendChild(tr);
+    });
+  }).catch(function (e) {
+    var host = document.getElementById("models-host");
+    if (host) host.textContent = "models unavailable: " + e.message;
+  });
+})();
+</script>
+<script>
+(function () {
+  var el = document.getElementById("job");
+  if (!el) return;
+  var id = el.getAttribute("data-id");
+  var log = document.getElementById("job-log");
+  var st = document.getElementById("job-status");
+  if (id && location.search.indexOf("job=") === -1) {
+    history.replaceState(null, "", "/?job=" + encodeURIComponent(id));
+  }
+  function paint(j) {
+    if (st) st.textContent = j.status + " · " + (j.completed || 0) + "/" + (j.total || 0);
+    if (st) st.className = "st-" + j.status;
+    if (log && j.log != null) {
+      var stick = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+      log.textContent = j.log;
+      if (stick) log.scrollTop = log.scrollHeight;
+    }
+    var box = document.getElementById("job-install");
+    if (box) box.hidden = j.type !== "install";
+    var eta = document.getElementById("job-eta");
+    if (eta) eta.textContent = j.eta_text || "";
+    var beer = document.getElementById("job-beer");
+    if (beer) beer.hidden = !j.beer;
+    var cur = document.getElementById("job-current");
+    if (cur) cur.textContent = j.current || "—";
+    var rem = document.getElementById("job-remaining");
+    if (rem) {
+      rem.innerHTML = "";
+      (j.remaining || []).forEach(function (name) {
+        var li = document.createElement("li");
+        li.textContent = name;
+        rem.appendChild(li);
+      });
+    }
+    var pkgs = document.getElementById("job-pkgs");
+    if (pkgs) {
+      pkgs.innerHTML = "";
+      (j.packages || []).forEach(function (p) {
+        var li = document.createElement("li");
+        li.className = "st-" + (p.status || "");
+        li.textContent = (p.status || "") + " · " + p.name;
+        pkgs.appendChild(li);
+      });
+    }
+    return j.status === "running" || j.status === "queued";
+  }
+  function tick() {
+    fetch("/jobs/" + encodeURIComponent(id)).then(function (r) { return r.json(); }).then(function (j) {
+      if (paint(j)) setTimeout(tick, 1000);
+    }).catch(function () { setTimeout(tick, 2000); });
+  }
+  tick();
+  function post(path) {
+    fetch(path, { method: "POST" }).then(function () { tick(); });
+  }
+  var stop = document.getElementById("job-stop");
+  var resume = document.getElementById("job-resume");
+  if (stop) stop.addEventListener("click", function () { post("/jobs/" + encodeURIComponent(id) + "/stop"); });
+  if (resume) resume.addEventListener("click", function () { post("/jobs/" + encodeURIComponent(id) + "/resume"); });
+})();
+</script>
+</body>
+</html>

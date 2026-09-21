@@ -1,0 +1,24 @@
+owasp_web:
+  - A01-broken-access-control
+  - A02-cryptographic-failures
+  - A03-injection
+  - A04-insecure-design
+  - A05-security-misconfiguration
+  - A07-auth-failures
+  - A08-integrity-failures
+owasp_api:
+  - API1-bola
+  - API2-broken-auth
+  - API5-bfla
+  - API8-misconfig
+owasp_llm:
+  - LLM01-prompt-injection
+  - LLM02-sensitive-disclosure
+  - LLM05-improper-output-handling
+  - LLM06-excessive-agency
+  - LLM07-system-prompt-leakage
+engagement:
+  - ai-slop-web
+  - bounty-web
+  - smb-external
+  - network

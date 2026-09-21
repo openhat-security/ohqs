@@ -1,0 +1,57 @@
+id: nextjs-clerk
+title: Next.js + Clerk client assessment (authorized)
+match:
+  - clerk
+  - next.js
+  - nextjs
+  - vibe
+  - cursor
+  - copilot
+  - ai
+  - slop
+  - saas
+steps:
+  - id: scope
+    title: Scope, RoE, and Clerk integration map
+    purpose: Confirm written authorization. Map App Router vs Pages, which routes use Clerk middleware, webhook endpoints, and API routes that trust client-supplied userId/orgId. Out of scope is Clerk's platform — only this app's integration.
+    tool_ids: [nextjs-clerk, wstg]
+  - id: secrets
+    title: Scan repo for Clerk keys and AI slop leaks
+    purpose: Vibe-coded repos often commit .env.local, CLERK_SECRET_KEY, webhook secrets, and OpenAI keys beside auth config.
+    tool_ids: [gitleaks, trufflehog]
+  - id: clerk-config
+    title: Review Clerk dashboard and env wiring
+    purpose: From the repo and (if provided) dashboard read-only access, verify production vs dev keys, webhook signing (svix), allowed redirect URLs, session settings, and that secret keys never reach the client bundle.
+    tool_ids: [nextjs-clerk]
+  - id: sast
+    title: Static scan — authz gaps, XSS sinks, unsafe API routes
+    purpose: AI-generated Next.js often skips auth on app/api routes, uses dangerouslySetInnerHTML, and trusts searchParams for IDs.
+    tool_ids: [semgrep, opengrep]
+  - id: deps
+    title: Dependencies and known CVEs
+    purpose: Lockfile typos, hallucinated packages, and vulnerable Next/React/Clerk versions.
+    tool_ids: [trivy, osv-scanner]
+  - id: live-map
+    title: Map the deployed app
+    purpose: Compare live routes, headers, and tech fingerprint to the repo. Find exposed _next/data, source maps, and debug endpoints.
+    tool_ids: [httpx, katana, nuclei]
+  - id: middleware
+    title: Middleware and route protection audit
+    purpose: Read middleware.ts matcher — confirm /app, /api, and server actions are covered. Test unauthenticated access to protected paths and static bypasses.
+    tool_ids: [nextjs-clerk]
+  - id: browser-authz
+    title: Two-role authz in the test browser
+    purpose: Sign in as User A and User B (Clerk test accounts). Use PwnFox containers. Proxy via ZAP/Caido. Hunt IDOR on orgId, userId, and generated CRUD IDs.
+    tool_ids: [pwnfox, cookie-editor, foxyproxy, zaproxy]
+  - id: xss
+    title: XSS and unsafe HTML in client components
+    purpose: Profile fields, chat UIs, error pages, and search — anywhere vibe coding used raw HTML or unsanitized user content. Confirm in proxy; save request/response to evidence/.
+    tool_ids: [nextjs-clerk, zaproxy]
+  - id: webhooks
+    title: Clerk webhooks and server-side trust
+    purpose: Verify Svix signature on webhook routes. Attempt replay/tamper only on in-scope staging if RoE allows — document missing verification as critical misconfiguration.
+    tool_ids: [nextjs-clerk]
+  - id: report
+    title: Client deliverable — findings for rebuild decision
+    purpose: One finding per issue — title, severity, steps to reproduce, evidence path, business impact, fix. Recommend rebuild when critical authz or secret exposure affects all users.
+    tool_ids: [asvs, cheatsheetseries]

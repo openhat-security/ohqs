@@ -1,0 +1,29 @@
+id: smb-external
+title: External SMB web/app audit
+match:
+  - smb
+  - audit
+  - contract
+  - customer
+  - saas
+steps:
+  - id: roe
+    title: Rules of engagement
+    purpose: Written authorization, time window, contacts, no DoS unless allowed.
+    tool_ids: []
+  - id: inventory
+    title: Inventory the agreed hosts
+    purpose: Only the customer’s list plus agreed wildcards.
+    tool_ids: [nmap, httpx]
+  - id: slop
+    title: If the app was AI-built, run the AI-slop pass
+    purpose: Secrets, SAST, deps, then live mapping.
+    tool_ids: [gitleaks, semgrep, trivy]
+  - id: app
+    title: Application mapping and access control
+    purpose: Same as bounty-web but on the contracted hosts only.
+    tool_ids: [zaproxy, nuclei, ffuf]
+  - id: report
+    title: Deliver the report stub
+    purpose: Severity, impact, evidence, fix for the customer.
+    tool_ids: []

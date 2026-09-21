@@ -1,0 +1,602 @@
+items:
+  - id: gitleaks
+    name: Gitleaks
+    kind: tool
+    summary: Secret scanning for git repos and files.
+    when_to_use: AI-generated or any repo that may contain keys, tokens, .env.
+    tags: [secrets, sast, ai-slop]
+    vuln_classes: [A02-cryptographic-failures, A05-security-misconfiguration]
+    platforms: [darwin, linux, windows]
+    homepage: https://github.com/gitleaks/gitleaks
+    submodule_path: third-party-resources/tools/gitleaks
+    safe_auto: true
+    install: go install github.com/gitleaks/gitleaks/v8@latest
+    commands:
+      - gitleaks detect --source {{path}} --report-path evidence/gitleaks.json --report-format json
+    how: Run from the repo root you are authorized to scan. Use --no-git for a loose directory.
+    look_for: High-entropy strings, AWS keys, OpenAI keys, JWTs, passwords in .env and history.
+    interpret: Confirm the secret is live and in scope before reporting. Rotate with the owner.
+  - id: trufflehog
+    name: TruffleHog
+    kind: tool
+    summary: Secret scanner with optional live verification.
+    when_to_use: Same as gitleaks; good second opinion and verified results.
+    tags: [secrets, ai-slop]
+    vuln_classes: [A02-cryptographic-failures]
+    homepage: https://github.com/trufflesecurity/trufflehog
+    submodule_path: third-party-resources/tools/trufflehog
+    safe_auto: true
+    install: See project README
+    commands:
+      - trufflehog git file://{{path}} --json
+    how: Point at a local clone or allowed remote. JSON to evidence/.
+    look_for: Verified secrets vs unverified matches.
+    interpret: Verified findings are higher priority. Still check scope.
+  - id: semgrep
+    name: Semgrep
+    kind: tool
+    summary: SAST with rulesets for OWASP-class bugs and custom AI-slop patterns.
+    when_to_use: You have source for an AI-built or normal web app.
+    tags: [sast, ai-slop, code]
+    vuln_classes: [A01-broken-access-control, A03-injection]
+    homepage: https://github.com/semgrep/semgrep
+    safe_auto: true
+    build: manual
+    install: pipx install semgrep
+    commands:
+      - semgrep scan --config p/owasp-top-ten --config p/security-audit {{path}}
+      - semgrep scan --config p/javascript --config p/react --config p/nextjs {{path}}
+    how: Scan the application source you are allowed to have. Add custom rules for missing authz later.
+    look_for: SQL built from strings, missing auth on handlers, dangerous sinks, wildcard CORS.
+    interpret: Triage by reachability. Absence of an auth check is a pattern of omission — verify the route is real.
+  - id: opengrep
+    name: Opengrep
+    kind: tool
+    summary: Open Semgrep-compatible SAST fork.
+    when_to_use: You want Semgrep-like rules without the commercial product.
+    tags: [sast, ai-slop]
+    vuln_classes: [A01-broken-access-control, A03-injection]
+    homepage: https://github.com/opengrep/opengrep
+    build: manual
+    install: See Opengrep docs
+    commands:
+      - opengrep scan --config p/security-audit {{path}}
+    how: Same workflow as Semgrep CE rulesets.
+    look_for: Same classes as Semgrep.
+    interpret: Treat as SAST signal, not proof.
+  - id: trivy
+    name: Trivy
+    kind: tool
+    summary: Vulnerability and misconfig scanner for filesystems, images, lockfiles.
+    when_to_use: Dependency and container review on an authorized codebase.
+    tags: [sca, deps, ai-slop]
+    vuln_classes: [A06-vulnerable-components]
+    homepage: https://github.com/aquasecurity/trivy
+    safe_auto: true
+    go_experiment: jsonv2
+    install: See aquasecurity.github.io/trivy
+    commands:
+      - trivy fs {{path}}
+    how: Run against the project directory or image the customer provided.
+    look_for: Critical/high CVEs in lockfiles, leaked secrets mode if enabled.
+    interpret: Reachability matters. AI projects often pin odd transitive deps.
+  - id: osv-scanner
+    name: OSV-Scanner
+    kind: tool
+    summary: Lockfile CVE matching via OSV.
+    when_to_use: Quick SCA on npm/pip/go modules.
+    tags: [sca, deps]
+    homepage: https://github.com/google/osv-scanner
+    commands:
+      - osv-scanner --recursive {{path}}
+    how: Point at the repo with lockfiles.
+    look_for: Known vulnerable versions.
+    interpret: Combine with Trivy; do not file every low CVE on a bounty unless impact is real.
+  - id: garak
+    name: garak
+    kind: tool
+    summary: LLM vulnerability scanner (NVIDIA). Application/model probes.
+    when_to_use: In-scope chat, RAG, or agent endpoint.
+    tags: [llm, ai-slop]
+    vuln_classes: [LLM01-prompt-injection, LLM02-sensitive-disclosure]
+    homepage: https://github.com/NVIDIA/garak
+    build: manual
+    install: pipx install garak
+    commands:
+      - garak --target_type rest --target_name {{url}}
+    how: Only against an API you are allowed to test. Start with a small probe set. Read current CLI flags with garak --help.
+    look_for: Prompt injection success, leaked system text, unsafe HTML/JS in model output.
+    interpret: Model-layer hits need an application impact story (data access, XSS in rendered output).
+  - id: promptfoo
+    name: Promptfoo
+    kind: tool
+    summary: LLM eval and red-team configs, including RAG/agent apps.
+    when_to_use: You can write a YAML eval against the in-scope app.
+    tags: [llm, ai-slop]
+    vuln_classes: [LLM01-prompt-injection, LLM06-excessive-agency]
+    homepage: https://www.promptfoo.dev/
+    build: manual
+    install: npm i -g promptfoo
+    commands:
+      - promptfoo eval
+    how: Define tests in the project. Map results to OWASP LLM categories in the report.
+    look_for: Failed guardrails, tool-misuse, data leakage in eval output.
+    interpret: Application-specific tests beat generic jailbreak lists.
+  - id: nuclei
+    name: Nuclei
+    kind: tool
+    summary: Template scanner for known exposures and misconfig.
+    when_to_use: After you have an in-scope live host list.
+    tags: [scan, bounty, web]
+    vuln_classes: [A05-security-misconfiguration]
+    homepage: https://github.com/projectdiscovery/nuclei
+    submodule_path: third-party-resources/tools/nuclei
+    safe_auto: true
+    install: go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+    commands:
+      - nuclei -l {{live_hosts}} -t http/exposures/ -severity medium,high,critical -o evidence/nuclei.txt
+    how: Feed live URLs only. Prefer exposures/misconfig templates first. Respect program rate limits.
+    look_for: Exposed .git, env files, debug panels, default creds pages, known CVE matches.
+    interpret: Verify in the browser. Many templates are informational.
+  - id: subfinder
+    name: Subfinder
+    kind: tool
+    summary: Passive subdomain enumeration.
+    when_to_use: Bounty recon when wildcards are in scope.
+    tags: [recon, bounty]
+    homepage: https://github.com/projectdiscovery/subfinder
+    submodule_path: third-party-resources/tools/subfinder
+    install: go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+    commands:
+      - subfinder -d {{domain}} -silent -o subs.txt
+    how: Passive sources only by default. Dedup before probing.
+    look_for: Forgotten staging, admin, and dev hosts.
+    interpret: Resolve and probe with httpx before spending time.
+  - id: amass
+    name: OWASP Amass
+    kind: tool
+    summary: Attack-surface mapping (DNS, certs, intel).
+    when_to_use: Deeper recon than subfinder alone.
+    tags: [recon]
+    homepage: https://github.com/owasp-amass/amass
+    submodule_path: third-party-resources/tools/amass
+    commands:
+      - amass enum -d {{domain}} -o amass.txt
+    how: Read current flags. Stay on in-scope roots.
+    look_for: Extra FQDNs and ASNs tied to the target.
+    interpret: Merge with subfinder; do not treat Amass output as live.
+  - id: httpx
+    name: httpx
+    kind: tool
+    summary: Fast HTTP probe, titles, tech detect.
+    when_to_use: Turn host lists into live web apps.
+    tags: [recon, bounty]
+    homepage: https://github.com/projectdiscovery/httpx
+    install: go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+    commands:
+      - httpx -l {{hosts}} -status-code -title -tech-detect -silent -o live.txt
+    how: Input domains or URLs. Save JSON if you want to chain nuclei.
+    look_for: 200s on odd hosts, interesting titles, tech that implies known issues.
+    interpret: Redirect chains and CDNs can hide origin apps.
+  - id: katana
+    name: Katana
+    kind: tool
+    summary: JS-aware crawler.
+    when_to_use: SPA / Next.js style apps where HTML crawl misses routes.
+    tags: [recon, crawl, ai-slop]
+    homepage: https://github.com/projectdiscovery/katana
+    install: go install github.com/projectdiscovery/katana/cmd/katana@latest
+    commands:
+      - katana -u {{url}} -jc -o endpoints.txt
+    how: -jc helps on JS-heavy apps. Stay on the in-scope host.
+    look_for: API paths, hidden admin routes, .js with secrets.
+    interpret: Feed unique URLs to ffuf/arjun/nuclei as allowed.
+  - id: ffuf
+    name: ffuf
+    kind: tool
+    summary: Fast web fuzzer for paths and parameters.
+    when_to_use: Content discovery on in-scope URL prefixes.
+    tags: [fuzz, web]
+    homepage: https://github.com/ffuf/ffuf
+    submodule_path: third-party-resources/tools/ffuf
+    install: go install github.com/ffuf/ffuf/v2@latest
+    commands:
+      - ffuf -u {{url}}/FUZZ -w {{wordlist}} -mc 200,204,301,302,307,401,403 -o evidence/ffuf.json -of json
+    how: Use SecLists wordlists. Throttle to program rules. Filter size/words to cut noise.
+    look_for: Non-default status or length vs baseline.
+    interpret: 403s can still be interesting. Confirm manually.
+  - id: gobuster
+    name: Gobuster
+    kind: tool
+    summary: Directory/DNS/vhost brute helper.
+    when_to_use: Alternative to ffuf for simple path discovery.
+    tags: [fuzz, web]
+    homepage: https://github.com/OJ/gobuster
+    submodule_path: third-party-resources/tools/gobuster
+    commands:
+      - gobuster dir -u {{url}} -w {{wordlist}}
+    how: Same discipline as ffuf — in-scope prefix only.
+    look_for: Unexpected directories.
+    interpret: Cross-check with ffuf if noisy.
+  - id: feroxbuster
+    name: Feroxbuster
+    kind: tool
+    summary: Recursive content discovery.
+    when_to_use: When you want recursion with care on in-scope trees.
+    tags: [fuzz, web]
+    homepage: https://github.com/epi052/feroxbuster
+    submodule_path: third-party-resources/tools/feroxbuster
+    commands:
+      - feroxbuster -u {{url}} -w {{wordlist}}
+    how: Watch recursion depth. Easy to get loud.
+    look_for: Nested apps and backups.
+    interpret: Stop if the program forbids recursive brute.
+  - id: arjun
+    name: Arjun
+    kind: tool
+    summary: HTTP parameter discovery.
+    when_to_use: After you have interesting endpoints with few obvious params.
+    tags: [params, web]
+    homepage: https://github.com/s0md3v/Arjun
+    submodule_path: third-party-resources/tools/Arjun
+    commands:
+      - arjun -u {{url}}
+    how: Point at a single in-scope URL. Combine with manual proxy work.
+    look_for: Hidden debug, id, file, redirect parameters.
+    interpret: Every extra param is a hypothesis, not a bug.
+  - id: nmap
+    name: Nmap
+    kind: tool
+    summary: Port and service discovery.
+    when_to_use: External SMB audits when host scanning is in the RoE.
+    tags: [network, recon]
+    homepage: https://nmap.org/
+    build: manual
+    install: apt/brew package nmap
+    commands:
+      - nmap -sV -sC -oA evidence/nmap {{target}}
+    how: Only contracted IPs/hosts. Avoid aggressive timing on fragile SMB gear unless allowed.
+    look_for: Unexpected open services, old banners.
+    interpret: Banner != exploit. Note versions for the report.
+  - id: zaproxy
+    name: OWASP ZAP
+    kind: tool
+    summary: Intercepting proxy and scanner.
+    when_to_use: Authenticated browse and passive/active checks you are allowed to run.
+    tags: [proxy, web]
+    homepage: https://www.zaproxy.org/
+    submodule_path: third-party-resources/tools/zaproxy
+    build: manual
+    commands:
+      - zap.sh
+    how: Point the browser via FoxyProxy. Prefer passive first. Active scan only if RoE allows.
+    look_for: Cookie flags, CSP, mixed content, interesting parameters in history.
+    interpret: Active scanner noise is high. Verify everything.
+  - id: caido
+    name: Caido
+    kind: tool
+    summary: Modern intercepting proxy (download, not a submodule).
+    when_to_use: Same role as ZAP/Burp for manual web work.
+    tags: [proxy, web]
+    homepage: https://www.caido.io/download/
+    build: manual
+    install: Download from caido.io
+    commands: []
+    how: Install, set browser proxy, work the site map.
+    look_for: Auth flows, APIs, replayable requests.
+    interpret: Manual tool — no auto run.sh step.
+  - id: burp
+    name: Burp Suite
+    kind: tool
+    summary: Industry intercepting proxy.
+    when_to_use: When the team standard is Burp.
+    tags: [proxy, web]
+    homepage: https://portswigger.net/burp/releases
+    build: manual
+    install: Download from PortSwigger
+    commands: []
+    how: Community or Pro. Pair with PwnFox on Firefox for role isolation.
+    look_for: Same as ZAP/Caido.
+    interpret: Extensions (Logger++, etc.) are out of catalog v1.
+  - id: sqlmap
+    name: sqlmap
+    kind: tool
+    summary: SQL injection testing tool. Use only on in-scope parameters you already suspect.
+    when_to_use: Authorized confirmation of a suspected SQLi, not a spray across the internet.
+    tags: [injection, web]
+    homepage: https://github.com/sqlmapproject/sqlmap
+    submodule_path: third-party-resources/tools/sqlmap
+    safe_auto: false
+    commands:
+      - python sqlmap.py -u {{url}} --batch --level=1 --risk=1
+    how: Start read-only / low risk. Never point at out-of-scope hosts. Prefer a single URL/param.
+    look_for: DBMS identified, data readable that should not be.
+    interpret: Stop at evidence for the report. Do not dump unrelated databases.
+  - id: nikto
+    name: Nikto
+    kind: tool
+    summary: Older web server checklist scanner.
+    when_to_use: Quick noisy pass on a single in-scope host if the program allows.
+    tags: [scan, web]
+    homepage: https://github.com/sullo/nikto
+    submodule_path: third-party-resources/tools/nikto
+    commands:
+      - nikto -h {{url}}
+    how: Loud. Ask before using on a bounty with strict rate limits.
+    look_for: Outdated server, dangerous files.
+    interpret: High false-positive rate.
+  - id: wpscan
+    name: WPScan
+    kind: tool
+    summary: WordPress enumeration.
+    when_to_use: In-scope WordPress.
+    tags: [cms, web]
+    homepage: https://github.com/wpscanteam/wpscan
+    submodule_path: third-party-resources/tools/wpscan
+    build: manual
+    commands:
+      - wpscan --url {{url}} --enumerate p
+    how: Enumeration first. Follow WPScan’s current CLI.
+    look_for: Vulnerable plugins/themes, users if enum is allowed.
+    interpret: Version match != instant critical without a working impact.
+  - id: dirsearch
+    name: dirsearch
+    kind: tool
+    summary: Path brute forcer.
+    when_to_use: Another content-discovery option.
+    tags: [fuzz, web]
+    homepage: https://github.com/maurosoria/dirsearch
+    submodule_path: third-party-resources/tools/dirsearch
+    commands:
+      - python dirsearch.py -u {{url}} -e php,js,json
+    how: Same scope rules as ffuf.
+    look_for: Backups, admin, .git.
+    interpret: Verify hits in a browser/proxy.
+  - id: assetfinder
+    name: assetfinder
+    kind: tool
+    summary: Related domain finder.
+    when_to_use: Extra passive names for in-scope roots.
+    tags: [recon]
+    homepage: https://github.com/tomnomnom/assetfinder
+    submodule_path: third-party-resources/tools/assetfinder
+    commands:
+      - assetfinder --subs-only {{domain}}
+    how: Passive. Merge into the subdomain pile.
+    look_for: Odd subsidiaries.
+    interpret: Confirm they are in-scope before probing.
+  - id: wireshark
+    name: Wireshark
+    kind: tool
+    summary: Packet capture analysis.
+    when_to_use: Network / lab captures you are allowed to take.
+    tags: [network]
+    homepage: https://www.wireshark.org/
+    submodule_path: third-party-resources/tools/wireshark
+    build: manual
+    commands: []
+    how: Capture on an authorized interface or open a provided pcap.
+    look_for: Cleartext secrets, odd protocols.
+    interpret: Do not capture on networks you do not have approval for.
+  - id: metasploit-framework
+    name: Metasploit Framework
+    kind: tool
+    summary: Framework for modules and auxiliary scanners. Catalogued as a local checkout only.
+    when_to_use: When you already know a specific auxiliary/scanner module is appropriate and authorized.
+    tags: [framework]
+    homepage: https://github.com/rapid7/metasploit-framework
+    submodule_path: third-party-resources/tools/metasploit-framework
+    build: manual
+    safe_auto: false
+    commands: []
+    how: Use auxiliary/scanner modules you understand. ohqs will not generate exploit module runbooks.
+    look_for: Scanner output that confirms a version or exposure.
+    interpret: Evidence for the report. No payload generation via ohqs.
+  - id: jwt_tool
+    name: jwt_tool
+    kind: tool
+    summary: JWT inspection and common weakness checks.
+    when_to_use: App uses JWTs (very common in AI-generated APIs).
+    tags: [auth, api, ai-slop]
+    vuln_classes: [A07-auth-failures]
+    homepage: https://github.com/ticarpi/jwt_tool
+    commands:
+      - python jwt_tool.py {{token}}
+    how: Paste a token you obtained in-session. Read the tool’s modes before changing alg tests.
+    look_for: none-alg, weak secrets, kid/jku confusion if the app accepts them.
+    interpret: Only report if the application accepts a tampered token.
+  - id: mitmproxy
+    name: mitmproxy
+    kind: tool
+    summary: Interactive CLI/web HTTP proxy.
+    when_to_use: Lightweight intercept without ZAP/Burp.
+    tags: [proxy]
+    homepage: https://mitmproxy.org/
+    submodule_path: third-party-resources/tools/mitmproxy
+    build: manual
+    commands:
+      - mitmproxy
+    how: Set HTTP(S) proxy and install the mitm cert in a dedicated browser profile.
+    look_for: API calls the UI hides.
+    interpret: Same discipline as any proxy.
+  - id: dalfox
+    name: Dalfox
+    kind: tool
+    summary: XSS helper for parameters you already identified.
+    when_to_use: Reflected/DOM hypotheses on in-scope params.
+    tags: [xss, web]
+    homepage: https://github.com/hahwul/dalfox
+    safe_auto: false
+    commands:
+      - dalfox url {{url}}
+    how: Single URL/param. Do not blast an entire program.
+    look_for: Reflected context that executes in your browser.
+    interpret: Self-XSS vs impactful XSS. Report impact, not a scanner line.
+  - id: commix
+    name: commix
+    kind: tool
+    summary: Command-injection tester. Authorized, suspected parameters only.
+    tags: [injection]
+    homepage: https://github.com/commixproject/commix
+    submodule_path: third-party-resources/tools/commix
+    safe_auto: false
+    commands: []
+    how: Do not auto-run. Use only after you have a reasoned hypothesis and written scope.
+    look_for: Evidence the application executes attacker-controlled OS commands.
+    interpret: Stop at proof for the report.
+  - id: reconmap
+    name: Reconmap
+    kind: tool
+    summary: Collaboration/reporting platform for engagements.
+    tags: [reporting]
+    homepage: https://github.com/reconmap/reconmap
+    submodule_path: third-party-resources/tools/reconmap
+    build: manual
+    commands: []
+    how: Optional place to store engagement notes.
+    look_for: n/a
+    interpret: n/a
+  - id: open-kritt
+    name: open-kritt
+    kind: tool
+    summary: Third-party project already vendored in this repo.
+    tags: [misc]
+    homepage: https://github.com/Kritt-ai/open-kritt
+    submodule_path: third-party-resources/tools/open-kritt
+    build: manual
+    commands: []
+    how: Read the project README before use.
+    look_for: n/a
+    interpret: n/a
+  - id: beef
+    name: BeEF
+    kind: tool
+    summary: Browser Exploitation Framework for authorized client-side assessments.
+    when_to_use: Written RoE that allows browser-hook testing on in-scope users you control.
+    tags: [browser, framework]
+    homepage: https://github.com/beefproject/beef
+    submodule_path: third-party-resources/tools/beef
+    build: manual
+    safe_auto: false
+    commands: []
+    how: Use only against browsers you own or that the customer provided. ohqs will not generate hook payloads.
+    look_for: Confirmation that a test browser executed an in-scope hook.
+    interpret: Evidence for XSS impact, not a standalone finding.
+  - id: evilginx2
+    name: Evilginx2
+    kind: tool
+    summary: Authorized phishing-simulation proxy for credential and session-token exercises.
+    when_to_use: Red-team engagements with explicit written approval for phishing simulations.
+    tags: [red-team, framework]
+    homepage: https://github.com/kgretzky/evilginx2
+    submodule_path: third-party-resources/tools/evilginx2
+    build: manual
+    safe_auto: false
+    commands: []
+    how: Do not auto-run. Use only when the RoE names phishing simulation. ohqs will not generate phish kits.
+    look_for: Whether the customer's MFA/session controls stop a simulated adversary.
+    interpret: Report control gaps. Do not use against anyone outside the written exercise.
+  - id: w3af
+    name: w3af
+    kind: tool
+    summary: Open-source web application scanner with many audit plugins.
+    when_to_use: Authorized web app scan when you want a second opinion besides ZAP/Nuclei.
+    tags: [dast, web]
+    homepage: https://github.com/andresriancho/w3af
+    submodule_path: third-party-resources/tools/w3af
+    build: manual
+    safe_auto: false
+    commands: []
+    how: Point only at in-scope hosts. Review plugin list before enabling anything noisy.
+    look_for: Confirmed vulns you can reproduce in a proxy.
+    interpret: Scanner output is a lead, not a report.
+  - id: vajra
+    name: Vajra
+    kind: tool
+    summary: Web-app recon and scanning orchestration UI.
+    when_to_use: You want a dashboard over several recon tools for one authorized target.
+    tags: [recon, orchestration]
+    homepage: https://github.com/r3curs1v3-pr0xy/vajra
+    submodule_path: third-party-resources/tools/vajra
+    build: manual
+    commands: []
+    how: Read the project README. Keep targets inside written scope.
+    look_for: New hosts or endpoints still in scope.
+    interpret: Feed interesting URLs into the proxy; do not treat the dashboard as proof.
+  - id: swiftnessx
+    name: SwiftnessX
+    kind: tool
+    summary: Desktop checklist and note-taking app for security testing.
+    when_to_use: You want a local engagement checklist instead of a full reporting platform.
+    tags: [reporting, checklist]
+    homepage: https://github.com/ehrishirajsharma/SwiftnessX
+    submodule_path: third-party-resources/tools/SwiftnessX
+    build: manual
+    commands: []
+    how: Track coverage for the current playbook. Do not store customer secrets in the notes file if it is synced.
+    look_for: Steps you have not covered yet.
+    interpret: A checklist is coverage, not findings.
+  - id: sliver
+    name: Sliver
+    kind: tool
+    summary: Open-source, cross-platform command-and-control (C2) framework for authorized engagements.
+    when_to_use: You hold written authorization for adversary simulation that needs a C2 (implant + listener).
+    tags: [c2, redteam, opsec]
+    vuln_classes: []
+    platforms: [darwin, linux, windows]
+    homepage: https://github.com/BishopFox/sliver
+    submodule_path: third-party-resources/tools/sliver
+    build: manual
+    safe_auto: false
+    install: See project README (sliver-client / sliver-server)
+    commands:
+      - sliver generate stager --arch amd64 --lhost {{host}} --lport {{port}} --os windows --format exe
+    how: Generate an implant, stand up the server on a host you control, and only deploy implants to in-scope machines you operate.
+    look_for: Whether the engagement rules allow implant deployment and the customer's approved detection-testing windows.
+    interpret: A C2 session is a strong foothold demo; it is also noisy. Tear down implants when the exercise window ends.
+  - id: havoc
+    name: Havoc
+    kind: tool
+    summary: Open-source command-and-control (C2) framework with a native agent.
+    when_to_use: Authorized red-team lab or engagement that needs a modern C2 with OPSEC amenities.
+    tags: [c2, redteam, opsec]
+    vuln_classes: []
+    platforms: [darwin, linux, windows]
+    homepage: https://github.com/HavocFramework/Havoc
+    submodule_path: third-party-resources/tools/havoc
+    build: manual
+    safe_auto: false
+    install: See project README (Teamserver + client, Qt)
+    commands: []
+    how: Run the Teamserver on your controlled host, connect the client, and restrict agents to authorized targets.
+    look_for: Whether the rules of engagement permit malware-like tooling and anti-detection features.
+    interpret: Powerful but agent-heavy; log and preserve command history for the report.
+  - id: mythic
+    name: Mythic
+    kind: tool
+    summary: Cross-platform command-and-control (C2) framework focused on operator control and plugin extensibility.
+    when_to_use: Authorized engagements or internal red teams that want a scriptable, REST-driven C2.
+    tags: [c2, redteam, opsec]
+    vuln_classes: []
+    platforms: [darwin, linux, windows]
+    homepage: https://github.com/its-a-feature/Mythic
+    submodule_path: third-party-resources/tools/mythic
+    build: manual
+    safe_auto: false
+    install: See project README (Mythic Server, Mythic CLI)
+    commands: []
+    how: Stand up the Mythic server in a docker container on a host you control; create operators and payloads in the UI.
+    look_for: "The same RoE boundaries as the other C2 frameworks: implant deployment on in-scope systems only."
+    interpret: The REST API makes automation easy; keep operator audit logs for the report.
+  - id: nighthawk
+    name: Nighthawk
+    kind: reference
+    summary: Commercial C2 platform; docs describe agent architecture and OPSEC trade-offs.
+    when_to_use: You want to compare commercial C2 capabilities before choosing a framework for a budgeted engagement.
+    tags: [c2, redteam, reference]
+    homepage: https://www.nighthawkc2.com/
+    build: manual
+    commands: []
+    how: Read the documentation to compare with the open-source options above.
+    look_for: Cost, agent features, and evasion profiles that match the engagement's detection budget.
+    interpret: Commercial C2 is licensed tooling — respect the license and the customer's permitted locations.

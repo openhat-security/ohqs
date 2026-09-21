@@ -1,0 +1,64 @@
+items:
+  - id: ippsec
+    name: IppSec
+    kind: reference
+    summary: Searchable walkthroughs of HackTheBox and similar labs.
+    tags: [training, reference]
+    homepage: https://ippsec.rocks/
+    how: Search for a technique name when you need a visual walkthrough. Labs are not customer targets.
+    look_for: A video that matches the class of bug you are testing.
+    interpret: Training material. Do not copy lab steps onto a live program.
+  - id: ired-team
+    name: iRed.team
+    kind: reference
+    summary: Offensive-security experiment notes and cheatsheets.
+    tags: [reference, methodology]
+    homepage: https://www.ired.team/offensive-security-experiments/offensive-security-cheetsheets
+    how: Read the page for a technique you already have a reason to use on an authorized engagement.
+    look_for: Preconditions that match your access and RoE.
+    interpret: Many pages assume an internal foothold you may not have.
+  - id: mitre-attack
+    name: MITRE ATT&CK
+    kind: reference
+    summary: Adversary tactic and technique knowledge base.
+    tags: [reference, taxonomy]
+    homepage: https://attack.mitre.org/
+    how: Map confirmed findings to a technique ID in the report when the customer asks for ATT&CK coverage.
+    look_for: A technique that matches what you actually demonstrated.
+    interpret: ATT&CK is a language for reports, not a scan list.
+  - id: portswigger-xss
+    name: PortSwigger XSS cheat sheet
+    kind: reference
+    summary: Context-specific XSS notes from PortSwigger.
+    tags: [xss, reference, web]
+    homepage: https://portswigger.net/web-security/cross-site-scripting/cheat-sheet
+    how: After you have a reflected or stored context, read the matching section. ohqs will not copy payload packs into plans.
+    look_for: The output context (HTML, attribute, JS, URL).
+    interpret: Only report if it executes in a browser you control on an in-scope page.
+  - id: cybermouflons-wiki
+    name: CyberMouflons Wiki
+    kind: reference
+    summary: Community wiki of pentest notes.
+    tags: [reference, methodology]
+    homepage: https://apogiatzis.notion.site/CYberMouflons-Wiki-a9ea93ec6877480c87438b31145dba54
+    how: Search for the service or product you fingerprinted.
+    look_for: A note that matches version and configuration.
+    interpret: Community notes go stale; verify on the live target.
+  - id: lolbas
+    name: LOLBAS
+    kind: reference
+    summary: Living-off-the-land binaries and scripts on Windows.
+    tags: [windows, privesc, reference]
+    homepage: https://lolbas-project.github.io/
+    how: Use after you have an authorized Windows shell and a hypothesis.
+    look_for: A signed Microsoft binary that is allowed in the environment.
+    interpret: Only relevant on internal/Windows engagements with written approval.
+  - id: browserscan
+    name: BrowserScan
+    kind: reference
+    summary: What the current browser reveals (IP, fingerprint, WebRTC).
+    tags: [browser, privacy, reference]
+    homepage: https://www.browserscan.net/
+    how: Check the isolated OHQS browser vs daily browser when you care about tester OPSEC.
+    look_for: Leaks that would identify your home IP or daily profile.
+    interpret: Use a dedicated workstation/VPN if the program requires it.

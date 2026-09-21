@@ -1,0 +1,43 @@
+items:
+  - id: kali
+    name: Kali Linux
+    kind: os
+    summary: Debian pentest distro. Default recommend for most people.
+    when_to_use: You want a documented, guide-compatible workstation.
+    tags: [linux, distro, kali]
+    homepage: https://www.kali.org/
+    docs_urls: [https://www.kali.org/tools/, https://www.kali.org/docs/general-use/metapackages/]
+    install: Follow kali.org installer. Then apt install kali-tools-web kali-tools-vulnerability
+  - id: blackarch
+    name: BlackArch
+    kind: os
+    summary: Arch overlay with ~2800 security packages.
+    when_to_use: You already use Arch and want category installs.
+    tags: [linux, distro, arch]
+    homepage: https://www.blackarch.org/
+    docs_urls: [https://www.blackarch.org/tools.html, https://blackarch.org/downloads.html]
+    install: strap.sh from blackarch.org/downloads.html after verifying checksum
+  - id: exegol
+    name: Exegol
+    kind: os
+    summary: Docker pentest environment. Best default on macOS.
+    when_to_use: Mac host, or one clean container per engagement.
+    tags: [docker, macos, distro]
+    homepage: https://exegol.com/
+    docs_urls: [https://github.com/ThePorgs/Exegol]
+    install: See https://exegol.com/install
+  - id: parrot
+    name: Parrot OS
+    kind: os
+    summary: Lighter Debian security distro.
+    when_to_use: You want a daily-driver VM with less weight than Kali.
+    tags: [linux, distro]
+    homepage: https://www.parrotsec.org/
+  - id: commando-vm
+    name: Commando VM
+    kind: os
+    summary: Windows pentest lab VM from Mandiant.
+    when_to_use: The engagement is Windows-heavy and you want a dedicated lab image.
+    tags: [windows, distro]
+    homepage: https://github.com/mandiant/commando-vm
+    install: See the Commando VM README. Do not install on a daily-driver Windows host.

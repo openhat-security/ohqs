@@ -1,0 +1,793 @@
+items:
+  - id: platform-001-immunefi-com
+    name: immunefi.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://immunefi.com/bug-bounty/
+  - id: platform-002-smartcontractshacking-com
+    name: smartcontractshacking.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://smartcontractshacking.com/tools/web3-auditing-competitions-and-bug-bounties
+  - id: platform-003-hashlock-com
+    name: hashlock.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://hashlock.com/blog/best-smart-contract-auditing-companies-securing-your-blockchain-project
+  - id: platform-004-github-com
+    name: github.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://github.com/cyfrin
+  - id: platform-005-gist-github-com
+    name: gist.github.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://gist.github.com/cusaldmsr/3e595766f0051fbbf4924859e6ff1357
+  - id: platform-006-github-com
+    name: github.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://github.com/disclose/bug-bounty-platforms
+  - id: platform-007-www-homeaffairs-gov-au
+    name: www.homeaffairs.gov.au
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.homeaffairs.gov.au/
+  - id: platform-008-bugbounty-sa
+    name: bugbounty.sa
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.sa/
+  - id: platform-009-cert-pl
+    name: cert.pl
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://cert.pl/en/cvd/
+  - id: platform-010-www-cert-in-org-in
+    name: www.cert-in.org.in
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.cert-in.org.in/RVDCP.jsp
+  - id: platform-011-www-cisa-gov
+    name: www.cisa.gov
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.cisa.gov/resources-tools/services/vulnerability-disclosure-policy-vdp-platform
+  - id: platform-012-www-divd-nl
+    name: www.divd.nl
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.divd.nl/
+  - id: platform-013-zeroday-hitcon-org
+    name: zeroday.hitcon.org
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://zeroday.hitcon.org/
+  - id: platform-014-jvn-jp
+    name: jvn.jp
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://jvn.jp/en/
+  - id: platform-015-knvd-krcert-or-kr
+    name: knvd.krcert.or.kr
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://knvd.krcert.or.kr/dashboard
+  - id: platform-016-nciipc-gov-in
+    name: nciipc.gov.in
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://nciipc.gov.in/RVDP.html
+  - id: platform-017-hub-ncsa-gov-mv
+    name: hub.ncsa.gov.mv
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://hub.ncsa.gov.mv/resources/bug-bounty-program
+  - id: platform-018-www-kyberturvallisuuskeskus-fi
+    name: www.kyberturvallisuuskeskus.fi
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.kyberturvallisuuskeskus.fi/en/contact-us/e-services/report-information-security-incident
+  - id: platform-019-www-ncsc-nl
+    name: www.ncsc.nl
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.ncsc.nl/producten-en-diensten/kwetsbaarheid-melden-cvd
+  - id: platform-020-www-nksc-lt
+    name: www.nksc.lt
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.nksc.lt/pranesti-spraga.html
+  - id: platform-021-www-openbugbounty-org
+    name: www.openbugbounty.org
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.openbugbounty.org//
+  - id: platform-022-bugbounty-qa
+    name: bugbounty.qa
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.qa/
+  - id: platform-023-www-tech-gov-sg
+    name: www.tech.gov.sg
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.tech.gov.sg/report-vulnerability/
+  - id: platform-024-www-ncsc-admin-ch
+    name: www.ncsc.admin.ch
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.ncsc.admin.ch/ncsc/de/home.html
+  - id: platform-025-www-twcert-org-tw
+    name: www.twcert.org.tw
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.twcert.org.tw/en/np-138-2.html
+  - id: platform-026-bugbounty-ae
+    name: bugbounty.ae
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.ae/
+  - id: platform-027-www-ncsc-gov-uk
+    name: www.ncsc.gov.uk
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.ncsc.gov.uk/
+  - id: platform-028-www-auditone-io
+    name: www.auditone.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.auditone.io/
+  - id: platform-029-bugrap-io
+    name: bugrap.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugrap.io/
+  - id: platform-030-cantina-xyz
+    name: cantina.xyz
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://cantina.xyz/welcome
+  - id: platform-031-www-certik-com
+    name: www.certik.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.certik.com/
+  - id: platform-032-www-certora-com
+    name: www.certora.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.certora.com/contests
+  - id: platform-033-code4rena-com
+    name: code4rena.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://code4rena.com/
+  - id: platform-034-codehawks-cyfrin-io
+    name: codehawks.cyfrin.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://codehawks.cyfrin.io/contests
+  - id: platform-035-hackenproof-com
+    name: hackenproof.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://hackenproof.com/
+  - id: platform-036-hashlock-com
+    name: hashlock.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://hashlock.com/
+  - id: platform-037-hats-finance
+    name: hats.finance
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://hats.finance/
+  - id: platform-038-immunefi-com
+    name: immunefi.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://immunefi.com/
+  - id: platform-039-openbounty-shentu-org
+    name: openbounty.shentu.org
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://openbounty.shentu.org/
+  - id: platform-040-r-xyz
+    name: r.xyz
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://r.xyz/
+  - id: platform-041-secure3-io
+    name: secure3.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://secure3.io/en
+  - id: platform-042-sherlock-xyz
+    name: sherlock.xyz
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://sherlock.xyz/
+  - id: platform-043-www-slowmist-com
+    name: www.slowmist.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.slowmist.com/
+  - id: platform-044-app-grayswan-ai
+    name: app.grayswan.ai
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://app.grayswan.ai/arena
+  - id: platform-045-www-hackaprompt-com
+    name: www.hackaprompt.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.hackaprompt.com/
+  - id: platform-046-huntr-com
+    name: huntr.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://huntr.com/
+  - id: platform-047-ssd-disclosure-com
+    name: ssd-disclosure.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://ssd-disclosure.com/
+  - id: platform-048-www-zerodayinitiative-com
+    name: www.zerodayinitiative.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.zerodayinitiative.com/
+  - id: platform-049-issuehunt-io
+    name: issuehunt.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://issuehunt.io/
+  - id: platform-050-patchstack-com
+    name: patchstack.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://patchstack.com/
+  - id: platform-051-www-wordfence-com
+    name: www.wordfence.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.wordfence.com/threat-intel/bug-bounty-program/
+  - id: platform-052-src-360-net
+    name: src.360.net
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://src.360.net/
+  - id: platform-053-bbhunt-jp
+    name: bbhunt.jp
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bbhunt.jp/?lang=ja
+  - id: platform-054-bugbounty-bi-zone
+    name: bugbounty.bi.zone
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.bi.zone/landing/ru
+  - id: platform-055-www-bountyteam-com
+    name: www.bountyteam.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.bountyteam.com/
+  - id: platform-056-www-bugbounty-ch
+    name: www.bugbounty.ch
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.bugbounty.ch/
+  - id: platform-057-bughunt-com-br
+    name: bughunt.com.br
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bughunt.com.br/
+  - id: platform-058-bugzero-io
+    name: bugzero.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugzero.io/
+  - id: platform-059-www-bugbank-cn
+    name: www.bugbank.cn
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.bugbank.cn/
+  - id: platform-060-bugbop-com
+    name: bugbop.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbop.com/
+  - id: platform-061-bugbounter-com
+    name: bugbounter.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounter.com/
+  - id: platform-062-bugbounty-am
+    name: bugbounty.am
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.am/
+  - id: platform-063-bugbounty-jp
+    name: bugbounty.jp
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.jp/en/
+  - id: platform-064-bugbounty-ru
+    name: bugbounty.ru
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.ru/
+  - id: platform-065-www-bugcrowd-com
+    name: www.bugcrowd.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.bugcrowd.com/
+  - id: platform-066-www-buglab-io
+    name: www.buglab.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.buglab.io/
+  - id: platform-067-bugloud-com
+    name: bugloud.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugloud.com/
+  - id: platform-068-www-bugrakshak-com
+    name: www.bugrakshak.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.bugrakshak.com/
+  - id: platform-069-bugsbounty-com
+    name: bugsbounty.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugsbounty.com/
+  - id: platform-070-bugv-io
+    name: bugv.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugv.io/
+  - id: platform-071-www-butian-net
+    name: www.butian.net
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.butian.net/
+  - id: platform-072-capturethebug-xyz
+    name: capturethebug.xyz
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://capturethebug.xyz/
+  - id: platform-073-www-cobalt-io
+    name: www.cobalt.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.cobalt.io/
+  - id: platform-074-www-comolho-com
+    name: www.comolho.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.comolho.com/
+  - id: platform-075-www-compass-security-com
+    name: www.compass-security.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.compass-security.com/en/
+  - id: platform-076-www-crowdswarm-io
+    name: www.crowdswarm.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.crowdswarm.io/
+  - id: platform-077-www-cyberarmy-asia
+    name: www.cyberarmy.asia
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.cyberarmy.asia/
+  - id: platform-078-cyber3ra-com
+    name: cyber3ra.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://cyber3ra.com/
+  - id: platform-079-cyberbay-tech
+    name: cyberbay.tech
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://cyberbay.tech/
+  - id: platform-080-cybertalents-com
+    name: cybertalents.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://cybertalents.com/
+  - id: platform-081-cyscope-io
+    name: cyscope.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://cyscope.io/en/home/
+  - id: platform-082-detectify-com
+    name: detectify.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://detectify.com/
+  - id: platform-083-dvuln-com
+    name: dvuln.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://dvuln.com/
+  - id: platform-084-www-federacy-com
+    name: www.federacy.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.federacy.com/
+  - id: platform-085-findthegap-co-kr
+    name: findthegap.co.kr
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://findthegap.co.kr/en
+  - id: platform-086-zerodaytest-com
+    name: zerodaytest.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://zerodaytest.com/
+  - id: platform-087-www-zerocopter-com
+    name: www.zerocopter.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.zerocopter.com/
+  - id: platform-088-yogosha-com
+    name: yogosha.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://yogosha.com/
+  - id: platform-089-www-yeswehack-com
+    name: www.yeswehack.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.yeswehack.com/
+  - id: platform-090-whitehub-net
+    name: whitehub.net
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://whitehub.net/
+  - id: platform-091-www-vulnscope-com
+    name: www.vulnscope.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.vulnscope.com/
+  - id: platform-092-www-vulnerability-lab-com
+    name: www.vulnerability-lab.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.vulnerability-lab.com/
+  - id: platform-093-www-vulbox-com
+    name: www.vulbox.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.vulbox.com/
+  - id: platform-094-uzhunter-com
+    name: uzhunter.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://uzhunter.com/
+  - id: platform-095-tumar-one
+    name: tumar.one
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://tumar.one/
+  - id: platform-096-www-trustline-sa
+    name: www.trustline.sa
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.trustline.sa/
+  - id: platform-097-www-topcoder-com
+    name: www.topcoder.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.topcoder.com/
+  - id: platform-098-www-testbirds-com
+    name: www.testbirds.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.testbirds.com/en/
+  - id: platform-099-teklabspace-com
+    name: teklabspace.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://teklabspace.com/
+  - id: platform-100-www-synack-com
+    name: www.synack.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.synack.com/
+  - id: platform-101-swarmnetics-com
+    name: swarmnetics.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://swarmnetics.com/
+  - id: platform-102-bugbounty-standoff365-com
+    name: bugbounty.standoff365.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bugbounty.standoff365.com/en-US/hacker/
+  - id: platform-103-secur0-com
+    name: secur0.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://secur0.com/es
+  - id: platform-104-secuna-io
+    name: secuna.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://secuna.io/
+  - id: platform-105-safevuln-com
+    name: safevuln.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://safevuln.com/
+  - id: platform-106-safehats-com
+    name: safehats.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://safehats.com/
+  - id: platform-107-www-redstorm-io
+    name: www.redstorm.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.redstorm.io/
+  - id: platform-108-www-ravro-ir
+    name: www.ravro.ir
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.ravro.ir/
+  - id: platform-109-patchday-io
+    name: patchday.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://patchday.io/
+  - id: platform-110-nordicdefender-com
+    name: nordicdefender.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://nordicdefender.com/
+  - id: platform-111-www-kolahsefid-org
+    name: www.kolahsefid.org
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.kolahsefid.org/
+  - id: platform-112-www-intigriti-com
+    name: www.intigriti.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.intigriti.com/
+  - id: platform-113-www-inspectiv-com
+    name: www.inspectiv.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.inspectiv.com/
+  - id: platform-114-www-huoxian-cn
+    name: www.huoxian.cn
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.huoxian.cn/
+  - id: platform-115-www-hunterspay-com-br
+    name: www.hunterspay.com.br
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.hunterspay.com.br/
+  - id: platform-116-huntbug-com
+    name: huntbug.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://huntbug.com/
+  - id: platform-117-www-hacktify-eu
+    name: www.hacktify.eu
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.hacktify.eu/en/home/
+  - id: platform-118-www-hckrt-com
+    name: www.hckrt.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.hckrt.com/
+  - id: platform-119-www-hackr-fi
+    name: www.hackr.fi
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.hackr.fi/
+  - id: platform-120-www-hackerone-com
+    name: www.hackerone.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.hackerone.com/
+  - id: platform-121-gobugfree-com
+    name: gobugfree.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://gobugfree.com/
+  - id: platform-122-gerobug-gerosecurity-com
+    name: gerobug.gerosecurity.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://gerobug.gerosecurity.com/
+  - id: platform-123-genbounty-com
+    name: genbounty.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://genbounty.com/
+  - id: platform-124-www-findbug-io
+    name: www.findbug.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.findbug.io/
+  - id: platform-125-ethereum-org
+    name: ethereum.org
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://ethereum.org/bug-bounty/
+  - id: platform-126-www-openbugbounty-org
+    name: www.openbugbounty.org
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.openbugbounty.org/
+  - id: platform-127-gitcoin-co
+    name: gitcoin.co
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://gitcoin.co/
+  - id: platform-128-bughunters-google-com
+    name: bughunters.google.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bughunters.google.com/
+  - id: platform-129-www-microsoft-com
+    name: www.microsoft.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.microsoft.com/en-us/msrc/bounty
+  - id: platform-130-security-apple-com
+    name: security.apple.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://security.apple.com/bounty/
+  - id: platform-131-bbradar-io
+    name: bbradar.io
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://bbradar.io/
+  - id: platform-132-www-genxploit-com
+    name: www.genxploit.com
+    kind: platform
+    summary: Bug bounty or VDP program listing.
+    tags: [bounty, platform]
+    homepage: https://www.genxploit.com/programs/solana-foundation

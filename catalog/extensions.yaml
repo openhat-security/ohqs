@@ -1,0 +1,291 @@
+items:
+  - id: foxyproxy
+    name: FoxyProxy
+    kind: extension
+    summary: One-click proxy profiles for Burp/ZAP/Caido.
+    when_to_use: Every browser-based web test.
+    tags: [proxy, browser]
+    homepage: https://chromewebstore.google.com/detail/foxyproxy/gcknhkkoolaabfmlnjonogaaifnjlfnp
+    store_chromium: https://chromewebstore.google.com/detail/foxyproxy/gcknhkkoolaabfmlnjonogaaifnjlfnp
+    store_firefox: https://addons.mozilla.org/en-US/firefox/addon/foxyproxy-standard/
+    addon_id: foxyproxy@eric.h.jung
+    xpi_url: https://addons.mozilla.org/firefox/downloads/latest/foxyproxy-standard/latest.xpi
+    how: Create a profile for 127.0.0.1:8080 (or Caido’s port). Toggle only while testing.
+    look_for: Traffic appearing in the proxy history.
+    interpret: If nothing shows, check the browser proxy and cert.
+  - id: pwnfox
+    name: PwnFox
+    kind: extension
+    summary: Firefox containers + Burp coloring for multi-role tests.
+    when_to_use: IDOR / access-control with two accounts.
+    tags: [authz, browser, firefox]
+    homepage: https://addons.mozilla.org/en-US/firefox/addon/pwnfox/
+    store_firefox: https://addons.mozilla.org/en-US/firefox/addon/pwnfox/
+    addon_id: PwnFox@bi.tk
+    xpi_url: https://addons.mozilla.org/firefox/downloads/latest/pwnfox/latest.xpi
+    how: One container per role. Optional Burp helper jar from the project.
+    look_for: Requests from the wrong role succeeding.
+    interpret: That is the access-control finding — capture both requests.
+  - id: cookie-editor
+    name: Cookie-Editor
+    kind: extension
+    summary: View/edit cookies in-page.
+    when_to_use: Session and cookie flag checks.
+    tags: [session, browser]
+    homepage: https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm
+    store_chromium: https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm
+    store_firefox: https://addons.mozilla.org/en-US/firefox/addon/cookie-editor/
+    addon_id: "{c3c10168-4186-445c-9c5b-63f12b8e2c87}"
+    xpi_url: https://addons.mozilla.org/firefox/downloads/latest/cookie-editor/latest.xpi
+    how: Inspect flags (Secure, HttpOnly, SameSite) and swap session cookies only in your test accounts.
+    look_for: Session not rotating on login/logout; missing flags on session cookies.
+    interpret: Report impact (account takeover, fixation), not just a missing flag.
+  - id: wappalyzer
+    name: Wappalyzer
+    kind: extension
+    summary: Tech fingerprint in the browser.
+    tags: [recon, browser]
+    homepage: https://chromewebstore.google.com/detail/wappalyzer-technology-pro/gppongmhjkpfnbhagpmjfkannfbllamg
+    how: Open the target, read versions.
+    look_for: CMS, frameworks, CDNs that change your tool choice.
+    interpret: Version hints need confirmation.
+  - id: owasp-ptk
+    name: OWASP Penetration Testing Kit
+    kind: extension
+    summary: In-browser DAST/IAST/SCA helper (PTK).
+    tags: [browser, dast]
+    homepage: https://owasp.org/www-project-penetration-testing-kit/
+    submodule_path: third-party-resources/browser-extensions/pentestkit
+    store_chromium: https://chromewebstore.google.com/detail/owasp-penetration-testing/ojkchikaholjmcnefhjlbohackpeeknd
+    store_firefox: https://addons.mozilla.org/en-US/firefox/addon/owasp-penetration-testing-kit/
+    how: Use on the authenticated session you already have. Stay in scope.
+    look_for: Client-side sinks, JWT issues, captured APIs.
+    interpret: Verify in the proxy. Do not treat every PTK alert as a report.
+  - id: penscope
+    name: PenScope
+    kind: extension
+    summary: Browser-native mapping and probes.
+    tags: [browser]
+    homepage: https://github.com/spider12223/PenScope
+    submodule_path: third-party-resources/browser-extensions/PenScope
+    how: Load unpacked if needed. Use only on authorized sites.
+    look_for: Endpoints, headers, secrets in JS.
+    interpret: Manual confirm.
+  - id: trufflehog-chrome
+    name: TruffleHog Chrome Extension
+    kind: extension
+    summary: Secret patterns while browsing.
+    tags: [secrets, browser]
+    homepage: https://github.com/trufflesecurity/Trufflehog-Chrome-Extension
+    submodule_path: third-party-resources/browser-extensions/Trufflehog-Chrome-Extension
+    store_chromium: https://chromewebstore.google.com/detail/trufflehog/bafhdnhjnlcdbjcdcnafhdcphhnfnhjc
+    how: Browse the in-scope app; review hits.
+    look_for: Keys in JS and HTML.
+    interpret: Same as CLI TruffleHog — verify liveness.
+  - id: keyfinder
+    name: keyFinder
+    kind: extension
+    summary: Finds keys/tokens in page traffic.
+    tags: [secrets, browser]
+    homepage: https://github.com/momenbasel/keyFinder
+    submodule_path: third-party-resources/browser-extensions/keyFinder
+    how: Browse; export findings.
+    look_for: Cloud keys, JWT, Slack tokens.
+    interpret: Confirm they are real and in scope.
+  - id: xnlreveal
+    name: XnlReveal
+    kind: extension
+    summary: Hidden params and links in the DOM.
+    tags: [recon, browser]
+    homepage: https://github.com/xnl-h4ck3r/XnlReveal
+    submodule_path: third-party-resources/browser-extensions/XnlReveal
+    how: Use on JS-heavy AI-built SPAs.
+    look_for: Hidden inputs, commented endpoints.
+    interpret: Feed into Arjun/ffuf if still in scope.
+  - id: findsomething
+    name: FindSomething
+    kind: extension
+    summary: Extracts URLs, IPs, keys from HTML/JS.
+    tags: [recon, browser]
+    homepage: https://github.com/momosecurity/FindSomething
+    how: Run on each interesting origin.
+    look_for: API hosts, keys, internal URLs.
+    interpret: Many strings are dead. Probe only in-scope hosts.
+  - id: cyberinject
+    name: CyberInject
+    kind: extension
+    summary: Quick-access helper for common authorized test payloads in the browser.
+    when_to_use: Authenticated browser testing on an in-scope app.
+    tags: [browser, web]
+    homepage: https://github.com/CyberNilsen/CyberInject
+    submodule_path: third-party-resources/browser-extensions/CyberInject
+    store_chromium: https://chromewebstore.google.com/detail/cyberinject/dgnnpllamcglhcfmppgijeindohkkabm
+    how: Use only on hosts in written scope. Treat listed strings as reminders, not something to blast.
+    look_for: Parameters that reflect or change server behavior.
+    interpret: Confirm in the proxy. Do not report a helper click as a finding.
+  - id: dependency-confusion-hunter
+    name: Dependency Confusion Hunter
+    kind: extension
+    summary: Passively flags internal package names that may exist on public registries.
+    when_to_use: Reviewing a target that loads npm/PyPI package names in-page.
+    tags: [sca, browser, supply-chain]
+    homepage: https://github.com/KingOfBugbounty/Dependency-Confusion-Hunter
+    submodule_path: third-party-resources/browser-extensions/Dependency-Confusion-Hunter
+    how: Browse the in-scope app; review alerts against the customer's private registry policy.
+    look_for: Internal package names resolvable on the public registry.
+    interpret: Confirm the name is theirs and that a public squat would be reachable.
+  - id: firefox-security-toolkit
+    name: Firefox Security Toolkit
+    kind: extension
+    summary: Installer script/collection for a Firefox security-testing profile.
+    when_to_use: You want a community set of Firefox add-ons instead of picking one by one.
+    tags: [browser, firefox]
+    homepage: https://github.com/mazen160/Firefox-Security-Toolkit
+    submodule_path: third-party-resources/browser-extensions/Firefox-Security-Toolkit
+    how: Prefer `ohqs browser` for an isolated profile. Use this toolkit only if you want the upstream bundle.
+    look_for: n/a
+    interpret: A profile installer, not a finding source.
+  - id: s3bucketlist
+    name: S3BucketList
+    kind: extension
+    summary: Lists S3 bucket names seen in page traffic and checks listing.
+    when_to_use: The in-scope app talks to S3 or similar object storage.
+    tags: [cloud, browser, recon]
+    homepage: https://github.com/AlecBlance/S3BucketList
+    submodule_path: third-party-resources/browser-extensions/S3BucketList
+    how: Browse the authorized app. Only probe buckets that belong to the customer / program.
+    look_for: Public list/read on customer buckets.
+    interpret: Third-party buckets are usually out of scope.
+  - id: uriloot
+    name: URILoot
+    kind: extension
+    summary: One-click recon searches across several OSINT sources for a domain.
+    when_to_use: Early recon on an in-scope root domain.
+    tags: [recon, browser, osint]
+    homepage: https://github.com/rsingh0x/URILoot
+    submodule_path: third-party-resources/browser-extensions/URILoot
+    how: Run against the program's in-scope domain only.
+    look_for: Extra hosts, leaked URLs, public mentions.
+    interpret: Confirm each host is in scope before probing.
+  - id: webexplode
+    name: WebExplode
+    kind: extension
+    summary: Multi-tool browser helper for recon and authenticated testing.
+    when_to_use: JS-heavy apps where you want several extractors in one extension.
+    tags: [recon, browser]
+    homepage: https://github.com/MacallanTheRoot/WebExplode
+    submodule_path: third-party-resources/browser-extensions/WebExplode
+    how: Use on in-scope origins. Export interesting URLs into the proxy.
+    look_for: Hidden endpoints, keys, comments.
+    interpret: Manual confirm.
+  - id: hackbar
+    name: HackBar
+    kind: extension
+    summary: Request editor toolbar for authorized browser tests.
+    tags: [browser, web]
+    homepage: https://chromewebstore.google.com/detail/hackbar/ginpbkfigcoaokgflihfhhmglmbchinc
+    store_chromium: https://chromewebstore.google.com/detail/hackbar/ginpbkfigcoaokgflihfhhmglmbchinc
+    how: Edit requests only on in-scope hosts you are authorized to test.
+    look_for: Parameter changes that alter authorization or output.
+    interpret: Capture request/response as evidence.
+  - id: retirejs
+    name: Retire.js
+    kind: extension
+    summary: Flags known-vulnerable JavaScript libraries in the page.
+    tags: [sca, browser]
+    homepage: https://chromewebstore.google.com/detail/retirejs/moibopkbhjceeedibkbkbchbjnkadmom
+    store_chromium: https://chromewebstore.google.com/detail/retirejs/moibopkbhjceeedibkbkbchbjnkadmom
+    how: Browse the in-scope app; confirm the library is actually loaded and reachable.
+    look_for: Outdated jQuery/Angular/etc. with a reachable sink.
+    interpret: Version alone is not a report — need impact.
+  - id: dotgit
+    name: dotgit
+    kind: extension
+    summary: Alerts if the site exposes a .git directory.
+    tags: [recon, browser, misconfig]
+    homepage: https://chromewebstore.google.com/detail/dotgit/pampamgoihgcedonnphgehgondkhikel
+    store_chromium: https://chromewebstore.google.com/detail/dotgit/pampamgoihgcedonnphgehgondkhikel
+    how: Visit in-scope origins. Do not download source from hosts outside scope.
+    look_for: Public .git/HEAD or similar.
+    interpret: Confirm it is the customer's repo and in scope.
+  - id: bishop
+    name: Bishop
+    kind: extension
+    summary: Browser vulnerability-scan helper.
+    tags: [browser, dast]
+    homepage: https://chromewebstore.google.com/detail/bishop-vulnerability-scan/cbkdeoaaclnbidadjimofnhpbfhjakoe
+    store_chromium: https://chromewebstore.google.com/detail/bishop-vulnerability-scan/cbkdeoaaclnbidadjimofnhpbfhjakoe
+    how: Use on authorized hosts only. Verify every alert in a proxy.
+    look_for: Confirmed issues you can reproduce.
+    interpret: Scanner noise is high.
+  - id: hacktools
+    name: HackTools
+    kind: extension
+    summary: Swiss-army toolbox (encoding, note helpers) inside the browser.
+    tags: [browser]
+    homepage: https://chromewebstore.google.com/detail/hack-tools/cmbndhnoonmghfofefkcccljbkdpamhi
+    store_chromium: https://chromewebstore.google.com/detail/hack-tools/cmbndhnoonmghfofefkcccljbkdpamhi
+    store_firefox: https://addons.mozilla.org/en-US/firefox/addon/hacktools/
+    how: Encoding/decoding aids. Do not paste customer secrets into online tools.
+    look_for: n/a
+    interpret: A helper, not a scanner.
+  - id: request-maker
+    name: Request Maker
+    kind: extension
+    summary: Build and replay HTTP requests from the browser.
+    tags: [browser, proxy]
+    homepage: https://chromewebstore.google.com/detail/request-maker/kajfghlhfkcocafkcjlajldicbikpgnp
+    store_chromium: https://chromewebstore.google.com/detail/request-maker/kajfghlhfkcocafkcjlajldicbikpgnp
+    how: Replay only in-scope requests from your session.
+    look_for: Authz differences when you change IDs.
+    interpret: Save both requests for the report.
+  - id: shodan-extension
+    name: Shodan
+    kind: extension
+    summary: Shodan lookup for the current host.
+    tags: [recon, osint, browser]
+    homepage: https://chromewebstore.google.com/detail/shodan/jjalcfnidlmpjhdfepjhjbhnhkbgleap
+    store_chromium: https://chromewebstore.google.com/detail/shodan/jjalcfnidlmpjhdfepjhjbhnhkbgleap
+    how: Look up in-scope hosts. Do not scan IPs that are out of scope.
+    look_for: Unexpected services on customer IPs.
+    interpret: Confirm ownership and program scope.
+  - id: hunter-email
+    name: Hunter
+    kind: extension
+    summary: Email-finder helper. Usually out of scope for product bounties.
+    tags: [osint, browser]
+    homepage: https://chromewebstore.google.com/detail/hunter-email-finder-exten/hgmhmanijnjhaffoampdlllchpolkdnj
+    store_chromium: https://chromewebstore.google.com/detail/hunter-email-finder-exten/hgmhmanijnjhaffoampdlllchpolkdnj
+    how: Only if the RoE allows OSINT on employee addresses (rare on public bounties).
+    look_for: n/a
+    interpret: Most programs forbid this. Skip unless written approval exists.
+  - id: open-multiple-urls
+    name: Open Multiple URLs
+    kind: extension
+    summary: Opens a list of URLs in tabs.
+    tags: [browser]
+    homepage: https://chromewebstore.google.com/detail/open-multiple-urls/oifijhaokejakekmnjmphonojcfkpbbh
+    store_chromium: https://chromewebstore.google.com/detail/open-multiple-urls/oifijhaokejakekmnjmphonojcfkpbbh
+    how: Paste only in-scope URLs from your recon pile.
+    look_for: n/a
+    interpret: Convenience only.
+  - id: mitaka
+    name: Mitaka
+    kind: extension
+    summary: OSINT context-menu lookups (VirusTotal, Shodan, and similar).
+    tags: [osint, browser]
+    homepage: https://chromewebstore.google.com/detail/mitaka/bfjbejmeoibbdpfdbmbacmefcbannnbg
+    store_chromium: https://chromewebstore.google.com/detail/mitaka/bfjbejmeoibbdpfdbmbacmefcbannnbg
+    how: Look up indicators from the in-scope app. Do not submit customer secrets to third parties if the RoE forbids it.
+    look_for: Infrastructure overlap.
+    interpret: OSINT is context, not a vulnerability.
+  - id: multi-account-containers
+    name: Firefox Multi-Account Containers
+    kind: extension
+    summary: Isolate cookies per container — useful with PwnFox for two-role tests.
+    tags: [browser, firefox, authz]
+    homepage: https://addons.mozilla.org/en-US/firefox/addon/multi-account-containers/
+    store_firefox: https://addons.mozilla.org/en-US/firefox/addon/multi-account-containers/
+    how: One container per test role. Prefer the OHQS isolated browser.
+    look_for: Requests from the wrong role succeeding.
+    interpret: That is the access-control finding.

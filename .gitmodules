@@ -1,0 +1,232 @@
+[submodule "third-party-resources/browser-extensions/CyberInject"]
+	path = third-party-resources/browser-extensions/CyberInject
+	url = https://github.com/CyberNilsen/CyberInject.git
+	shallow = true
+[submodule "third-party-resources/browser-extensions/Dependency-Confusion-Hunter"]
+	path = third-party-resources/browser-extensions/Dependency-Confusion-Hunter
+	url = https://github.com/KingOfBugbounty/Dependency-Confusion-Hunter
+	shallow = true
+[submodule "third-party-resources/browser-extensions/Firefox-Security-Toolkit"]
+	path = third-party-resources/browser-extensions/Firefox-Security-Toolkit
+	url = https://github.com/mazen160/Firefox-Security-Toolkit.git
+	shallow = true
+[submodule "third-party-resources/browser-extensions/PenScope"]
+	path = third-party-resources/browser-extensions/PenScope
+	url = https://github.com/spider12223/PenScope.git
+	shallow = true
+[submodule "third-party-resources/browser-extensions/S3BucketList"]
+	path = third-party-resources/browser-extensions/S3BucketList
+	url = https://github.com/AlecBlance/S3BucketList.git
+	shallow = true
+[submodule "third-party-resources/browser-extensions/Trufflehog-Chrome-Extension"]
+	path = third-party-resources/browser-extensions/Trufflehog-Chrome-Extension
+	url = https://github.com/trufflesecurity/Trufflehog-Chrome-Extension.git
+	shallow = true
+[submodule "third-party-resources/browser-extensions/URILoot"]
+	path = third-party-resources/browser-extensions/URILoot
+	url = https://github.com/rsingh0x/URILoot
+	shallow = true
+[submodule "third-party-resources/browser-extensions/WebExplode"]
+	path = third-party-resources/browser-extensions/WebExplode
+	url = https://github.com/MacallanTheRoot/WebExplode.git
+	shallow = true
+[submodule "third-party-resources/browser-extensions/XnlReveal"]
+	path = third-party-resources/browser-extensions/XnlReveal
+	url = https://github.com/xnl-h4ck3r/XnlReveal
+	shallow = true
+[submodule "third-party-resources/browser-extensions/keyFinder"]
+	path = third-party-resources/browser-extensions/keyFinder
+	url = https://github.com/momenbasel/keyFinder
+	shallow = true
+[submodule "third-party-resources/browser-extensions/pentestkit"]
+	path = third-party-resources/browser-extensions/pentestkit
+	url = https://github.com/DenisPodgurskii/pentestkit
+	shallow = true
+[submodule "third-party-resources/guides/Active-Directory-Exploitation-Cheat-Sheet"]
+	path = third-party-resources/guides/Active-Directory-Exploitation-Cheat-Sheet
+	url = https://github.com/S1ckB0y1337/Active-Directory-Exploitation-Cheat-Sheet
+	shallow = true
+[submodule "third-party-resources/guides/Awesome-Hacking"]
+	path = third-party-resources/guides/Awesome-Hacking
+	url = https://github.com/Hack-with-Github/Awesome-Hacking.git
+	shallow = true
+[submodule "third-party-resources/guides/Bug-Bounty"]
+	path = third-party-resources/guides/Bug-Bounty
+	url = https://github.com/AnLoMinus/Bug-Bounty.git
+	shallow = true
+[submodule "third-party-resources/guides/Bug-Bounty-Resources"]
+	path = third-party-resources/guides/Bug-Bounty-Resources
+	url = https://github.com/securitycipher/Bug-Bounty-Resources.git
+	shallow = true
+[submodule "third-party-resources/guides/CheatSheetSeries"]
+	path = third-party-resources/guides/CheatSheetSeries
+	url = https://github.com/OWASP/CheatSheetSeries.git
+	shallow = true
+[submodule "third-party-resources/guides/Cheatsheet-God"]
+	path = third-party-resources/guides/Cheatsheet-God
+	url = https://github.com/OlivierLaflamme/Cheatsheet-God.git
+	shallow = true
+[submodule "third-party-resources/guides/GTFOBins.github.io"]
+	path = third-party-resources/guides/GTFOBins.github.io
+	url = https://github.com/GTFOBins/GTFOBins.github.io.git
+	shallow = true
+[submodule "third-party-resources/guides/PayloadsAllTheThings"]
+	path = third-party-resources/guides/PayloadsAllTheThings
+	url = https://github.com/swisskyrepo/PayloadsAllTheThings.git
+	shallow = true
+[submodule "third-party-resources/guides/SecLists"]
+	path = third-party-resources/guides/SecLists
+	url = https://github.com/danielmiessler/SecLists.git
+	shallow = true
+[submodule "third-party-resources/guides/android-penetration-testing-cheat-sheet"]
+	path = third-party-resources/guides/android-penetration-testing-cheat-sheet
+	url = https://github.com/ivan-sincek/android-penetration-testing-cheat-sheet.git
+	shallow = true
+[submodule "third-party-resources/guides/awesome-bug-bounty"]
+	path = third-party-resources/guides/awesome-bug-bounty
+	url = https://github.com/djadmin/awesome-bug-bounty.git
+	shallow = true
+[submodule "third-party-resources/guides/awesome-bug-bounty-tips"]
+	path = third-party-resources/guides/awesome-bug-bounty-tips
+	url = https://github.com/ajdumanhug/awesome-bug-bounty-tips.git
+	shallow = true
+[submodule "third-party-resources/guides/awesome-pentest"]
+	path = third-party-resources/guides/awesome-pentest
+	url = https://github.com/enaqx/awesome-pentest.git
+	shallow = true
+[submodule "third-party-resources/guides/hacktricks"]
+	path = third-party-resources/guides/hacktricks
+	url = https://github.com/HackTricks-wiki/hacktricks.git
+	shallow = true
+[submodule "third-party-resources/guides/ios-penetration-testing-cheat-sheet"]
+	path = third-party-resources/guides/ios-penetration-testing-cheat-sheet
+	url = https://github.com/ivan-sincek/ios-penetration-testing-cheat-sheet
+	shallow = true
+[submodule "third-party-resources/guides/the-book-of-secret-knowledge"]
+	path = third-party-resources/guides/the-book-of-secret-knowledge
+	url = https://github.com/trimstray/the-book-of-secret-knowledge.git
+	shallow = true
+[submodule "third-party-resources/tools/Arjun"]
+	path = third-party-resources/tools/Arjun
+	url = https://github.com/s0md3v/Arjun
+	shallow = true
+[submodule "third-party-resources/tools/SwiftnessX"]
+	path = third-party-resources/tools/SwiftnessX
+	url = https://github.com/ehrishirajsharma/SwiftnessX.git
+	shallow = true
+[submodule "third-party-resources/tools/amass"]
+	path = third-party-resources/tools/amass
+	url = https://github.com/owasp-amass/amass
+	shallow = true
+[submodule "third-party-resources/tools/assetfinder"]
+	path = third-party-resources/tools/assetfinder
+	url = https://github.com/tomnomnom/assetfinder
+	shallow = true
+[submodule "third-party-resources/tools/beef"]
+	path = third-party-resources/tools/beef
+	url = https://github.com/beefproject/beef
+	shallow = true
+[submodule "third-party-resources/tools/commix"]
+	path = third-party-resources/tools/commix
+	url = https://github.com/commixproject/commix
+	shallow = true
+[submodule "third-party-resources/tools/dirsearch"]
+	path = third-party-resources/tools/dirsearch
+	url = https://github.com/maurosoria/dirsearch
+	shallow = true
+[submodule "third-party-resources/tools/evilginx2"]
+	path = third-party-resources/tools/evilginx2
+	url = https://github.com/kgretzky/evilginx2.git
+	shallow = true
+[submodule "third-party-resources/tools/feroxbuster"]
+	path = third-party-resources/tools/feroxbuster
+	url = https://github.com/epi052/feroxbuster
+	shallow = true
+[submodule "third-party-resources/tools/ffuf"]
+	path = third-party-resources/tools/ffuf
+	url = https://github.com/ffuf/ffuf.git
+	shallow = true
+[submodule "third-party-resources/tools/gitleaks"]
+	path = third-party-resources/tools/gitleaks
+	url = https://github.com/gitleaks/gitleaks.git
+	shallow = true
+[submodule "third-party-resources/tools/gobuster"]
+	path = third-party-resources/tools/gobuster
+	url = https://github.com/OJ/gobuster.git
+	shallow = true
+[submodule "third-party-resources/tools/httpx"]
+	path = third-party-resources/tools/httpx
+	url = https://github.com/projectdiscovery/httpx.git
+	shallow = true
+[submodule "third-party-resources/tools/katana"]
+	path = third-party-resources/tools/katana
+	url = https://github.com/projectdiscovery/katana.git
+	shallow = true
+[submodule "third-party-resources/tools/metasploit-framework"]
+	path = third-party-resources/tools/metasploit-framework
+	url = https://github.com/rapid7/metasploit-framework.git
+	shallow = true
+[submodule "third-party-resources/tools/mitmproxy"]
+	path = third-party-resources/tools/mitmproxy
+	url = https://github.com/mitmproxy/mitmproxy.git
+	shallow = true
+[submodule "third-party-resources/tools/nikto"]
+	path = third-party-resources/tools/nikto
+	url = https://github.com/sullo/nikto
+	shallow = true
+[submodule "third-party-resources/tools/nuclei"]
+	path = third-party-resources/tools/nuclei
+	url = https://github.com/projectdiscovery/nuclei
+	shallow = true
+[submodule "third-party-resources/tools/open-kritt"]
+	path = third-party-resources/tools/open-kritt
+	url = https://github.com/Kritt-ai/open-kritt.git
+	shallow = true
+[submodule "third-party-resources/tools/osv-scanner"]
+	path = third-party-resources/tools/osv-scanner
+	url = https://github.com/google/osv-scanner.git
+	shallow = true
+[submodule "third-party-resources/tools/reconmap"]
+	path = third-party-resources/tools/reconmap
+	url = https://github.com/reconmap/reconmap.git
+	shallow = true
+[submodule "third-party-resources/tools/sqlmap"]
+	path = third-party-resources/tools/sqlmap
+	url = https://github.com/sqlmapproject/sqlmap
+	shallow = true
+[submodule "third-party-resources/tools/subfinder"]
+	path = third-party-resources/tools/subfinder
+	url = https://github.com/projectdiscovery/subfinder
+	shallow = true
+[submodule "third-party-resources/tools/trivy"]
+	path = third-party-resources/tools/trivy
+	url = https://github.com/aquasecurity/trivy.git
+	shallow = true
+[submodule "third-party-resources/tools/trufflehog"]
+	path = third-party-resources/tools/trufflehog
+	url = https://github.com/trufflesecurity/trufflehog.git
+	shallow = true
+[submodule "third-party-resources/tools/vajra"]
+	path = third-party-resources/tools/vajra
+	url = https://github.com/r3curs1v3-pr0xy/vajra
+	shallow = true
+[submodule "third-party-resources/tools/w3af"]
+	path = third-party-resources/tools/w3af
+	url = https://github.com/andresriancho/w3af
+	shallow = true
+[submodule "third-party-resources/tools/wireshark"]
+	path = third-party-resources/tools/wireshark
+	url = https://github.com/wireshark/wireshark.git
+	shallow = true
+[submodule "third-party-resources/tools/wpscan"]
+	path = third-party-resources/tools/wpscan
+	url = https://github.com/wpscanteam/wpscan
+	shallow = true
+[submodule "third-party-resources/tools/www-project-zap"]
+	path = third-party-resources/tools/www-project-zap
+	url = https://github.com/OWASP/www-project-zap
+	shallow = true
+[submodule "third-party-resources/tools/zaproxy"]
+	path = third-party-resources/tools/zaproxy
+	url = https://github.com/zaproxy/zaproxy.git
+	shallow = true

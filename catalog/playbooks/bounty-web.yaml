@@ -1,0 +1,34 @@
+id: bounty-web
+title: In-scope web bug bounty
+match:
+  - bounty
+  - hackerone
+  - bugcrowd
+  - intigriti
+  - web
+  - subdomain
+steps:
+  - id: scope
+    title: Read the program policy
+    purpose: Stay in scope. Note wildcards, rate limits, and excluded assets.
+    tool_ids: []
+  - id: recon
+    title: Enumerate and probe live hosts
+    purpose: Passive subs, then live HTTP fingerprinting.
+    tool_ids: [subfinder, amass, httpx]
+  - id: crawl
+    title: Discover routes and parameters
+    purpose: JS-aware crawl plus parameter guessing on in-scope hosts.
+    tool_ids: [katana, arjun, ffuf]
+  - id: known
+    title: Template checks for exposures
+    purpose: Known panels, leaked files, misconfig — not a substitute for manual work.
+    tool_ids: [nuclei]
+  - id: browser
+    title: Authenticated browse with a proxy
+    purpose: Real session, cookies, client-side secrets.
+    tool_ids: [foxyproxy, pwnfox, zaproxy, caido]
+  - id: report
+    title: Write the report to the program’s template
+    purpose: Clear repro without extra weaponization.
+    tool_ids: []

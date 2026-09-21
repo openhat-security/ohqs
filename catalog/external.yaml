@@ -1,0 +1,1465 @@
+items:
+  - id: owasp-org-www-community
+    name: "Vulnerability Scanning Tools"
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca, owasp]
+    homepage: https://owasp.org/www-community/Vulnerability_Scanning_Tools
+  - id: owasp-org-www-community-2
+    name: "Free for Open Source Application Security Tools"
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, owasp, scanner]
+    homepage: https://owasp.org/www-community/Free_for_Open_Source_Application_Security_Tools
+  - id: docs-github-com-code-security
+    name: docs.github.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, sca]
+    homepage: https://docs.github.com/en/code-security/concepts/code-scanning/code-scanning
+  - id: owasp-org-www-community-3
+    name: "Source Code Analysis Tools"
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, owasp, scanner]
+    homepage: https://owasp.org/www-community/Source_Code_Analysis_Tools
+  - id: learn-microsoft-com-visualstudio
+    name: learn.microsoft.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://learn.microsoft.com/en-us/visualstudio/code-quality/roslyn-analyzers-overview?view=visualstudio
+  - id: ext-42crunch-com
+    name: 42crunch.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://42crunch.com/
+  - id: vulert-com-abom
+    name: vulert.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://vulert.com/abom
+  - id: github-com-splx-ai
+    name: agentic-radar
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/splx-ai/agentic-radar
+  - id: aikido-dev
+    name: aikido.dev
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.aikido.dev/
+  - id: almanax-ai
+    name: almanax.ai
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.almanax.ai/
+  - id: anchore-com-platform
+    name: anchore.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://anchore.com/platform/
+  - id: github-com-cpeoples
+    name: ansible-security-scanner
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/cpeoples/ansible-security-scanner
+  - id: apisecurity-io-tools
+    name: apisecurity.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://apisecurity.io/tools/audit/
+  - id: guardsquare-com-appsweep-mobile-application-secu
+    name: guardsquare.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, mobile, scanner]
+    homepage: https://www.guardsquare.com/appsweep-mobile-application-security-testing
+  - id: arnica-io
+    name: arnica.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.arnica.io/
+  - id: absint-com-astree
+    name: absint.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.absint.com/astree/index.htm
+  - id: github-com-awslabs
+    name: automated-security-helper
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/awslabs/automated-security-helper
+  - id: github-com-pycqa
+    name: bandit
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://github.com/PyCQA/bandit
+  - id: github-com-bearer
+    name: bearer
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/bearer/bearer
+  - id: fortra-com-fortra-vulnerability-management
+    name: fortra.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.fortra.com/products/fortra-vulnerability-management
+  - id: github-com-microsoft
+    name: binskim
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/Microsoft/binskim
+  - id: brakemanscanner-org
+    name: brakemanscanner.org
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://brakemanscanner.org/
+  - id: bugscout-io
+    name: bugscout.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://bugscout.io/en/
+  - id: castsoftware-com-imaging
+    name: castsoftware.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.castsoftware.com/imaging
+  - id: github-com-clj-holmes
+    name: clj-holmes
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/clj-holmes/clj-holmes
+  - id: codacy-com
+    name: codacy.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.codacy.com/
+  - id: codecordon-up-railway-app
+    name: codecordon.up.railway.app
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://codecordon.up.railway.app/
+  - id: autorabit-com-codescan-static-code-analysis
+    name: autorabit.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, sca]
+    homepage: https://www.autorabit.com/products/codescan-static-code-analysis/
+  - id: adacore-com-codesecure
+    name: adacore.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.adacore.com/codesecure
+  - id: codethreat-com
+    name: codethreat.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.codethreat.com/
+  - id: codiga-io
+    name: codiga.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://codiga.io/
+  - id: coguard-io
+    name: coguard.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.coguard.io/
+  - id: contrastsecurity-com-contrast-assess
+    name: contrastsecurity.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.contrastsecurity.com/contrast-assess
+  - id: corgea-com
+    name: corgea.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://corgea.com/
+  - id: synopsys-com-software-integrity
+    name: synopsys.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.synopsys.com/software-integrity/security-testing/static-analysis-sast.html
+  - id: checkmarx-com-cxsast-source-code-scanning
+    name: checkmarx.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, sca]
+    homepage: https://checkmarx.com/cxsast-source-code-scanning/
+  - id: cycode-com
+    name: cycode.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://cycode.com/
+  - id: rubygems-org
+    name: rubygems.org
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://rubygems.org/gems/dawnscanner
+  - id: zeropath-com
+    name: zeropath.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://zeropath.com/
+  - id: zennoxa-com
+    name: zennoxa.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://zennoxa.com/
+  - id: xygeni-io-xygeni-code-security
+    name: xygeni.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://xygeni.io/xygeni-code-security/
+  - id: vulert-com
+    name: vulert.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://vulert.com/
+  - id: marketplace-visualstudio-com-items
+    name: marketplace.visualstudio.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://marketplace.visualstudio.com/items?itemName=42Crunch.vscode-openapi
+  - id: sourceforge-net-projects
+    name: sourceforge.net
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://sourceforge.net/projects/visualcodegrepp/
+  - id: veracode-com-binary-static-analysis-sast
+    name: veracode.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.veracode.com/products/binary-static-analysis-sast
+  - id: veracode-com
+    name: veracode.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.veracode.com/
+  - id: scitools-com
+    name: scitools.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://scitools.com/
+  - id: thoughtworks-github-io-talisman
+    name: thoughtworks.github.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://thoughtworks.github.io/talisman/
+  - id: github-com-anchore
+    name: syft
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/anchore/syft
+  - id: securityreviewer-net
+    name: securityreviewer.net
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.securityreviewer.net/
+  - id: sast-online
+    name: sast.online
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://sast.online/
+  - id: spotbugs-github-io
+    name: spotbugs.github.io
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://spotbugs.github.io/
+  - id: splint-org
+    name: splint.org
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://splint.org/
+  - id: spectralops-io
+    name: spectralops.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://spectralops.io/
+  - id: sonarsource-com-sonarqube
+    name: sonarsource.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.sonarsource.com/products/sonarqube/downloads/
+  - id: sonarsource-com-sonarqube-2
+    name: sonarsource.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.sonarsource.com/products/sonarqube/cloud/
+  - id: github-com-nccgroup
+    name: sobelow
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/nccgroup/sobelow
+  - id: snyk-io-open-source-security-management
+    name: snyk.io
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://snyk.io/product/open-source-security-management/
+  - id: snyk-io-infrastructure-as-code-security
+    name: snyk.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://snyk.io/product/infrastructure-as-code-security/
+  - id: snyk-io-container-vulnerability-manageme
+    name: snyk.io
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://snyk.io/product/container-vulnerability-management/
+  - id: snyk-io-snyk-code
+    name: snyk.io
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://snyk.io/product/snyk-code/
+  - id: snyk-io
+    name: snyk.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://snyk.io/
+  - id: github-com-shiftleftsecurity
+    name: sast-scan
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, sca]
+    homepage: https://github.com/ShiftLeftSecurity/sast-scan
+  - id: blackduck-com-static-analysis-tools-sast-html
+    name: blackduck.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.blackduck.com/static-analysis-tools-sast.html
+  - id: semgrep-dev-semgrep-supply-chain
+    name: semgrep.dev
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, sca]
+    homepage: https://semgrep.dev/products/semgrep-supply-chain/
+  - id: github-com-semgrep
+    name: semgrep
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://github.com/semgrep/semgrep
+  - id: synopsys-com-software-integrity-2
+    name: synopsys.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, iast]
+    homepage: https://www.synopsys.com/software-integrity/security-testing/interactive-application-security-testing.html
+  - id: community-synopsys-com
+    name: community.synopsys.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://community.synopsys.com/s/article/SecureAssist-Overview
+  - id: github-com-quantakrypto
+    name: pqc-tools
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/quantakrypto/pqc-tools
+  - id: pyre-check-org
+    name: pyre-check.org
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://pyre-check.org/
+  - id: viva64-com-pvs-studio
+    name: viva64.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.viva64.com/en/pvs-studio/
+  - id: pumasecurity-io-pricing
+    name: pumasecurity.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://pumasecurity.io/pricing/
+  - id: pumasecurity-io
+    name: pumasecurity.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://pumasecurity.io/
+  - id: ptsecurity-com-ww-en
+    name: ptsecurity.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.ptsecurity.com/ww-en/products/ai/
+  - id: psalm-dev-docs
+    name: psalm.dev
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://psalm.dev/docs/security_analysis/
+  - id: github-com-designsecurity
+    name: progpilot
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/designsecurity/progpilot
+  - id: learn-microsoft-com-previous-versions
+    name: learn.microsoft.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://learn.microsoft.com/en-us/previous-versions/windows/embedded/ms933794(v=msdn.10)?redirectedfrom=MSDN
+  - id: mathworks-com-polyspace-html
+    name: mathworks.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.mathworks.com/products/polyspace.html
+  - id: pmd-github-io
+    name: pmd.github.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://pmd.github.io/
+  - id: plexicus-ai-aspm-application-security-postur
+    name: plexicus.ai
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.plexicus.ai/aspm-application-security-posture-management/
+  - id: pixee-ai
+    name: pixee.ai
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.pixee.ai/
+  - id: pitss-com-products-3
+    name: pitss.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://pitss.com/products-3/
+  - id: phpstan-org
+    name: phpstan.org
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://phpstan.org/
+  - id: github-com-floedesigntechnologies
+    name: phpcs-security-audit
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/FloeDesignTechnologies/phpcs-security-audit
+  - id: github-com-psecio
+    name: parse
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/psecio/parse
+  - id: parasoft-com
+    name: parasoft.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.parasoft.com/products/
+  - id: parasoft-com-2
+    name: parasoft.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.parasoft.com/
+  - id: github-com-owasp-noir
+    name: noir
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, owasp, scanner]
+    homepage: https://github.com/owasp-noir/noir
+  - id: owasp-org-www-project-ide-vulscanner
+    name: "www project ide vulscanner"
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca, owasp]
+    homepage: https://owasp.org/www-project-ide-vulscanner/
+  - id: github-com-owasp
+    name: ASST
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, owasp, scanner]
+    homepage: https://github.com/OWASP/ASST
+  - id: oversecured-com
+    name: oversecured.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://oversecured.com/
+  - id: github-com-seqra
+    name: opentaint
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/seqra/opentaint
+  - id: offensive360-com
+    name: offensive360.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://offensive360.com/
+  - id: nucleaus-com
+    name: nucleaus.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://nucleaus.com/products/
+  - id: github-com-ajinabraham
+    name: nodejsscan
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/ajinabraham/nodejsscan
+  - id: qwiet-ai-sast
+    name: qwiet.ai
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://qwiet.ai/sast
+  - id: github-com-sonatype-nexus-community
+    name: nancy
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/sonatype-nexus-community/nancy
+  - id: github-com-naivesystems
+    name: analyze
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/naivesystems/analyze
+  - id: github-com-mobsf
+    name: mobsfscan
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca, mobile]
+    homepage: https://github.com/MobSF/mobsfscan
+  - id: mobsf-github-io-mobile-security-framework-mobsf
+    name: mobsf.github.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, mobile, scanner]
+    homepage: https://mobsf.github.io/Mobile-Security-Framework-MobSF/
+  - id: learn-microsoft-com-previous-versions-2
+    name: learn.microsoft.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://learn.microsoft.com/en-us/previous-versions/windows/embedded/ms933794%28v=msdn.10%29
+  - id: mend-io-sast
+    name: mend.io
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://www.mend.io/sast/
+  - id: lunasec-io
+    name: lunasec.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.lunasec.io/
+  - id: lucentsky-com-avm
+    name: lucentsky.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.lucentsky.com/en/avm
+  - id: marketplace-visualstudio-com-items-2
+    name: marketplace.visualstudio.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, sca]
+    homepage: https://marketplace.visualstudio.com/items?itemName=FernandoMengali.leapfix-sast-scan&ssr=false#review-details
+  - id: github-com-vulnplanet
+    name: l3x
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/VulnPlanet/l3x
+  - id: kusari-dev
+    name: kusari.dev
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.kusari.dev/
+  - id: perforce-com-klocwork
+    name: perforce.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.perforce.com/products/klocwork
+  - id: kiuwan-com
+    name: kiuwan.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.kiuwan.com/
+  - id: joern-io
+    name: joern.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://joern.io/
+  - id: github-com-globocom
+    name: huskyCI
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/globocom/huskyCI
+  - id: github-com-artvepa80
+    name: Agents-Hefesto
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/artvepa80/Agents-Hefesto
+  - id: hdivsecurity-com-interactive-application-security
+    name: hdivsecurity.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, iast]
+    homepage: https://hdivsecurity.com/interactive-application-security-testing-iast
+  - id: hcl-software-com-appscan
+    name: hcl-software.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.hcl-software.com/appscan/products/appscan-source
+  - id: cloud-appscan-com
+    name: cloud.appscan.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://cloud.appscan.com/
+  - id: marketplace-visualstudio-com-items-3
+    name: marketplace.visualstudio.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://marketplace.visualstudio.com/items?itemName=HCLTechnologies.hclappscancodesweep
+  - id: github-com-marketplace
+    name: actions
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/marketplace/actions/hcl-appscan-codesweep
+  - id: github-com-anchore-2
+    name: grype
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/anchore/grype
+  - id: github-com-wireghoul
+    name: graudit
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/wireghoul/graudit/
+  - id: bishopfox-com-tools
+    name: bishopfox.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://bishopfox.com/tools/google-hacking-diggity-project
+  - id: golangci-lint-run
+    name: golangci-lint.run
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://golangci-lint.run/
+  - id: docs-gitlab-com-user
+    name: docs.gitlab.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast]
+    homepage: https://docs.gitlab.com/user/application_security/sast/
+  - id: github-com-security
+    name: advanced-security
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/security/advanced-security
+  - id: gitguardian-com
+    name: gitguardian.com
+    kind: external
+    summary: External secret-scanning product (link only; not vendored).
+    tags: [external, secrets]
+    homepage: https://www.gitguardian.com/
+  - id: opentext-com-static-application-security-test
+    name: opentext.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.opentext.com/products/static-application-security-testing
+  - id: docs-fluidattacks-com-machine
+    name: docs.fluidattacks.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://docs.fluidattacks.com/machine/scanner
+  - id: dwheeler-com-flawfinder
+    name: dwheeler.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://dwheeler.com/flawfinder/
+  - id: find-sec-bugs-github-io
+    name: find-sec-bugs.github.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://find-sec-bugs.github.io/
+  - id: github-com-findbugsproject
+    name: findbugs
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/findbugsproject/findbugs
+  - id: laravel-enlightn-com
+    name: laravel-enlightn.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.laravel-enlightn.com/
+  - id: enforster-ai
+    name: enforster.ai
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://enforster.ai/
+  - id: derscanner-com
+    name: derscanner.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://derscanner.com/
+  - id: deepsource-com
+    name: deepsource.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://deepsource.com/
+  - id: owasp-org-www-project-top-ten
+    name: "A9 2017 Using Components with Known Vulnerabilities.html"
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, owasp, scanner]
+    homepage: https://owasp.org/www-project-top-ten/2017/A9_2017-Using_Components_with_Known_Vulnerabilities.html
+  - id: zerothreat-ai
+    name: zerothreat.ai
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://zerothreat.ai/
+  - id: xygeni-io-dast
+    name: xygeni.io
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast]
+    homepage: https://xygeni.io/dast/
+  - id: github-com-tno-s3
+    name: WuppieFuzz
+    kind: external
+    summary: External fuzzing product or project (link only; not vendored).
+    tags: [external, fuzz]
+    homepage: https://github.com/TNO-S3/WuppieFuzz
+  - id: cyberant-com-website-security-check
+    name: cyberant.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://cyberant.com/en/website-security-check/
+  - id: suite-websecurify-com
+    name: suite.websecurify.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://suite.websecurify.com/
+  - id: opentext-com-listing
+    name: opentext.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.opentext.com/products/listing?o=mf
+  - id: webcookies-org
+    name: webcookies.org
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://webcookies.org/
+  - id: tripwire-com-industries
+    name: tripwire.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.tripwire.com/industries
+  - id: defensecode-com-webscanner-php
+    name: defensecode.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.defensecode.com/webscanner.php
+  - id: wapiti-scanner-github-io
+    name: wapiti-scanner.github.io
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://wapiti-scanner.github.io/
+  - id: vulnwatch-tech
+    name: vulnwatch.tech
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://vulnwatch.tech/
+  - id: vulnsign-com
+    name: vulnsign.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://vulnsign.com/
+  - id: vulners-com-plugins
+    name: vulners.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://vulners.com/plugins
+  - id: vullify-com
+    name: vullify.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://vullify.com/
+  - id: github-com-vigolium
+    name: vigolium
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/vigolium/vigolium
+  - id: ubsecure-jp
+    name: ubsecure.jp
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.ubsecure.jp/en/
+  - id: subgraph-com-vega
+    name: subgraph.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://subgraph.com/vega/
+  - id: levelblue-com-services
+    name: levelblue.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.levelblue.com/en-us/services/security-testing/security-testing-services/
+  - id: blackduck-com
+    name: blackduck.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.blackduck.com/
+  - id: secureblink-com-threatspy
+    name: secureblink.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.secureblink.com/threatspy
+  - id: stackhawk-com
+    name: stackhawk.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.stackhawk.com/
+  - id: github-com-smicallef
+    name: spiderfoot
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/smicallef/spiderfoot
+  - id: soos-io
+    name: soos.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://soos.io/
+  - id: thesmartscanner-com
+    name: thesmartscanner.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.thesmartscanner.com/
+  - id: secyour-pro
+    name: secyour.pro
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://secyour.pro/
+  - id: orvant-com-lander
+    name: orvant.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.orvant.com/lander
+  - id: s4e-io
+    name: s4e.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://s4e.io/
+  - id: github-com-deepfence
+    name: SecretScanner
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca, secrets]
+    homepage: https://github.com/deepfence/SecretScanner
+  - id: secpoint-com
+    name: secpoint.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.secpoint.com/
+  - id: secopsolution-com
+    name: secopsolution.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.secopsolution.com/
+  - id: pypi-org-project
+    name: pypi.org
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://pypi.org/project/sec-helpers/
+  - id: scantitan-com-website-vulnerability-scanner
+    name: scantitan.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://scantitan.com/website-vulnerability-scanner/
+  - id: scanrepeat-com
+    name: scanrepeat.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://scanrepeat.com/
+  - id: roguesight-com
+    name: roguesight.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.roguesight.com/
+  - id: github-com-adobe
+    name: ride
+    kind: external
+    summary: External fuzzing product or project (link only; not vendored).
+    tags: [external, fuzz]
+    homepage: https://github.com/adobe/ride/blob/develop/Usage.md#the-fuzz
+  - id: beyondtrust-com-solutions
+    name: beyondtrust.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.beyondtrust.com/solutions
+  - id: resilientx-com
+    name: resilientx.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.resilientx.com/
+  - id: reconwithme-com
+    name: reconwithme.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://reconwithme.com/
+  - id: qualys-com-apps
+    name: qualys.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast, sca]
+    homepage: https://www.qualys.com/apps/web-app-scanning
+  - id: github-com-linkedin
+    name: qark
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/linkedin/qark
+  - id: owasp-org-www-project-purpleteam
+    name: "www project purpleteam"
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, owasp, scanner]
+    homepage: https://owasp.org/www-project-purpleteam/
+  - id: prowler-com
+    name: prowler.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://prowler.com/
+  - id: probely-com
+    name: probely.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://probely.com/
+  - id: pentest-tools-com-website-vulnerability-scanning
+    name: pentest-tools.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://pentest-tools.com/website-vulnerability-scanning/website-scanner
+  - id: penetrify-cloud
+    name: penetrify.cloud
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.penetrify.cloud/en/
+  - id: panopticscans-com
+    name: panopticscans.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://panopticscans.com/
+  - id: github-com-ostesayed
+    name: OSTE-Meta-Scan
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/OSTEsayed/OSTE-Meta-Scan
+  - id: github-com-greenbone
+    name: openvas-scanner
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://github.com/greenbone/openvas-scanner
+  - id: openapi-security
+    name: openapi.security
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://openapi.security/
+  - id: github-com-maverickaayush
+    name: ONUS
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/maverickaayush/ONUS
+  - id: onsecurity-io
+    name: onsecurity.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://onsecurity.io/
+  - id: wpscan-online
+    name: wpscan.online
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://wpscan.online/
+  - id: nmmapper-com-tool
+    name: nmmapper.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.nmmapper.com/tool/subdomainfinder/
+  - id: nikto-online
+    name: nikto.online
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://nikto.online/
+  - id: rapid7-com-nexpose
+    name: rapid7.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.rapid7.com/products/nexpose/
+  - id: neuralegion-com
+    name: neuralegion.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.neuralegion.com/
+  - id: tenable-com-web-app-scanning
+    name: tenable.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast, sca]
+    homepage: https://www.tenable.com/products/web-app-scanning
+  - id: nstalker-com
+    name: nstalker.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: http://www.nstalker.com/
+  - id: mayhem4api-forallsecure-com-signup
+    name: mayhem4api.forallsecure.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://mayhem4api.forallsecure.com/signup
+  - id: lunatech-xyz
+    name: lunatech.xyz
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.lunatech.xyz/
+  - id: newrelic-com
+    name: newrelic.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://newrelic.com/
+  - id: iothreat-com
+    name: iothreat.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://iothreat.com/
+  - id: invicti-com
+    name: invicti.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast]
+    homepage: https://www.invicti.com/
+  - id: intruder-io
+    name: intruder.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.intruder.io/
+  - id: rapid7-com-insightvm
+    name: rapid7.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.rapid7.com/products/insightvm/
+  - id: immuniweb-com
+    name: immuniweb.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.immuniweb.com/
+  - id: itrust-fr-scanner-de-vulnerabilites-ikare
+    name: itrust.fr
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.itrust.fr/scanner-de-vulnerabilites-ikare
+  - id: github-com-soulghost
+    name: iblessing
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/Soulghost/iblessing
+  - id: github-com-nullc0d30
+    name: HunterX
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/nullc0d30/HunterX
+  - id: hostedscan-com
+    name: hostedscan.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://hostedscan.com/
+  - id: holmsecurity-com-web-application-security
+    name: holmsecurity.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast]
+    homepage: https://www.holmsecurity.com/products/web-application-security
+  - id: haxore-com
+    name: haxore.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://haxore.com/
+  - id: graphql-security
+    name: graphql.security
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://graphql.security/
+  - id: rgaucher-info-beta
+    name: rgaucher.info
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://rgaucher.info/beta/grabber/
+  - id: siemba-io-genpt
+    name: siemba.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.siemba.io/genpt
+  - id: fitoxs-com
+    name: fitoxs.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://fitoxs.com/
+  - id: escape-tech
+    name: escape.tech
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://escape.tech/
+  - id: edgescan-com
+    name: edgescan.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.edgescan.com/
+  - id: detectify-com
+    name: detectify.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast]
+    homepage: https://detectify.com/
+  - id: deepfence-io
+    name: deepfence.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://deepfence.io/
+  - id: github-com-deepfence-2
+    name: ThreatMapper
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://github.com/deepfence/ThreatMapper
+  - id: cytrix-io
+    name: cytrix.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://cytrix.io/
+  - id: cylock-tech-home-en
+    name: cylock.tech
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.cylock.tech/en/home-en/
+  - id: cyberchief-ai
+    name: cyberchief.ai
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.cyberchief.ai/
+  - id: cvescanner-co-uk
+    name: cvescanner.co.uk
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.cvescanner.co.uk/
+  - id: veracode-com-dynamic-analysis-dast
+    name: veracode.com
+    kind: external
+    summary: External SAST / code-analysis tool or index (link only; not vendored).
+    tags: [external, sast, dast]
+    homepage: https://www.veracode.com/products/dynamic-analysis-dast
+  - id: contrastsecurity-com
+    name: contrastsecurity.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.contrastsecurity.com/
+  - id: ecsypno-com-spectre
+    name: ecsypno.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://ecsypno.com/pages/spectre
+  - id: code-intelligence-com-book-a-demo
+    name: code-intelligence.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.code-intelligence.com/book-a-demo
+  - id: accuknox-com
+    name: accuknox.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://accuknox.com/
+  - id: code-intelligence-com-product-ci-fuzz
+    name: code-intelligence.com
+    kind: external
+    summary: External fuzzing product or project (link only; not vendored).
+    tags: [external, fuzz]
+    homepage: https://www.code-intelligence.com/product-ci-fuzz
+  - id: breachlock-com-continuous-penetration-testing
+    name: breachlock.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.breachlock.com/products/continuous-penetration-testing/
+  - id: blueclosure-net
+    name: blueclosure.net
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.blueclosure.net/
+  - id: blacklock-io
+    name: blacklock.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.blacklock.io/
+  - id: fortra-com-beyond-security
+    name: fortra.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.fortra.com/beyond-security
+  - id: beaglesecurity-com
+    name: beaglesecurity.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://beaglesecurity.com/
+  - id: barrion-io
+    name: barrion.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://barrion.io/
+  - id: kratikal-com-autosect
+    name: kratikal.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.kratikal.com/autosect
+  - id: getastra-com
+    name: getastra.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.getastra.com/
+  - id: ecsypno-com-arachni-web-application-security
+    name: ecsypno.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast, sca]
+    homepage: https://ecsypno.com/pages/arachni-web-application-security-scanner-framework
+  - id: aptori-com
+    name: aptori.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.aptori.com/
+  - id: rapid7-com-insightappsec
+    name: rapid7.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.rapid7.com/products/insightappsec/
+  - id: hcl-software-com-appscan-2
+    name: hcl-software.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.hcl-software.com/appscan
+  - id: indusface-com-was-platform-listing
+    name: indusface.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.indusface.com/products/was-platform-listing/
+  - id: appcheck-ng-com
+    name: appcheck-ng.com
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://appcheck-ng.com/
+  - id: ethicalcheck-dev
+    name: ethicalcheck.dev
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://ethicalcheck.dev/
+  - id: indusface-com-api-scanning-listing
+    name: indusface.com
+    kind: external
+    summary: External SCA / supply-chain scanner (link only; not vendored).
+    tags: [external, sca]
+    homepage: https://www.indusface.com/api-scanning-listing/
+  - id: akto-io
+    name: akto.io
+    kind: external
+    summary: External scanner, SAST/DAST/SCA, or security-testing product (link only; not vendored).
+    tags: [external, scanner]
+    homepage: https://www.akto.io/
+  - id: aikido-dev-attack
+    name: aikido.dev
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast]
+    homepage: https://www.aikido.dev/attack/surface-monitoring-dast
+  - id: acunetix-com
+    name: acunetix.com
+    kind: external
+    summary: External DAST / web-app scanner (link only; not vendored).
+    tags: [external, dast]
+    homepage: https://www.acunetix.com/
