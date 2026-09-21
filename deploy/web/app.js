@@ -123,17 +123,30 @@ function setBountyClass(cls) {
 window.runBountySearch = async function () {
   const box = document.getElementById("bounty-results");
   const src = document.getElementById("bounty-source");
+  const nota = document.getElementById("bounty-note");
   const q = (document.getElementById("bounty-q").value || "").trim();
   box.innerHTML = "";
+  nota.hidden = true;
+  nota.innerHTML = "";
   src.textContent = "searching…";
   try {
     const r = await fetchJSON(
       "/v1/bounties?class=" + encodeURIComponent(bountyClass) +
       "&q=" + encodeURIComponent(q)
     );
-    const label = bountyClass === "program" ? "programs" : "marketplaces";
-    src.textContent = (r.records || []).length + " " + label +
-      (r.source ? " · ranked by " + r.source : "");
+    if (r.note) {
+      nota.hidden = false;
+      nota.appendChild(document.createTextNode(r.note));
+      const a = document.createElement("a");
+      a.href = "https://github.com/adamsiwiec1/runhug";
+      a.target = "_blank";
+      a.rel = "noopener";
+      a.textContent = " runhug script for contributors";
+      nota.appendChild(a);
+    }
+    const label = bountyClass === "program" ? "programs" : (bountyClass === "contract" ? "contracts" : "marketplaces");
+    src.textContent = r.note ? "" : ((r.records || []).length + " " + label +
+      (r.source ? " · ranked by " + r.source : ""));
     (r.records || []).forEach(function (rec) {
       const li = document.createElement("li");
       li.innerHTML =
@@ -149,7 +162,7 @@ window.runBountySearch = async function () {
       }
       box.appendChild(li);
     });
-    if (!r.records || !r.records.length) {
+    if (!r.note && (!r.records || !r.records.length)) {
       const li = document.createElement("li");
       li.textContent = q
         ? "no " + label + " match “" + q + "”"

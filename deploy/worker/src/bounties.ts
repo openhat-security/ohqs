@@ -4,12 +4,25 @@
 //     Bugcrowd, Intigriti, Synack, Immunefi, Code4rena, …)
 //   - program: a single organization's own bounty/VDP (Microsoft MSRC, Apple,
 //     Google Bug Hunters, Ethereum, national CERTs/NCSCs, …)
+//   - contract: the individual program listings hosted inside marketplaces
+//     (e.g. "Stripe" on HackerOne). We do NOT have these yet — scraping is a
+//     contributor task (see scripts/bounty-ingest) — so /v1/bounties returns
+//     an empty list plus this note until they land.
 //
 // Mirror of the bounty-marketplace / bounty-program tags in
 // catalog/platforms.yaml. Keep the set below in sync when editing that file.
 // (An id NOT listed here is treated as a marketplace.)
 
-export type BountyClass = "marketplace" | "program";
+export type BountyClass = "marketplace" | "program" | "contract";
+
+export const CONTRACT_NOTE =
+  "Contracts (individual programs inside marketplaces) aren't scraped yet — " +
+  "we're out of compute budget and burned through the AI credits. We're " +
+  "recruiting a contributor with a proper GPU (e.g. @chaseleto) to scrape and " +
+  "ingest these on a schedule using the reusable Playwright scripts in " +
+  "scripts/bounty-ingest, powered by runhug (github.com/adamsiwiec1/runhug) " +
+  "to deploy the model. If you need proxies or dummy credentials per platform, " +
+  "reach out to @adamsiwiec1.";
 
 // Single-org / government-run programs. Everything else with kind "platform"
 // is a marketplace.
@@ -50,5 +63,6 @@ export function matchesClass(
   r: { id: string; kind?: unknown; [k: string]: unknown },
   cls: BountyClass,
 ): boolean {
+  if (cls === "contract") return false;
   return isPlatform(r) && bountyClassOf(r.id) === cls;
 }

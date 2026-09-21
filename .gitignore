@@ -8,6 +8,7 @@ data/snapshots/
 ohqs-out/
 dist/
 evidence/
+scripts/bounty-ingest/data/
 live.txt
 subs.txt
 endpoints.txt

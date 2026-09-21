@@ -116,7 +116,7 @@ export default {
     if (path === "/v1/bounties" && method === "GET") {
       const q = url.searchParams.get("q") ?? "";
       const clsParam = (url.searchParams.get("class") ?? "marketplace").toLowerCase();
-      const cls: BountyClass = clsParam === "program" ? "program" : "marketplace";
+      const cls: BountyClass = clsParam === "program" ? "program" : clsParam === "contract" ? "contract" : "marketplace";
       const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "200", 10) || 200, 200);
       const result = await searchBounties(env.D1, env.AI ?? null, q, limit, cls);
       return json(result);

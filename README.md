@@ -74,6 +74,24 @@ If you provide an OpenAI-compatible model, `ohqs` can use it to draft the plan. 
 - Open an isolated test browser
 - Use local or hosted OpenAI-compatible models
 - Browse the catalog through the web UI
+- Browse bounty **marketplaces** and **programs** (Bounties tab)
+
+## Bounty contracts — get involved
+
+The Bounties tab splits bounty/VDP listings into **marketplaces** (HackerOne,
+Bugcrowd, Immunefi, …), **programs** (single-org: MSRC, Apple, CERTs, …), and
+**contracts** (the individual programs inside marketplaces).
+
+Contracts aren't scraped yet. We don't have the compute and we're out of AI
+credits, so we're recruiting a contributor **with a proper GPU** to scrape and
+ingest them on a schedule and keep the script reusable.
+
+- Cadence: **daily, or at least weekly**.
+- Powered by [`runhug`](https://github.com/adamsiwiec1/runhug) — deploy a good
+  HF model on RunPod in minutes, run it for pennies, or run it locally.
+- Scraped with **Playwright**. See `scripts/bounty-ingest/` for the repeatable
+  `runhug` script, scraper, and ingest pipeline.
+- Need proxies or dummy credentials per platform? Reach out to **@adamsiwiec1**.
 
 ## CLI
 

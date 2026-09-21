@@ -14,8 +14,8 @@
   </div>
   <nav>
     <a class="tab active" data-tab="catalog" href="#catalog">Catalog</a>
-    <a class="tab" data-tab="bounties" href="#bounties">Bounties</a>
     <a class="tab" data-tab="playbook" href="#playbook">Playbook</a>
+    <a class="tab" data-tab="bounties" href="#bounties">Bounties</a>
   </nav>
 </header>
 <main>
@@ -37,10 +37,11 @@
 
   <section class="card page" data-page="bounties" hidden>
     <p class="label">Bug bounties &amp; VDPs</p>
-    <p class="meta">Kept separate from the catalog. A <strong>marketplace</strong> is an aggregator you join to pick programs; a <strong>program</strong> is a single organization's own bounty or disclosure channel.</p>
+    <p class="meta"><strong>Marketplaces</strong> are aggregators you join to pick programs (HackerOne, Bugcrowd, Immunefi…). <strong>Programs</strong> are a single organization's own bounty or disclosure channel (MSRC, Apple, CERTs/NCSCs…). <strong>Contracts</strong> are the individual program listings hosted inside marketplaces — not scraped yet, see below.</p>
     <div class="seg" id="bounty-class">
       <button type="button" class="btn ghost active" data-class="marketplace">Marketplaces</button>
       <button type="button" class="btn ghost" data-class="program">Programs</button>
+      <button type="button" class="btn ghost" data-class="contract">Contracts</button>
     </div>
     <div class="row search">
       <div class="grow">
@@ -49,6 +50,7 @@
       <button type="button" onclick="runBountySearch()">Search</button>
     </div>
     <p id="bounty-source" class="meta"></p>
+    <div id="bounty-note" class="callout" hidden></div>
     <ul class="links" id="bounty-results"></ul>
   </section>
 

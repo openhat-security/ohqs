@@ -5,7 +5,7 @@
 // rather than keyword-matched. Lexical FTS is the fallback when vectors are
 // missing or the embedder fails.
 
-import { matchesClass, isPlatform, BountyClass } from "./bounties";
+import { matchesClass, isPlatform, BountyClass, CONTRACT_NOTE } from "./bounties";
 
 export interface SearchRecord {
   id: string;
@@ -197,11 +197,13 @@ export interface BountiesResult {
   class: BountyClass;
   source: string;
   records: SearchRecord[];
+  note?: string;
 }
 
 // searchBounties is the Bounties tab query: only kind "platform" rows, split
 // into marketplaces vs single-org programs. An empty query lists the whole
-// class alphabetically so the tab is browsable without typing.
+// class alphabetically so the tab is browsable without typing. Contracts
+// aren't ingested yet — the endpoint reports that honestly.
 export async function searchBounties(
   db: D1Database,
   ai: Ai | null,
@@ -210,8 +212,12 @@ export async function searchBounties(
   cls: BountyClass,
 ): Promise<BountiesResult> {
   const q = (query || "").trim();
-  const effLimit = limit > 0 ? limit : 100;
+  const effLimit = limit > 0 ? limit : 200;
   const match: Predicate = (r) => matchesClass(r, cls);
+
+  if (cls === "contract") {
+    return { q, class: cls, source: "none", records: [], note: CONTRACT_NOTE };
+  }
 
   if (!q) {
     const { results } = await db
