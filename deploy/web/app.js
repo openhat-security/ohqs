@@ -112,6 +112,7 @@ window.runSearch = async function () {
 // ---- bounties tab: marketplace | program, separate from the catalog ----
 
 let bountyClass = "marketplace";
+let bountySearchSeq = 0;
 
 function setBountyClass(cls) {
   bountyClass = cls === "contract" ? "contract" : cls === "program" ? "program" : "marketplace";
@@ -126,10 +127,12 @@ function setBountyClass(cls) {
 }
 
 window.runBountySearch = async function () {
+  const seq = ++bountySearchSeq;
   const box = document.getElementById("bounty-results");
   const src = document.getElementById("bounty-source");
   const nota = document.getElementById("bounty-note");
   const q = (document.getElementById("bounty-q").value || "").trim();
+  const fresh = () => seq === bountySearchSeq;
   box.innerHTML = "";
   nota.hidden = true;
   nota.innerHTML = "";
@@ -164,6 +167,7 @@ window.runBountySearch = async function () {
       "/v1/bounties?class=" + encodeURIComponent(bountyClass) +
       "&q=" + encodeURIComponent(q)
     );
+    if (!fresh()) return;
     if (r.note && bountyClass !== "contract") {
       nota.hidden = false;
       nota.appendChild(document.createTextNode(r.note));
@@ -200,6 +204,7 @@ window.runBountySearch = async function () {
       box.appendChild(li);
     }
   } catch (e) {
+    if (!fresh()) return;
     src.textContent = "bounties failed: " + esc(e.message);
   }
 };
