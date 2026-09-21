@@ -114,10 +114,15 @@ window.runSearch = async function () {
 let bountyClass = "marketplace";
 
 function setBountyClass(cls) {
-  bountyClass = cls === "program" ? "program" : "marketplace";
+  bountyClass = cls === "contract" ? "contract" : cls === "program" ? "program" : "marketplace";
   document.querySelectorAll("#bounty-class button").forEach(function (b) {
     b.classList.toggle("active", b.getAttribute("data-class") === bountyClass);
   });
+  document.getElementById("bounty-search-row").hidden = bountyClass === "contract";
+  document.getElementById("bounty-note").hidden = true;
+  document.getElementById("bounty-note").innerHTML = "";
+  document.getElementById("bounty-results").innerHTML = "";
+  document.getElementById("bounty-source").textContent = "";
 }
 
 window.runBountySearch = async function () {
@@ -129,6 +134,53 @@ window.runBountySearch = async function () {
   nota.hidden = true;
   nota.innerHTML = "";
   src.textContent = "searching…";
+
+  if (bountyClass === "contract") {
+    // Contracts aren't ingested yet — this is the contributor call-to-action.
+    src.textContent = "";
+    nota.hidden = false;
+    const h = document.createElement("p");
+    h.className = "label";
+    h.textContent = "Help wanted · a contributor with a GPU";
+    nota.appendChild(h);
+    const p1 = document.createElement("p");
+    p1.textContent = "Contracts (the individual programs inside marketplaces) aren't scraped yet. We're out of compute budget and burned through the AI credits.";
+    nota.appendChild(p1);
+    const p2 = document.createElement("p");
+    p2.innerHTML =
+      "Looking for someone with a proper GPU — shoutout to " +
+      "<a href='https://github.com/chaseleto' target='_blank' rel='noopener'>@chaseleto</a> " +
+      "and any willing contributor — to scrape and ingest these bounties on a schedule.";
+    nota.appendChild(p2);
+    const ul = document.createElement("ul");
+    ul.className = "links";
+    const row = (label, href, extra) => {
+      const li = document.createElement("li");
+      if (href) {
+        const a = document.createElement("a");
+        a.href = href;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.textContent = label;
+        li.appendChild(a);
+      } else {
+        li.textContent = label;
+      }
+      if (extra) li.appendChild(document.createTextNode(extra));
+      ul.appendChild(li);
+    };
+    row("runhug — the repeatable script that deploys a GPU model (RunPod, pennies / your own box) →", "https://github.com/adamsiwiec1/runhug");
+    row("reusable Playwright scrape + ingest pipeline (scripts/bounty-ingest) →", "https://github.com/openhat-security/ohqs/tree/main/scripts/bounty-ingest");
+    row("Run it daily, or at least weekly, to keep the bounty DB current.", null);
+    nota.appendChild(ul);
+    const p3 = document.createElement("p");
+    p3.innerHTML =
+      "Need proxies or dummy credentials per platform to scrape? Reach out to " +
+      "<a href='https://github.com/adamsiwiec1' target='_blank' rel='noopener'>@adamsiwiec1</a>.";
+    nota.appendChild(p3);
+    return;
+  }
+
   try {
     const r = await fetchJSON(
       "/v1/bounties?class=" + encodeURIComponent(bountyClass) +
