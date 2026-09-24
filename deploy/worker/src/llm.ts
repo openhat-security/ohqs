@@ -1,9 +1,14 @@
-// LLM playbook planner at the edge. Runs a small Workers AI chat model through
-// the existing AI binding — no external endpoint, no extra secret — and mirrors
-// internal/llm (plan.go): same system prompt, same "schooled" user prompt built
-// from the matched playbook + ranked catalog tools, same JSON contract, same
-// hydration, and it throws on any failure so the caller falls back to the
-// deterministic template (Build in plan.go).
+// LLM playbook planner at the edge. Mirrors internal/llm (plan.go): same system
+// prompt, user prompt built from the matched playbook + ranked catalog tools,
+// same JSON contract, same hydration, throws on any failure so the caller falls
+// back to the deterministic template (Build in plan.go).
+//
+// Backends (pick one at deploy time):
+//   - Workers AI through the existing AI binding (free tier) when LLM_BASE_URL
+//     is unset. Defaults to DEFAULT_LLM_MODEL, override via the LLM_MODEL var.
+//   - Any OpenAI-compatible /chat/completions endpoint when LLM_BASE_URL is
+//     set. LLM_API_KEY (secret, Bearer) and LLM_MODEL are optional; the hosted
+//     OpenAI default model applies when the base is api.openai.com.
 
 import {
   allRecords,
@@ -17,6 +22,42 @@ import {
 // Small, fast, free-tier Workers AI model (beta). Override with the LLM_MODEL
 // bind/var if you want a different one later.
 export const DEFAULT_LLM_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
+
+export const DEFAULT_HOSTED_MODEL = "gpt-4o-mini";
+
+export interface LlmConfig {
+  model: string;
+  ai?: Ai;
+  baseURL?: string;
+  apiKey?: string;
+}
+
+// resolveLlmConfig turns worker env into a backend config with mirror-GO CLI
+// semantics: an api key implies the OpenAI base, a missing model on hosted
+// OpenAI gets a default, otherwise the free Workers AI model is used.
+export function resolveLlmConfig(env: {
+  AI?: Ai;
+  LLM_BASE_URL?: string;
+  LLM_API_KEY?: string;
+  LLM_MODEL?: string;
+}): LlmConfig {
+  let baseURL = (env.LLM_BASE_URL || "").trim();
+  const apiKey = (env.LLM_API_KEY || "").trim();
+  let model = (env.LLM_MODEL || "").trim();
+  if (!baseURL && apiKey) baseURL = "https://api.openai.com/v1";
+  if (!model && baseURL.includes("api.openai.com")) model = DEFAULT_HOSTED_MODEL;
+  if (!model) model = DEFAULT_LLM_MODEL;
+  return {
+    model,
+    ai: env.AI,
+    baseURL: baseURL || undefined,
+    apiKey: apiKey || undefined,
+  };
+}
+
+export function llmEnabled(cfg: LlmConfig): boolean {
+  return !!cfg.ai || !!cfg.baseURL;
+}
 
 const DEFAULT_WORDLIST = "third-party-resources/guides/SecLists/Discovery/Web-Content/common.txt";
 
@@ -92,8 +133,15 @@ function extractJSON(s: string): string {
   return t.slice(start, end + 1);
 }
 
-async function chat(ai: Ai, model: string, system: string, user: string): Promise<string> {
-  const raw = await (ai.run(model, {
+// chat dispatches to the configured backend: an OpenAI-compatible endpoint when
+// baseURL is set, otherwise the Workers AI binding. Both return the assistant's
+// text content or throw, leaving fallback decisions to the caller.
+async function chat(cfg: LlmConfig, system: string, user: string): Promise<string> {
+  if (cfg.baseURL) {
+    return chatExternal(cfg.baseURL, cfg.apiKey, cfg.model, system, user);
+  }
+  if (!cfg.ai) throw new Error("no LLM backend configured");
+  const raw = await (cfg.ai.run(cfg.model, {
     messages: [
       { role: "system", content: system },
       { role: "user", content: user },
@@ -106,6 +154,61 @@ async function chat(ai: Ai, model: string, system: string, user: string): Promis
   const content = extractContent(raw);
   if (!content) {
     throw new Error("Workers AI returned no content (shape: " + JSON.stringify(Object.keys(raw)).slice(0, 120) + ")");
+  }
+  return content;
+}
+
+// chatExternal talks to any OpenAI-compatible /chat/completions endpoint, which
+// covers hosted providers (OpenAI, Groq, OpenRouter, Together, Fireworks...) and
+// self-hosted ones (llama.cpp/llamafile, vLLM, LocalAI, Ollama). Mirrors
+// internal/llm/client.go: Bearer auth when apiKey is set, max_tokens overall,
+// lenient message extraction, and a hard 25s deadline so the /v1/recommend
+// handler can fall back to the template instead of hanging.
+async function chatExternal(
+  baseURL: string,
+  apiKey: string | undefined,
+  model: string,
+  system: string,
+  user: string,
+): Promise<string> {
+  const base = baseURL.replace(/\/+$/, "");
+  const url = /\/chat\/completions$/.test(base)
+    ? base
+    : base + "/chat/completions";
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["Authorization"] = "Bearer " + apiKey;
+
+  const opts: RequestInit = {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      temperature: 0.2,
+      max_tokens: 4096,
+    }),
+  };
+  return await raceTimeout(chatExternalOnce(url, opts), 25000, "LLM endpoint timed out");
+}
+
+async function chatExternalOnce(url: string, opts: RequestInit): Promise<string> {
+  let resp: Response;
+  try {
+    resp = await fetch(url, opts);
+  } catch (e) {
+    throw new Error("LLM endpoint unreachable: " + (e as Error).message);
+  }
+  if (!resp.ok) {
+    throw new Error("LLM endpoint HTTP " + resp.status + ": " +
+      (await resp.text()).slice(0, 200));
+  }
+  const body = (await resp.json()) as Record<string, unknown>;
+  const content = extractContent(body);
+  if (!content) {
+    throw new Error("LLM endpoint returned no content");
   }
   return content;
 }
@@ -253,13 +356,12 @@ function expand(cmd: string, subs: Record<string, string>): string {
   return out;
 }
 
-// llmRecommend validates the gate, schools a Workers AI chat model on the
+// llmRecommend validates the gate, schools the configured LLM on the
 // situation + matched template, and returns a hydrated Plan. Any failure throws,
 // letting the caller fall back to the deterministic template.
 export async function llmRecommend(
   db: D1Database,
-  ai: Ai,
-  model: string,
+  cfg: LlmConfig,
   req: RecommendRequest,
 ): Promise<Plan> {
   if (!req.situation || req.situation.trim() === "") {
@@ -273,14 +375,16 @@ export async function llmRecommend(
   // Race the model call so a slow/hung inference still lets the caller fall
   // back to the deterministic template before the Workers wall-clock limit.
   const content = await raceTimeout(
-    chat(ai, model, system, user),
+    chat(cfg, system, user),
     25_000,
-    "Workers AI plan timed out after 25s",
+    "LLM plan timed out after 25s",
   );
   const draft = parseDraft(content);
   return hydrate(db, req, draft);
 }
 
+// raceTimeout rejects (after ms) with msg if the inner promise has not settled,
+// leaking the underlying request — fine for stateless /v1/recommend calls.
 function raceTimeout<T>(p: Promise<T>, ms: number, msg: string): Promise<T> {
   return new Promise<T>((resolve, reject) => {
     const t = setTimeout(() => reject(new Error(msg)), ms);

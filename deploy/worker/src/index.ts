@@ -14,15 +14,20 @@ import { BountyClass } from "./bounties";
 import { recommend, activeLabel } from "./models";
 import { rateLimit, RateLimiter } from "./ratelimit";
 import { buildPlan, markdown, RecommendRequest } from "./planner";
-import { llmRecommend, DEFAULT_LLM_MODEL } from "./llm";
+import { llmRecommend, llmEnabled, resolveLlmConfig } from "./llm";
 
 export interface Env {
   D1: D1Database;
   AI?: Ai;
   RATE_LIMITER?: DurableObjectNamespace;
   ADMIN_TOKEN?: string;
-  // Optional override for the Workers AI chat model used by the playbook
-  // planner. Defaults to DEFAULT_LLM_MODEL when unset.
+  // Live playbook planner backend. Defaults to the Workers AI binding (free
+  // tier) with DEFAULT_LLM_MODEL. Set LLM_BASE_URL to any OpenAI-compatible
+  // /chat/completions endpoint (OpenAI, Groq, OpenRouter, llama.cpp...); set
+  // LLM_API_KEY via `wrangler secret put` for Bearer auth. LLM_MODEL overrides
+  // the model name (hosted-OpenAI default: gpt-4o-mini).
+  LLM_BASE_URL?: string;
+  LLM_API_KEY?: string;
   LLM_MODEL?: string;
 }
 
@@ -238,13 +243,15 @@ export default {
         return err("invalid JSON body", 400);
       }
       let plan: Awaited<ReturnType<typeof buildPlan>>;
-      // Live LLM planner via Workers AI (free tier) when the binding exists;
-      // any failure falls back to the deterministic template — mirrors
-      // internal/llm.Build. Gate failures (authorized/scope/situation) surface
-      // as 400 because both paths raise them before making a model call.
-      if (env.AI) {
+      // Live LLM planner when a backend is configured (Workers AI binding by
+      // default, or an OpenAI-compatible endpoint via LLM_BASE_URL); any failure
+      // falls back to the deterministic template — mirrors internal/llm.Build.
+      // Gate failures (situation required) surface as 400 because both paths
+      // raise them before making a model call.
+      const llmCfg = resolveLlmConfig(env);
+      if (llmEnabled(llmCfg)) {
         try {
-          plan = await llmRecommend(env.D1, env.AI, env.LLM_MODEL || DEFAULT_LLM_MODEL, body);
+          plan = await llmRecommend(env.D1, llmCfg, body);
         } catch (e) {
           console.warn("LLM plan failed, using template:", (e as Error).message);
           try {

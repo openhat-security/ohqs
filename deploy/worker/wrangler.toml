@@ -32,8 +32,17 @@ new_sqlite_classes = ["RateLimiter"]
 [observability]
 enabled = true
 
-# Optional: override the Workers AI chat model used by the playbook builder
-# (/v1/recommend LLM planner). Defaults to @cf/meta/llama-3.1-8b-instruct-fast.
-# Set as a plain var (not a secret):  npx wrangler deploy --var LLM_MODEL:...
+# Optional: LLM backend for the playbook builder (/v1/recommend LLM planner).
+#
+# Default: Workers AI binding (free tier) with @cf/meta/llama-3.1-8b-instruct-fast.
+#
+# To use ANY OpenAI-compatible endpoint instead (OpenAI, Groq, OpenRouter,
+# Together, Fireworks, llama.cpp/llamafile, vLLM, LocalAI, Ollama):
+#   npx wrangler deploy --var LLM_BASE_URL:https://api.openai.com/v1 --var LLM_MODEL:gpt-4o-mini
+#   npx wrangler secret put LLM_API_KEY   # Bearer token; optional for keyless
+#                                         # self-hosted endpoints
+# model defaults: gpt-4o-mini when the base is api.openai.com, else
+# @cf/meta/llama-3.1-8b-instruct-fast.
 # [vars]
-# LLM_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast"
+# LLM_BASE_URL = "https://api.openai.com/v1"
+# LLM_MODEL = "gpt-4o-mini"
