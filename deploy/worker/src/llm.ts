@@ -25,9 +25,11 @@ const LLM_SYSTEM_PROMPT = `You write authorized security-engagement playbooks fo
 Rules:
 - The operator already asserted written authorization and a scope. Stay inside that scope.
 - Plan detection, triage, and reporting only. Do not invent exploit payloads, shellcode, phishing kits, or bypass recipes.
-- Prefer tools from the catalog context. Use their ids exactly when listing tools.
-- Commands may use placeholders {{url}}, {{path}}, {{wordlist}}. Do not add destructive flags (DoS, wipe, mass exploit).
+- Use ONLY tool ids listed under "Available catalog tools". Never invent tool ids or flags.
+- Each step's commands must be taken from that tool's example commands (verbatim, keeping {{url}}/{{path}}/{{wordlist}} placeholders or substituting the target). Never write a command for a tool that has none.
+- Do not add destructive flags (DoS, wipe, mass exploit).
 - If something is out of scope or unclear, say so in a step instead of guessing.
+- A reference playbook is included for TONE ONLY. Do not copy its steps or titles. Write a NEW playbook specific to the situation: different angles, order, and emphasis where the situation calls for it.
 
 Reply with a single JSON object (no markdown fences) matching:
 {
@@ -146,7 +148,7 @@ function extractContent(resp: Record<string, unknown>, depth = 0): string {
 async function userPrompt(db: D1Database, req: RecommendRequest): Promise<string> {
   const pb = matchPlaybook(req.situation);
   const records = await allRecords(db);
-  const tools = await situationRanked(db, records, req.situation, 18);
+  const tools = await situationRanked(db, records, req.situation, 12);
   const lines: string[] = [
     "Situation: " + req.situation,
     "Scope: " + (req.scope && req.scope.trim() !== "" ? req.scope : "not provided"),
@@ -154,16 +156,19 @@ async function userPrompt(db: D1Database, req: RecommendRequest): Promise<string
   if (req.target) lines.push("Target: " + req.target);
   if (req.path) lines.push("Local path: " + req.path);
   if (req.wordlist) lines.push("Wordlist: " + req.wordlist);
-  lines.push("", "Matched playbook: " + pb.title + " (" + pb.id + ")");
-  for (const st of pb.steps) {
-    lines.push("- " + st.title + ": " + st.purpose +
-      " (tools: " + (st.tool_ids.length > 0 ? st.tool_ids.join(", ") : "-") + ")");
-  }
-  lines.push("", "Catalog tools to prefer:");
+  // Tone-only reference: do not laminate step titles so the model writes fresh
+  // steps instead of echoing the template.
+  lines.push("", "Reference template (TONE ONLY — do not copy its steps): " +
+    pb.title + " (" + pb.id + ")");
+  lines.push("", "Available catalog tools (use these ids; borrow example commands verbatim when sensible):");
   for (const t of tools) {
     lines.push("- " + t.id + " (" + t.name + ", " + t.kind + "): " + t.summary);
+    const cmds = Array.isArray(t.commands) && (t.commands as string[]).length > 0
+      ? (t.commands as string[]).join("  ;  ")
+      : "";
+    if (cmds) lines.push("    example: " + cmds);
   }
-  lines.push("", "Write the JSON plan now.");
+  lines.push("", "Write a NEW playbook for this situation and the JSON plan now.");
   return lines.join("\n");
 }
 
@@ -213,10 +218,12 @@ async function hydrate(db: D1Database, req: RecommendRequest, d: DraftPlan & { s
   d.steps.forEach((st, i) => {
     const n = st.n && st.n > 0 ? st.n : i + 1;
     const stepRecs: PlanRecord[] = [];
+    const cmds: string[] = [];
     for (const id of st.tool_ids ?? []) {
       const rec = byId.get(id);
       if (!rec) continue;
       stepRecs.push(rec);
+      for (const c of rec.commands ?? []) cmds.push(expand(c, subs));
       if (!seen.has(rec.id)) {
         seen.add(rec.id);
         plan.tools.push(rec);
@@ -230,14 +237,20 @@ async function hydrate(db: D1Database, req: RecommendRequest, d: DraftPlan & { s
       how: or(st.how, ""),
       look_for: or(st.look_for, "Notes in each step's how and the tool look_for."),
       next: or(st.next, "If you have a finding: save request/response or scanner JSON and note it. If not: continue."),
-      commands: (st.commands ?? []).map((c) => {
-        let cmd = c;
-        for (const [k, v] of Object.entries(subs)) cmd = cmd.split(k).join(v);
-        return cmd;
-      }),
+      // The model picks the tools and structure; commands are synthesized from
+      // the catalog records so they are always real flags, never model-made-up.
+      commands: cmds,
     });
   });
   return plan;
+}
+
+// expand replaces {{placeholders}} with the request values (mirrors planner
+// buildPlan so synthesized commands read like the template output).
+function expand(cmd: string, subs: Record<string, string>): string {
+  let out = cmd;
+  for (const [k, v] of Object.entries(subs)) out = out.split(k).join(v);
+  return out;
 }
 
 // llmRecommend validates the gate, schools a Workers AI chat model on the
