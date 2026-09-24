@@ -7,10 +7,24 @@ function apiBase() {
   return (saved && saved.trim()) ? saved.trim().replace(/\/+$/, "") : API_BASE_DEFAULT;
 }
 
+function apiBaseIsOverride() {
+  return !!(localStorage.getItem(LS_KEY) || "").trim();
+}
+
 function setApiBase(v) {
   const t = (v || "").trim();
   if (t) localStorage.setItem(LS_KEY, t);
   else localStorage.removeItem(LS_KEY);
+}
+
+// debounce lets the search run as you type instead of only on Enter/Search.
+function debounce(fn, ms) {
+  let t = null;
+  return function () {
+    const args = arguments;
+    if (t) clearTimeout(t);
+    t = setTimeout(function () { t = null; fn.apply(null, args); }, ms);
+  };
 }
 
 async function fetchJSON(path, opts) {
@@ -105,7 +119,7 @@ window.runSearch = async function () {
       handoff.hidden = false;
     }
   } catch (e) {
-    src.textContent = "search failed: " + esc(e.message);
+    src.textContent = "search failed: " + esc(e.message) + " — tried " + esc(apiBase() + "/v1/search?q=" + encodeURIComponent(q));
   }
 };
 
@@ -205,7 +219,7 @@ window.runBountySearch = async function () {
     }
   } catch (e) {
     if (!fresh()) return;
-    src.textContent = "bounties failed: " + esc(e.message);
+    src.textContent = "bounties failed: " + esc(e.message) + " — tried " + esc(apiBase() + "/v1/bounties?class=" + encodeURIComponent(bountyClass) + "&q=" + encodeURIComponent(q));
   }
 };
 
@@ -351,17 +365,30 @@ window.downloadMarkdown = async function () {
 
 window.addEventListener("DOMContentLoaded", function () {
   const base = document.getElementById("api-base");
+  const baseReset = document.getElementById("api-base-reset");
   if (base) {
     base.value = localStorage.getItem(LS_KEY) || "";
     base.addEventListener("change", function () {
-      setApiBase(base.value);
+      if (base.value) setApiBase(base.value);
+      else localStorage.removeItem(LS_KEY);
+      if (baseReset) baseReset.hidden = !apiBaseIsOverride();
       document.getElementById("search-results").innerHTML = "";
       document.getElementById("search-source").textContent = "";
       refreshIndex();
     });
   }
+  if (baseReset) {
+    baseReset.hidden = !apiBaseIsOverride();
+    baseReset.addEventListener("click", function () {
+      localStorage.removeItem(LS_KEY);
+      if (base) base.value = "";
+      baseReset.hidden = true;
+      refreshIndex();
+    });
+  }
   const q = document.getElementById("search-q");
   if (q) q.addEventListener("keydown", function (ev) { if (ev.key === "Enter") runSearch(); });
+  if (q) q.addEventListener("input", debounce(runSearch, 350));
 
   // Bounties tab: class toggle + search, loaded lazily on first view.
   document.querySelectorAll("#bounty-class button").forEach(function (b) {
@@ -372,6 +399,7 @@ window.addEventListener("DOMContentLoaded", function () {
   });
   const bq = document.getElementById("bounty-q");
   if (bq) bq.addEventListener("keydown", function (ev) { if (ev.key === "Enter") runBountySearch(); });
+  if (bq) bq.addEventListener("input", debounce(runBountySearch, 350));
   let bountiesLoaded = false;
 
   const sit = document.getElementById("rely-situation");

@@ -37,7 +37,7 @@
 
   <section class="card page" data-page="bounties" hidden>
     <p class="label">Bug bounties &amp; VDPs</p>
-    <p class="meta"><strong>Marketplaces</strong> are aggregators you join to pick programs (HackerOne, Bugcrowd, Immunefi…). <strong>Programs</strong> are a single organization's own bounty or disclosure channel (MSRC, Apple, CERTs/NCSCs…). <strong>Contracts</strong> are the individual program listings hosted inside marketplaces — not scraped yet, see below.</p>
+    <p class="meta"><strong>Marketplaces</strong> are aggregators you join to pick programs (HackerOne, Bugcrowd, Immunefi…). <strong>Programs</strong> are a single organization's own bounty or disclosure channel (MSRC, Apple, CERTs/NCSCs…). <strong>Contracts</strong> are the individual program listings hosted inside marketplaces — live on the Contracts tab, refreshed on a schedule. Search by company, asset, or vuln class; blank lists all.</p>
     <div class="seg" id="bounty-class">
       <button type="button" class="btn ghost active" data-class="marketplace">Marketplaces</button>
       <button type="button" class="btn ghost" data-class="program">Programs</button>
@@ -92,11 +92,12 @@
       <label class="inline">API base override
         <input id="api-base" type="text" placeholder="https://…">
       </label>
-      <span class="hint">Optional. Only set if you run your own API.</span>
+      <button type="button" class="btn ghost" id="api-base-reset" hidden>reset to default</button>
+      <span class="hint">Optional. Only set if you run your own API. Searches run as you type.</span>
     </p>
   </section>
 
 </main>
-<script src="/app.js?v=contracts-live-20250921b" defer></script>
+<script src="/app.js?v=20250924b" defer></script>
 </body>
 </html>
