@@ -182,7 +182,7 @@ window.runBountySearch = async function () {
       "&q=" + encodeURIComponent(q)
     );
     if (!fresh()) return;
-    if (r.note && bountyClass !== "contract") {
+    if (r.note && (bountyClass !== "contract" || (r.records && r.records.length))) {
       nota.hidden = false;
       nota.appendChild(document.createTextNode(r.note));
       const a = document.createElement("a");

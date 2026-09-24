@@ -160,6 +160,51 @@ async function semanticRank(
   return { records, embedder: meta.name };
 }
 
+// semanticScore embeds the query once and returns a cosine score per id (in
+// the same order as `ids`), so a caller can re-rank an already-narrowed subset
+// instead of scoring the whole corpus. Missing/malformed vectors score -Inf.
+async function semanticScore(
+  db: D1Database,
+  ai: Ai | null,
+  query: string,
+  ids: string[],
+): Promise<number[]> {
+  const out = new Array<number>(ids.length).fill(-Infinity);
+  if (!ai || ids.length === 0) return out;
+  const meta = await embedderMeta(db);
+  if (!meta) return out;
+  let qvec: number[];
+  try {
+    qvec = await embedQuery(ai, meta.name, query);
+  } catch {
+    return out;
+  }
+  const byId = new Map<string, number>();
+  const CHUNK = 90;
+  for (let i = 0; i < ids.length; i += CHUNK) {
+    const slice = ids.slice(i, i + CHUNK);
+    const placeholders = slice.map(() => "?").join(",");
+    const { results } = await db
+      .prepare(`SELECT id, vec FROM vectors WHERE id IN (${placeholders})`)
+      .bind(...slice)
+      .all<{ id: string; vec: string }>();
+    for (const r of results ?? []) {
+      try {
+        const v = JSON.parse(r.vec) as number[];
+        if (v.length !== meta.dim) continue;
+        byId.set(r.id, dot(qvec, v));
+      } catch {
+        /* skip malformed vector */
+      }
+    }
+  }
+  for (let i = 0; i < ids.length; i++) {
+    const s = byId.get(ids[i]);
+    if (s !== undefined) out[i] = s;
+  }
+  return out;
+}
+
 // hasClassVectors reports whether any persisted vectors exist for the given
 // class (e.g. "contract-%") so search knows whether semantic ranking can make
 // sense of that class. Contracts are added without vectors until a maintainer
@@ -269,21 +314,53 @@ export async function searchBounties(
     return { q, class: cls, source: "list", records: recs.slice(0, effLimit) };
   }
 
-  const sem = cls === "contract" && !(await hasClassVectors(db, "contract-"))
-    ? null
-    : await semanticRank(db, ai, q, effLimit, match);
-  if (sem) {
-    const note = cls === "contract" && sem.records.length === 0 ? CONTRACT_NOTE : undefined;
-    return { q, class: cls, source: `semantic (${sem.embedder})`, records: sem.records, note };
+  // Lexical-first: tokenize the query and pull the exact-match pool, so a
+  // typed company/asset actually FILTERS the list instead of re-ordering the
+  // whole corpus (embedding-only ranking always returns `limit` rows and reads
+  // as "doesn't filter"). The matched subset is then semantically re-ranked so
+  // intent still wins among the matches. If nothing matches, a small bounded
+  // set of semantic suggestions comes back so the box still answers.
+  const need = significantTokens(q);
+  const pool = effLimit * 5;
+  const meta = await embedderMeta(db);
+  const haveVecs = ai != null && meta != null &&
+    (cls !== "contract" || (await hasClassVectors(db, "contract-")));
+
+  let ids: string[] = [];
+  if (need.length > 0) {
+    ids = await matchRecords(db, need.join(" AND "), pool);
+    if (ids.length === 0) ids = await matchRecords(db, need.join(" OR "), pool);
   }
 
-  const need = significantTokens(q);
-  if (need.length === 0) return { q, class: cls, source: "lexical", records: [] };
+  if (ids.length > 0) {
+    const matched = await fetchFiltered(db, ids, match, pool);
+    if (matched.length > 0) {
+      if (haveVecs) {
+        const scores = await semanticScore(db, ai, q, matched.map((r) => String(r.id)));
+        const ranked = matched
+          .map((r, i) => ({ r, s: scores[i] ?? -Infinity }))
+          .filter((x) => x.s > -Infinity)
+          .sort((a, b) => b.s - a.s)
+          .map((x) => x.r);
+        if (ranked.length > 0) {
+          return { q, class: cls, source: `semantic (${meta!.name})`, records: ranked.slice(0, effLimit) };
+        }
+      }
+      return { q, class: cls, source: "lexical", records: matched.slice(0, effLimit) };
+    }
+  }
 
-  const pool = effLimit * 5;
-  let ids = await matchRecords(db, need.join(" AND "), pool);
-  if (ids.length === 0) ids = await matchRecords(db, need.join(" OR "), pool);
-  const records = await fetchFiltered(db, ids, match, effLimit);
-  const note = cls === "contract" && records.length === 0 ? CONTRACT_NOTE : undefined;
-  return { q, class: cls, source: "lexical", records, note };
+  // No exact matches in this class — bounded semantic suggestions.
+  if (haveVecs) {
+    const sem = await semanticRank(db, ai, q, Math.min(effLimit, 12), match);
+    if (sem && sem.records.length > 0) {
+      const note = `No exact matches for “${q}” — showing ${
+        cls === "contract" ? "closest contracts" : "closest " + (cls === "program" ? "programs" : "marketplaces")
+      } by similarity.`;
+      return { q, class: cls, source: `semantic suggestions (${sem.embedder})`, records: sem.records, note };
+    }
+  }
+
+  const note = cls === "contract" ? CONTRACT_NOTE : undefined;
+  return { q, class: cls, source: "lexical", records: [], note };
 }
