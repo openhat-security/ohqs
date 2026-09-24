@@ -314,10 +314,30 @@ async function chatExternal(
       max_tokens: 4096,
     }),
   };
-  return await raceTimeout(chatExternalOnce(url, opts), 25000, "LLM endpoint timed out");
+  // openrouter/free and openrouter/auto route across many providers; a free slot
+  // can return a transient 401/5xx or be slow. Retry a couple of times (cheap
+  // when the failure is instant), bounded overall by llmRecommend's race — a
+  // persistently hung provider still ends in the template fallback.
+  let lastErr: Error | null = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      return await chatExternalOnce(url, opts);
+    } catch (e) {
+      lastErr = e as Error;
+      if (attempt < 2) await new Promise((res) => setTimeout(res, 600));
+    }
+  }
+  throw lastErr ?? new Error("LLM endpoint failed");
 }
 
 async function chatExternalOnce(url: string, opts: RequestInit): Promise<string> {
+  const headers = (opts.headers ?? {}) as Record<string, string>;
+  // OpenRouter uses these identity headers in promotions/rankings; harmless for
+  // any other OpenAI-compatible endpoint.
+  if (url.includes("openrouter.ai")) {
+    headers["HTTP-Referer"] = "https://web-ukryty-6366.vercel.app";
+    headers["X-Title"] = "ohqs";
+  }
   let resp: Response;
   try {
     resp = await fetch(url, opts);
@@ -496,11 +516,12 @@ export async function llmRecommend(
   const system = LLM_SYSTEM_PROMPT;
   const user = await userPrompt(db, req);
   // Race the model call so a slow/hung inference still lets the caller fall
-  // back to the deterministic template before the Workers wall-clock limit.
+  // back to the deterministic template before the Workers wall-clock limit
+  // (~30s). 28s gives retries + the fallback just enough room to finish first.
   const content = await raceTimeout(
     chat(cfg, system, user),
-    25_000,
-    "LLM plan timed out after 25s",
+    28_000,
+    "LLM plan timed out after 28s",
   );
   const draft = parseDraft(content);
   return hydrate(db, req, draft);

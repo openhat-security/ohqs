@@ -34,15 +34,12 @@ enabled = true
 
 # Optional: LLM backend for the playbook builder (/v1/recommend LLM planner).
 #
-# Default: Workers AI binding (free tier) with @cf/meta/llama-3.1-8b-instruct-fast.
-#
-# To use ANY OpenAI-compatible endpoint instead (OpenAI, Groq, OpenRouter,
-# Together, Fireworks, llama.cpp/llamafile, vLLM, LocalAI, Ollama):
-#   npx wrangler deploy --var LLM_BASE_URL:https://api.openai.com/v1 --var LLM_MODEL:gpt-4o-mini
-#   npx wrangler secret put LLM_API_KEY   # Bearer token; optional for keyless
-#                                         # self-hosted endpoints
-# model defaults: gpt-4o-mini when the base is api.openai.com, else
-# @cf/meta/llama-3.1-8b-instruct-fast.
-# [vars]
-# LLM_BASE_URL = "https://api.openai.com/v1"
-# LLM_MODEL = "gpt-4o-mini"
+# Live deployment uses OpenRouter free router. Omit LLM_BASE_URL to fall back
+# to the Workers AI binding (@cf/meta/llama-3.1-8b-instruct-fast), or point it
+# at any OpenAI-compatible endpoint (OpenAI, Groq, OpenRouter, llama.cpp...).
+# The API key is separate:  npx wrangler secret put LLM_API_KEY
+# NOTE: vars in [vars] are sticky across plain `wrangler deploy`; --var overrides
+# only that deploy and are dropped on the next plain deploy.
+[vars]
+LLM_BASE_URL = "https://openrouter.ai/api/v1"
+LLM_MODEL = "inclusionai/ling-3.0-flash-fin:free"
