@@ -15,6 +15,7 @@
 
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { ensureUniqueIds } from "./ident.mjs";
 
 const args = {};
 for (let i = 2; i < process.argv.length; i++) {
@@ -27,7 +28,7 @@ const outFile = args["--out"] || "../../dist/d1/seed_contracts.sql";
 const lit = (s) => "'" + String(s).replace(/'/g, "''") + "'";
 
 const raw = JSON.parse(await readFile(inFile, "utf8"));
-const rows = (raw.items || []).filter((r) => r.kind === "contract");
+const rows = ensureUniqueIds((raw.items || []).filter((r) => r.kind === "contract"));
 if (!rows.length) { console.error("no contract rows found"); process.exit(1); }
 
 let sql = "-- incremental contract seed: " + rows.length + " rows, " + new Date().toISOString() + "\n";

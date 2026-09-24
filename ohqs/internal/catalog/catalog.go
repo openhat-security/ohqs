@@ -18,6 +18,10 @@ type Record struct {
 	Tags          []string `yaml:"tags" json:"tags"`
 	VulnClasses   []string `yaml:"vuln_classes" json:"vuln_classes"`
 	Platforms     []string `yaml:"platforms" json:"platforms"`
+	Platform      string   `yaml:"platform" json:"platform"`
+	Company       string   `yaml:"company" json:"company"`
+	Scope         string   `yaml:"scope" json:"scope"`
+	Payout        string   `yaml:"payout" json:"payout"`
 	Homepage      string   `yaml:"homepage" json:"homepage"`
 	StoreFirefox  string   `yaml:"store_firefox" json:"store_firefox"`
 	StoreChromium string   `yaml:"store_chromium" json:"store_chromium"`
@@ -80,12 +84,12 @@ func FindRoot(start string) (string, error) {
 
 func Load(root string) (*Catalog, error) {
 	c := &Catalog{Root: root, ByID: map[string]Record{}}
-	files := []string{"tools.yaml", "extensions.yaml", "guides.yaml", "os.yaml", "platforms.yaml", "references.yaml", "external.yaml", "ingested.yaml"}
+	files := []string{"tools.yaml", "extensions.yaml", "guides.yaml", "os.yaml", "platforms.yaml", "references.yaml", "external.yaml", "contracts.yaml", "ingested.yaml"}
 	for _, name := range files {
 		path := filepath.Join(root, "catalog", name)
 		b, err := os.ReadFile(path)
 		if err != nil {
-			if name == "ingested.yaml" && os.IsNotExist(err) {
+			if os.IsNotExist(err) && (name == "ingested.yaml" || name == "contracts.yaml") {
 				continue
 			}
 			return nil, fmt.Errorf("read %s: %w", path, err)
@@ -132,6 +136,7 @@ func (r Record) SearchText() string {
 	parts = append(parts, r.Tags...)
 	parts = append(parts, r.VulnClasses...)
 	parts = append(parts, r.Commands...)
+	parts = append(parts, r.Platform, r.Company, r.Scope, r.Payout)
 	return strings.Join(parts, " ")
 }
 

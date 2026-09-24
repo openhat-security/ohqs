@@ -21,6 +21,7 @@
 //      node scrape-all.mjs --source apify-hacktivity --out data/reports-raw.json
 
 const { writeFile } = await import("node:fs/promises");
+import { ensureUniqueIds } from "./ident.mjs";
 
 async function main() {
 const args = {};
@@ -256,7 +257,7 @@ for (const src of sources) {
 
 const uniq = new Map();
 for (const r of rows) if (!uniq.has(r.homepage || r.id)) uniq.set(r.homepage || r.id, r);
-const deduped = [...uniq.values()];
+const deduped = ensureUniqueIds([...uniq.values()]);
 await writeFile(out, JSON.stringify({ scraped_at: new Date().toISOString(), sources, items: deduped }, null, 2));
 console.log(`wrote ${deduped.length} contracts -> ${out}`);
 }

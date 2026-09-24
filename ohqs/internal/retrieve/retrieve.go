@@ -27,6 +27,12 @@ func Situation(cat *catalog.Catalog, store *index.Store, situation string, limit
 	}
 	q := strings.ToLower(situation)
 	for _, r := range cat.Records {
+		// Bounty/VDP listings (marketplace platforms, single-org programs, and
+		// the individual contract programs inside marketplaces) are browsable
+		// via the Bounties tab, not recommendation candidates.
+		if r.Kind == "contract" || r.Kind == "platform" {
+			continue
+		}
 		score := 0
 		blob := strings.ToLower(r.SearchText())
 		for _, w := range strings.Fields(q) {

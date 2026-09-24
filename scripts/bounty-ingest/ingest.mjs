@@ -10,6 +10,7 @@
 //                       --in data/contracts-raw.json --out ../../catalog/contracts.yaml
 
 const { readFile, writeFile } = await import("node:fs/promises");
+import { ensureUniqueIds } from "./ident.mjs";
 
 const args = {};
 for (let i = 2; i < process.argv.length; i++) {
@@ -22,7 +23,7 @@ const base = args["--base"] || "";
 const model = args["--model"] || "";
 
 const raw = JSON.parse(await readFile(from, "utf8"));
-const rows = raw.items || [];
+const rows = ensureUniqueIds(raw.items || []);
 
 if (!rows.length) {
   console.log("no rows to ingest — skipped (keep running, this is normal until scrapers land)");
@@ -90,10 +91,10 @@ const yaml =
   "items:\n" +
   items
     .map((r) => {
-      const kv = (k, v) => (v == null || v === "" ? null : `    ${k}: ${String(v).trim()}`);
+      const kv = (k, v) => (v == null || String(v).trim() === "" ? null : `    ${k}: ${JSON.stringify(String(v).trim())}`);
       return [
         "  - id: " + r.id,
-        "    name: " + String(r.name || "").trim(),
+        "    name: " + JSON.stringify(String(r.name || "").trim()),
         '    kind: contract',
         "    summary: " + JSON.stringify((r.summary || "").trim()),
         "    tags: " + JSON.stringify(r.tags || ["bounty", "contract"]),
