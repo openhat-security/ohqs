@@ -17,6 +17,7 @@ amass.txt
 .DS_Store
 *.exe
 deploy/worker/.wrangler/
+.wrangler/
 deploy/worker/wrangler.dev.toml
 deploy/worker/node_modules/
 deploy/web/node_modules/
