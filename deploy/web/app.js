@@ -250,18 +250,14 @@ function syncPlaybookGate() {
 
 window.runRecommend = async function () {
   const situation = (document.getElementById("rely-situation").value || "").trim();
-  const scope = (document.getElementById("rely-scope").value || "").trim();
   const target = (document.getElementById("rely-target").value || "").trim();
-  const authorized = (document.getElementById("rely-authed").value || "false") === "true";
   const out = document.getElementById("rely-out");
   const st = document.getElementById("rely-status");
   const mdBtn = document.getElementById("rely-md");
   out.innerHTML = "";
   mdBtn.hidden = true;
   if (!situation) { st.textContent = "situation is required."; return; }
-  if (!scope) { st.textContent = "scope is required — paste the program/contract, not a guess."; return; }
-  if (!authorized) { st.textContent = "not authorized — the planner refuses to plan without written permission."; return; }
-  const body = { situation: situation, scope: scope, authorized: true };
+  const body = { situation: situation };
   if (target) body.target = target;
   st.textContent = "planning…";
   try {
@@ -274,7 +270,8 @@ window.runRecommend = async function () {
     st.textContent = plan.playbook_title + " · " + plan.tools.length + " tools · " + plan.steps.length + " steps";
     const info = document.createElement("p");
     info.className = "meta";
-    info.textContent = "Playbook: " + plan.playbook + " — " + plan.playbook_title + "   ·   Scope: " + plan.scope;
+    info.textContent = "Playbook: " + plan.playbook + " — " + plan.playbook_title +
+      (plan.scope ? "   ·   Scope: " + plan.scope : "");
     out.appendChild(info);
     (plan.steps || []).forEach(function (step) {
       const div = document.createElement("div");
@@ -338,9 +335,8 @@ window.runRecommend = async function () {
 
 window.downloadMarkdown = async function () {
   const situation = document.getElementById("rely-situation").value.trim();
-  const scope = document.getElementById("rely-scope").value.trim();
   const target = document.getElementById("rely-target").value.trim();
-  const body = { situation: situation, scope: scope, authorized: true };
+  const body = { situation: situation };
   if (target) body.target = target;
   try {
     const r = await fetch(apiBase() + "/v1/recommend?fmt=markdown", {
@@ -404,10 +400,6 @@ window.addEventListener("DOMContentLoaded", function () {
 
   const sit = document.getElementById("rely-situation");
   if (sit) sit.addEventListener("input", syncPlaybookGate);
-  document.getElementById("rely-authed").addEventListener("change", function () {
-    const st = document.getElementById("rely-status");
-    if (st) st.textContent = "";
-  });
 
   window.addEventListener("hashchange", function () {
     const page = pageFromHash();

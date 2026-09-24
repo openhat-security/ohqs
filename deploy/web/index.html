@@ -56,26 +56,16 @@
 
   <section class="card page" data-page="playbook" hidden>
     <p class="label">Playbook generator</p>
-    <p class="meta">Deterministic template planner — zero LLM. Same gate as the CLI: authorized + written scope only.</p>
+    <p class="meta">Live planner — a small Workers AI model writes a tailored playbook per situation.</p>
     <label for="rely-situation">Situation</label>
-    <textarea id="rely-situation" placeholder="Describe the target and context — e.g. vibe-coded Next.js SaaS with Clerk auth…"></textarea>
+    <textarea id="rely-situation" placeholder="Describe the target and context — e.g. Next.js SaaS payments page where invoices leak via IDOR…"></textarea>
     <div id="rely-gate" hidden>
       <div class="row">
-        <div>
-          <label for="rely-scope">Scope (written authorization — program/contract/hosts)</label>
-          <input id="rely-scope" type="text" placeholder="HackerOne program app.example.com www api">
-        </div>
         <div>
           <label for="rely-target">Target (optional)</label>
           <input id="rely-target" type="text" placeholder="https://app.example.com">
         </div>
       </div>
-      <label class="inline" for="rely-authed">Authorized
-        <select id="rely-authed">
-          <option value="false">no</option>
-          <option value="true">yes — I have written permission</option>
-        </select>
-      </label>
       <div class="actions">
         <button type="button" onclick="runRecommend()">Build playbook</button>
         <button type="button" class="btn ghost" id="rely-md" onclick="downloadMarkdown()" hidden>Download .md</button>
@@ -98,6 +88,6 @@
   </section>
 
 </main>
-<script src="/app.js?v=20250924c" defer></script>
+<script src="/app.js?v=20250924d" defer></script>
 </body>
 </html>

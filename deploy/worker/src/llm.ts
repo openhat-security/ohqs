@@ -70,8 +70,8 @@ interface DraftPlan {
   steps?: DraftStep[];
 }
 
-function or(a: string | undefined, b: string): string {
-  return a && a.trim() !== "" ? a : b;
+function or(a: string | undefined, b: string | undefined): string {
+  return a && a.trim() !== "" ? a : b ?? "";
 }
 
 // extractJSON pulls the first {...} block out of the model reply, tolerating
@@ -149,7 +149,7 @@ async function userPrompt(db: D1Database, req: RecommendRequest): Promise<string
   const tools = await situationRanked(db, records, req.situation, 18);
   const lines: string[] = [
     "Situation: " + req.situation,
-    "Scope: " + req.scope,
+    "Scope: " + (req.scope && req.scope.trim() !== "" ? req.scope : "not provided"),
   ];
   if (req.target) lines.push("Target: " + req.target);
   if (req.path) lines.push("Local path: " + req.path);
@@ -190,7 +190,7 @@ async function hydrate(db: D1Database, req: RecommendRequest, d: DraftPlan & { s
   const pb = matchPlaybook(req.situation);
   const plan: Plan = {
     goal: or(d.goal, req.situation),
-    scope: or(d.scope, req.scope),
+    scope: or(d.scope, req.scope) || "",
     playbook: or(d.playbook, pb.id),
     playbook_title: or(d.playbook_title, pb.title + " (LLM)"),
     checklist: d.checklist && d.checklist.length > 0
@@ -249,12 +249,6 @@ export async function llmRecommend(
   model: string,
   req: RecommendRequest,
 ): Promise<Plan> {
-  if (!req.authorized) {
-    throw new Error("refusing to plan: pass authorized=true and a written scope for work you are allowed to do");
-  }
-  if (!req.scope || req.scope.trim() === "") {
-    throw new Error("refusing to plan: scope is required (program, hosts, out-of-scope)");
-  }
   if (!req.situation || req.situation.trim() === "") {
     throw new Error("situation is required");
   }

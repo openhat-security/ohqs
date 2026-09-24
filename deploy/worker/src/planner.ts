@@ -7,8 +7,8 @@ import { PLAYBOOKS, Playbook } from "./playbooks";
 
 export interface RecommendRequest {
   situation: string;
-  scope: string;
-  authorized: boolean;
+  scope?: string;
+  authorized?: boolean;
   target?: string;
   path?: string;
   wordlist?: string;
@@ -248,12 +248,6 @@ function prereqStep(records: PlanRecord[], pb: Playbook, n: number): PlanStep | 
 }
 
 export async function buildPlan(db: D1Database, req: RecommendRequest): Promise<Plan> {
-  if (!req.authorized) {
-    throw new Error("refusing to plan: pass authorized=true and a written scope for work you are allowed to do");
-  }
-  if (!req.scope || req.scope.trim() === "") {
-    throw new Error("refusing to plan: scope is required (program, hosts, out-of-scope)");
-  }
   if (!req.situation || req.situation.trim() === "") {
     throw new Error("situation is required");
   }
@@ -278,7 +272,7 @@ export async function buildPlan(db: D1Database, req: RecommendRequest): Promise<
 
   const plan: Plan = {
     goal: req.situation,
-    scope: req.scope,
+    scope: req.scope ?? "",
     playbook: pb.id,
     playbook_title: pb.title,
     tools,
