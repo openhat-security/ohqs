@@ -236,6 +236,44 @@ window.goPlaybookWithQuery = function () {
 
 // ---- playbook generator ----
 
+// Populate the model / router dropdown from /v1/llm/models. The backend (Workers
+// AI or the configured OpenAI-compatible / OpenRouter endpoint) is decided on the
+// server; here we only render its offer list.
+async function loadModels() {
+  const sel = document.getElementById("rely-model");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">server default…</option>';
+  try {
+    const r = await fetchJSON("/v1/llm/models");
+    const opts = Array.isArray(r.models) ? r.models : [];
+    sel.disabled = opts.length === 0;
+    sel.innerHTML = "";
+    if (!opts.length) {
+      const o = document.createElement("option");
+      o.value = "";
+      o.textContent = "server default (" + (r.active || "?") + ")";
+      sel.appendChild(o);
+      return;
+    }
+    opts.forEach(function (m) {
+      const o = document.createElement("option");
+      o.value = m.id;
+      let label = m.name || m.id;
+      if (m.router) label += " · router";
+      else if (m.free) label += " · free";
+      if (m.context) label += " · " + m.context + " ctx";
+      o.textContent = label;
+      if (m.id === r.active) o.selected = true;
+      sel.appendChild(o);
+    });
+  } catch (e) {
+    const o = document.createElement("option");
+    o.value = "";
+    o.textContent = "server default (no model list)";
+    sel.appendChild(o);
+  }
+}
+
 // situation unlocks the scope/target/authorized gate.
 function syncPlaybookGate() {
   const has = (document.getElementById("rely-situation").value || "").trim() !== "";
@@ -251,6 +289,7 @@ function syncPlaybookGate() {
 window.runRecommend = async function () {
   const situation = (document.getElementById("rely-situation").value || "").trim();
   const target = (document.getElementById("rely-target").value || "").trim();
+  const model = (document.getElementById("rely-model").value || "").trim();
   const out = document.getElementById("rely-out");
   const st = document.getElementById("rely-status");
   const mdBtn = document.getElementById("rely-md");
@@ -259,6 +298,7 @@ window.runRecommend = async function () {
   if (!situation) { st.textContent = "situation is required."; return; }
   const body = { situation: situation };
   if (target) body.target = target;
+  if (model) body.model = model;
   st.textContent = "planning…";
   try {
     const plan = await fetchJSON("/v1/recommend", {
@@ -336,8 +376,10 @@ window.runRecommend = async function () {
 window.downloadMarkdown = async function () {
   const situation = document.getElementById("rely-situation").value.trim();
   const target = document.getElementById("rely-target").value.trim();
+  const model = (document.getElementById("rely-model").value || "").trim();
   const body = { situation: situation };
   if (target) body.target = target;
+  if (model) body.model = model;
   try {
     const r = await fetch(apiBase() + "/v1/recommend?fmt=markdown", {
       method: "POST",
@@ -417,6 +459,7 @@ window.addEventListener("DOMContentLoaded", function () {
   }
   syncPlaybookGate();
   refreshIndex();
+  loadModels();
 
   // Deep link: /?q=command+and+control pre-fills + runs a catalog search.
   const pre = new URLSearchParams(location.search).get("q");

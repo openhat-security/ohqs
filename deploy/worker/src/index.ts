@@ -14,7 +14,7 @@ import { BountyClass } from "./bounties";
 import { recommend, activeLabel } from "./models";
 import { rateLimit, RateLimiter } from "./ratelimit";
 import { buildPlan, markdown, RecommendRequest } from "./planner";
-import { llmRecommend, llmEnabled, resolveLlmConfig } from "./llm";
+import { llmRecommend, llmEnabled, resolveLlmConfig, listLlmModels } from "./llm";
 
 export interface Env {
   D1: D1Database;
@@ -43,6 +43,7 @@ const LIMITS = {
   index: { limit: 60, window: 60_000 },
   embed: { limit: 2, window: 60_000 },
   recommend: { limit: 10, window: 60_000 },
+  llmModels: { limit: 30, window: 60_000 },
 };
 
 const baseHeaders = {
@@ -97,6 +98,7 @@ export default {
       else if (path === "/v1/index") bucket = LIMITS.index;
       else if (path === "/v1/index/embed") bucket = LIMITS.embed;
       else if (path === "/v1/recommend") bucket = LIMITS.recommend;
+      else if (path === "/v1/llm/models") bucket = LIMITS.llmModels;
     }
     if (bucket && !headersOnly) {
       const rl = await rateLimit(env, ip, path, bucket.limit, bucket.window);
@@ -231,16 +233,29 @@ export default {
       return json({ host, fits });
     }
 
-    // /v1/recommend — deterministic template planner (no LLM). Mirrors the
-    // local `ohqs recommend` gate: authorized=true + written scope required.
-    // Returns the same Plan shape as the Go server. ?fmt=markdown for the
-    // renderable playbook.
+    // /v1/llm/models — what the playbook model dropdown should offer: OpenRouter
+    // routers + free models (when LLM_BASE_URL points there), any other
+    // endpoint's readable /models list, else preset Workers AI models.
+    if (path === "/v1/llm/models" && method === "GET") {
+      return json(await listLlmModels(resolveLlmConfig(env)));
+    }
+
+    // /v1/recommend — the live playbook planner. Mirrors the local `ohqs
+    // recommend` gate: situation required. ?fmt=markdown for the renderable
+    // playbook.
     if (path === "/v1/recommend" && method === "POST") {
       let body: RecommendRequest;
       try {
         body = (await request.json()) as RecommendRequest;
       } catch {
         return err("invalid JSON body", 400);
+      }
+      // Optional client-selectable model / router override (e.g.
+      // openrouter/auto). The backend + its credentials always come from worker
+      // env; we only map a validated name onto it.
+      const modelSel = (body.model || "").trim();
+      if (modelSel && (modelSel.length > 80 || !/^[A-Za-z0-9._:@/-]+$/.test(modelSel))) {
+        return err("invalid model", 400);
       }
       let plan: Awaited<ReturnType<typeof buildPlan>>;
       // Live LLM planner when a backend is configured (Workers AI binding by
@@ -250,8 +265,9 @@ export default {
       // raise them before making a model call.
       const llmCfg = resolveLlmConfig(env);
       if (llmEnabled(llmCfg)) {
+        const active = modelSel ? Object.assign({}, llmCfg, { model: modelSel }) : llmCfg;
         try {
-          plan = await llmRecommend(env.D1, llmCfg, body);
+          plan = await llmRecommend(env.D1, active, body);
         } catch (e) {
           console.warn("LLM plan failed, using template:", (e as Error).message);
           try {

@@ -12,6 +12,11 @@ export interface RecommendRequest {
   target?: string;
   path?: string;
   wordlist?: string;
+  // Optional LLM model / router override (e.g. "openrouter/auto" or
+  // "@cf/qwen/qwen3-30b-a3b-fp8"). Validated + overridden server-side; the
+  // backend (Workers AI or the configured OpenAI-compatible endpoint) still
+  // comes from worker env, never from the client.
+  model?: string;
 }
 
 export interface PlanRecord {

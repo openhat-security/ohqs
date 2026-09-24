@@ -59,6 +59,129 @@ export function llmEnabled(cfg: LlmConfig): boolean {
   return !!cfg.ai || !!cfg.baseURL;
 }
 
+// Curated Workers AI chat presets, shown in the model dropdown when no external
+// endpoint is configured. First entry is the free-tier default.
+export const WORKERS_AI_PRESETS: Array<{ id: string; name: string }> = [
+  { id: "@cf/meta/llama-3.1-8b-instruct-fast", name: "Llama 3.1 8B (fast)" },
+  { id: "@cf/qwen/qwen3-30b-a3b-fp8", name: "Qwen 3 30B MoE (cheap)" },
+  { id: "@cf/meta/llama-3.3-70b-instruct-fp8-fast", name: "Llama 3.3 70B (fast)" },
+  { id: "@cf/qwen/qwen2.5-coder-32b-instruct", name: "Qwen2.5 Coder 32B" },
+];
+
+export interface LlmModelInfo {
+  id: string;
+  name?: string;
+  free?: boolean;
+  router?: boolean;
+  context?: number;
+}
+
+// listLlmModels returns what the model dropdown should offer for the currently
+// configured backend: OpenRouter routers + free models when LLM_BASE_URL points
+// at OpenRouter, all models of another OpenAI-compatible endpoint when its
+// listing is readable, else the Workers AI presets. `active` is the model the
+// server uses when the client sends no override.
+export async function listLlmModels(cfg: LlmConfig): Promise<{
+  backend: string;
+  active: string;
+  models: LlmModelInfo[];
+}> {
+  if (cfg.baseURL) {
+    const isOpenRouter = cfg.baseURL.includes("openrouter.ai");
+    const listed = await listExternalModels(cfg);
+    if (listed && listed.length > 0) {
+      if (isOpenRouter) {
+        const routers: LlmModelInfo[] = [
+          { id: "openrouter/auto", name: "Auto — best available", router: true, free: true },
+          { id: "openrouter/free", name: "Free — best free model", router: true, free: true },
+        ];
+        // Skip our own router entries that OpenRouter also lists, plus any
+        // paid models; the routers themselves stay first.
+        const free = listed
+          .filter((m) => m.free && m.id !== "openrouter/auto" && m.id !== "openrouter/free")
+          .sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+        return { backend: "openrouter", active: cfg.model, models: routers.concat(free) };
+      }
+      return { backend: "openai", active: cfg.model, models: listed };
+    }
+    // Listing failed (e.g. OpenRouter needs the key on /models too): still offer
+    // the routers + whatever model the server is configured with.
+    if (isOpenRouter) {
+      return {
+        backend: "openrouter",
+        active: cfg.model,
+        models: [
+          { id: "openrouter/auto", name: "Auto — best available", router: true, free: true },
+          { id: "openrouter/free", name: "Free — best free model", router: true, free: true },
+          { id: cfg.model, name: cfg.model },
+        ],
+      };
+    }
+    return { backend: "openai", active: cfg.model, models: [{ id: cfg.model, name: cfg.model }] };
+  }
+  const models = WORKERS_AI_PRESETS.map((m) => ({ ...m, free: true }));
+  return { backend: "workers-ai", active: cfg.model, models };
+}
+
+let extModelsCache: { key: string; at: number; list: LlmModelInfo[] | null } | null = null;
+
+// listExternalModels reads an OpenAI-compatible GET {base}/models (OpenRouter
+// including `pricing` fields). Null on any failure; the result is cached ~5min
+// per (baseURL, model) since the dropdown loads once per page view.
+async function listExternalModels(cfg: LlmConfig): Promise<LlmModelInfo[] | null> {
+  const base = (cfg.baseURL as string).replace(/\/+$/, "");
+  const url = /\/models$/.test(base) ? base : base + "/models";
+  const key = url + "|" + (cfg.apiKey || "");
+  const now = Date.now();
+  if (extModelsCache && extModelsCache.key === key && now - extModelsCache.at < 300_000) {
+    return extModelsCache.list;
+  }
+  const headers: Record<string, string> = {};
+  if (cfg.apiKey) headers["Authorization"] = "Bearer " + cfg.apiKey;
+  let list: LlmModelInfo[] | null = null;
+  try {
+    const resp = await fetch(url, { headers });
+    if (resp.ok) {
+      const j = (await resp.json()) as { data?: unknown; models?: unknown };
+      const data = Array.isArray(j.data) ? j.data : Array.isArray(j.models) ? (j.models as unknown[]) : [];
+      list = [];
+      const seen = new Set<string>();
+      for (const m of data) {
+        const rec = (typeof m === "object" && m !== null ? m : {}) as Record<string, unknown>;
+        const id = typeof rec.id === "string" ? rec.id : "";
+        if (!id || seen.has(id)) continue;
+        seen.add(id);
+        list.push({
+          id,
+          name: typeof rec.name === "string" ? rec.name : id,
+          free: pricingIsFree(rec.pricing),
+          context: typeof rec.context_length === "number" ? rec.context_length : undefined,
+        });
+      }
+      if (list.length === 0) list = null;
+    }
+  } catch {
+    list = null;
+  }
+  extModelsCache = { key, at: now, list };
+  return list;
+}
+
+function pricingIsFree(p: unknown): boolean {
+  if (!p || typeof p !== "object") return false;
+  const r = p as Record<string, unknown>;
+  return priceToNumber(r.prompt) === 0 && priceToNumber(r.completion) === 0;
+}
+
+function priceToNumber(v: unknown): number {
+  if (typeof v === "number") return v;
+  if (typeof v === "string") {
+    const n = parseFloat(v);
+    return isFinite(n) ? n : -1;
+  }
+  return -1;
+}
+
 const DEFAULT_WORDLIST = "third-party-resources/guides/SecLists/Discovery/Web-Content/common.txt";
 
 const LLM_SYSTEM_PROMPT = `You write authorized security-engagement playbooks for OpenHat Quick Start (ohqs).

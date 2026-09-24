@@ -56,11 +56,18 @@
 
   <section class="card page" data-page="playbook" hidden>
     <p class="label">Playbook generator</p>
-    <p class="meta">Live planner — a small Workers AI model writes a tailored playbook per situation.</p>
+    <p class="meta">Live planner — a model (Workers AI, or your own OpenAI-compatible / OpenRouter endpoint) writes a tailored playbook per situation.</p>
     <label for="rely-situation">Situation</label>
     <textarea id="rely-situation" placeholder="Describe the target and context — e.g. Next.js SaaS payments page where invoices leak via IDOR…"></textarea>
     <div id="rely-gate" hidden>
       <div class="row">
+        <div>
+          <label for="rely-model">Model / router</label>
+          <select id="rely-model" disabled>
+            <option value="">loading models…</option>
+          </select>
+          <p class="meta">Server default is pre-selected; OpenRouter options include the auto/free routers and free models when a key is configured.</p>
+        </div>
         <div>
           <label for="rely-target">Target (optional)</label>
           <input id="rely-target" type="text" placeholder="https://app.example.com">
@@ -88,6 +95,6 @@
   </section>
 
 </main>
-<script src="/app.js?v=20250924d" defer></script>
+<script src="/app.js?v=20250924e" defer></script>
 </body>
 </html>
