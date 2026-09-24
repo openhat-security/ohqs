@@ -14,12 +14,16 @@ import { BountyClass } from "./bounties";
 import { recommend, activeLabel } from "./models";
 import { rateLimit, RateLimiter } from "./ratelimit";
 import { buildPlan, markdown, RecommendRequest } from "./planner";
+import { llmRecommend, DEFAULT_LLM_MODEL } from "./llm";
 
 export interface Env {
   D1: D1Database;
   AI?: Ai;
   RATE_LIMITER?: DurableObjectNamespace;
   ADMIN_TOKEN?: string;
+  // Optional override for the Workers AI chat model used by the playbook
+  // planner. Defaults to DEFAULT_LLM_MODEL when unset.
+  LLM_MODEL?: string;
 }
 
 const EMBED_MODEL = "@cf/baai/bge-small-en-v1.5";
@@ -234,10 +238,29 @@ export default {
         return err("invalid JSON body", 400);
       }
       let plan: Awaited<ReturnType<typeof buildPlan>>;
-      try {
-        plan = await buildPlan(env.D1, body);
-      } catch (e) {
-        return err((e as Error).message, 400);
+      // Live LLM planner via Workers AI (free tier) when the binding exists;
+      // any failure falls back to the deterministic template — mirrors
+      // internal/llm.Build. Gate failures (authorized/scope/situation) surface
+      // as 400 because both paths raise them before making a model call.
+      if (env.AI) {
+        try {
+          plan = await llmRecommend(env.D1, env.AI, env.LLM_MODEL || DEFAULT_LLM_MODEL, body);
+        } catch (e) {
+          console.warn("LLM plan failed, using template:", (e as Error).message);
+          try {
+            plan = await buildPlan(env.D1, body);
+          } catch (e2) {
+            return err((e2 as Error).message, 400);
+          }
+          (plan as typeof plan & { planner_note?: string }).planner_note =
+            "LLM plan failed (" + (e as Error).message + "); using template";
+        }
+      } else {
+        try {
+          plan = await buildPlan(env.D1, body);
+        } catch (e) {
+          return err((e as Error).message, 400);
+        }
       }
       const fmt = url.searchParams.get("fmt") ?? "json";
       if (fmt === "markdown") {

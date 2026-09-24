@@ -64,7 +64,7 @@ function or(a: string | undefined, b: string): string {
 
 // Playbook returns the best matched playbook, mirroring retrieve.Playbook:
 // exact "clerk" hit first, then keyword-match by count, defaulting to bounty-web.
-function matchPlaybook(situation: string): Playbook {
+export function matchPlaybook(situation: string): Playbook {
   const q = situation.toLowerCase();
   if (q.includes("clerk")) {
     const pb = PLAYBOOKS.find((p) => p.id === "nextjs-clerk");
@@ -92,7 +92,7 @@ function matchPlaybook(situation: string): Playbook {
 // situationRanked mirrors retrieve.Situation: FTS order contributes a
 // positional weighting (limit*2 - i), followed by keyword/tag scoring over the
 // full catalog. Returns the top N records, id-ordered by score, then rank.
-async function situationRanked(
+export async function situationRanked(
   db: D1Database,
   records: PlanRecord[],
   situation: string,
@@ -109,6 +109,10 @@ async function situationRanked(
 
   const q = situation.toLowerCase();
   for (const r of records) {
+    // Bounty/VDP listings (marketplace platforms, single-org programs, and the
+    // individual contract programs inside marketplaces) belong on the Bounties
+    // tab, not in recommendation or LLM tool context.
+    if (r.kind === "contract" || r.kind === "platform") continue;
     let score = 0;
     const blob = (r.id + " " + r.name + " " + r.kind + " " + r.summary + " ")
       .toLowerCase();
@@ -179,7 +183,7 @@ async function ftsIds(db: D1Database, ftsQ: string, limit: number): Promise<stri
   return (results ?? []).map((r) => r.id).filter((x): x is string => !!x);
 }
 
-async function allRecords(db: D1Database): Promise<PlanRecord[]> {
+export async function allRecords(db: D1Database): Promise<PlanRecord[]> {
   const { results } = await db.prepare(`SELECT data FROM records`).all<{ data: string }>();
   const out: PlanRecord[] = [];
   for (const r of results ?? []) {
