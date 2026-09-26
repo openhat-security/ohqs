@@ -1,10 +1,17 @@
 // Default Worker API is baked in; the page only exposes an optional override.
+// When the console is served from the local worker (wrangler assets), prefer same origin.
 const API_BASE_DEFAULT = "https://ohqs.ukryty.workers.dev";
 const LS_KEY = "ohqs.apiBase";
+const LS_KC = "ohqs.kcAccessToken";
+const LS_API_TOKEN = "ohqs.apiToken";
 
 function apiBase() {
   const saved = localStorage.getItem(LS_KEY);
-  return (saved && saved.trim()) ? saved.trim().replace(/\/+$/, "") : API_BASE_DEFAULT;
+  if (saved && saved.trim()) return saved.trim().replace(/\/+$/, "");
+  if (typeof location !== "undefined" && /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(location.origin)) {
+    return location.origin;
+  }
+  return API_BASE_DEFAULT;
 }
 
 function apiBaseIsOverride() {
@@ -56,6 +63,7 @@ function showPage(name) {
 function pageFromHash() {
   if (location.hash === "#playbook") return "playbook";
   if (location.hash === "#bounties") return "bounties";
+  if (location.hash === "#account" || location.hash.indexOf("#ohqs_") === 0 || location.hash.indexOf("ohqs_access_token=") >= 0) return "account";
   return "catalog";
 }
 
@@ -301,9 +309,12 @@ window.runRecommend = async function () {
   if (model) body.model = model;
   st.textContent = "planning…";
   try {
+    const authTok = storedApiToken() || kcToken();
+    const recHeaders = { "Content-Type": "application/json" };
+    if (authTok) recHeaders["Authorization"] = "Bearer " + authTok;
     const plan = await fetchJSON("/v1/recommend", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: recHeaders,
       body: JSON.stringify(body),
     });
     mdBtn.hidden = false;
@@ -399,6 +410,213 @@ window.downloadMarkdown = async function () {
   }
 };
 
+
+
+// ---- account / Keycloak / API tokens ----
+
+function kcToken() {
+  return (localStorage.getItem(LS_KC) || "").trim();
+}
+
+function setKcToken(t) {
+  if (t) localStorage.setItem(LS_KC, t);
+  else localStorage.removeItem(LS_KC);
+}
+
+function storedApiToken() {
+  return (localStorage.getItem(LS_API_TOKEN) || "").trim();
+}
+
+function setStoredApiToken(t) {
+  if (t) localStorage.setItem(LS_API_TOKEN, t);
+  else localStorage.removeItem(LS_API_TOKEN);
+}
+
+async function authFetch(path, opts) {
+  opts = opts || {};
+  const headers = Object.assign({}, opts.headers || {});
+  const tok = kcToken();
+  if (tok) headers["Authorization"] = "Bearer " + tok;
+  const r = await fetch(apiBase() + path, Object.assign({}, opts, { headers: headers }));
+  const text = await r.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch (_) { data = { raw: text }; }
+  if (!r.ok) throw new Error((data && data.error) || text || (r.status + " " + r.statusText));
+  return data;
+}
+
+function captureOidcHash() {
+  const h = location.hash || "";
+  // Callback may set #ohqs_access_token=...&ohqs_roles=...
+  if (h.indexOf("ohqs_access_token=") < 0) return false;
+  const q = new URLSearchParams(h.replace(/^#/, ""));
+  const tok = q.get("ohqs_access_token");
+  if (tok) {
+    setKcToken(tok);
+    history.replaceState(null, "", location.pathname + location.search + "#account");
+    return true;
+  }
+  return false;
+}
+
+window.loginKeycloak = function () {
+  const returnTo = location.origin + location.pathname + "#account";
+  location.href = apiBase() + "/v1/auth/login?return_to=" + encodeURIComponent(returnTo);
+};
+
+window.usePastedKcToken = function () {
+  const el = document.getElementById("acct-paste-token");
+  const t = (el && el.value || "").trim();
+  if (!t) return;
+  setKcToken(t);
+  if (el) el.value = "";
+  refreshAccount();
+};
+
+window.logoutKc = function () {
+  setKcToken("");
+  setStoredApiToken("");
+  refreshAccount();
+};
+
+window.signupOhqs = async function () {
+  const status = document.getElementById("signup-status");
+  const email = (document.getElementById("signup-email").value || "").trim();
+  const password = document.getElementById("signup-password").value || "";
+  const name = (document.getElementById("signup-name").value || "").trim();
+  status.textContent = "creating…";
+  try {
+    const r = await fetchJSON("/v1/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: email, password: password, name: name || undefined }),
+    });
+    status.textContent = (r.created ? "Created " : "Existing ") + r.email + " — now Login with Keycloak.";
+  } catch (e) {
+    status.textContent = "signup failed: " + e.message;
+  }
+};
+
+window.mintClientToken = async function () {
+  const status = document.getElementById("acct-mint-status");
+  const pre = document.getElementById("acct-raw-token");
+  status.textContent = "minting…";
+  pre.hidden = true;
+  try {
+    const r = await authFetch("/v1/tokens", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+    setStoredApiToken(r.token);
+    status.textContent = "Client token minted (prefix " + r.prefix + "). Copy now — shown once.";
+    pre.textContent = r.token + "\n\n" + (r.warning || "");
+    pre.hidden = false;
+    await refreshAccountTokens();
+  } catch (e) {
+    status.textContent = "mint failed: " + e.message;
+  }
+};
+
+window.mintAiToken = async function () {
+  const status = document.getElementById("acct-mint-status");
+  const pre = document.getElementById("acct-raw-token");
+  status.textContent = "minting AI token…";
+  pre.hidden = true;
+  try {
+    const r = await authFetch("/v1/tokens/ai", { method: "POST" });
+    status.textContent = "Admin AI token minted (prefix " + r.prefix + "). Keep offline — never in README/CLI/www.";
+    pre.textContent = r.token + "\n\n" + (r.warning || "");
+    pre.hidden = false;
+    await refreshAccountTokens();
+  } catch (e) {
+    status.textContent = "mint AI failed: " + e.message;
+  }
+};
+
+window.revokeToken = async function (id) {
+  try {
+    await authFetch("/v1/tokens/" + encodeURIComponent(id) + "/revoke", { method: "POST" });
+    await refreshAccountTokens();
+  } catch (e) {
+    alert("revoke failed: " + e.message);
+  }
+};
+
+async function refreshAccountTokens() {
+  const list = document.getElementById("acct-token-list");
+  const usage = document.getElementById("acct-usage-list");
+  if (!list) return;
+  list.innerHTML = "";
+  usage.innerHTML = "";
+  try {
+    const r = await authFetch("/v1/tokens");
+    (r.tokens || []).forEach(function (tok) {
+      const li = document.createElement("li");
+      const revoked = tok.revoked_at ? " · REVOKED" : "";
+      li.innerHTML = "<strong>" + esc(tok.type) + "</strong> " + esc(tok.prefix) + "… <span class='muted'>id=" + esc(tok.id) + revoked + "</span>";
+      if (!tok.revoked_at) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "btn ghost";
+        b.textContent = "Revoke";
+        b.onclick = function () { revokeToken(tok.id); };
+        li.appendChild(document.createTextNode(" "));
+        li.appendChild(b);
+      }
+      list.appendChild(li);
+    });
+    if (!(r.tokens || []).length) {
+      const li = document.createElement("li");
+      li.textContent = "No tokens yet.";
+      list.appendChild(li);
+    }
+  } catch (e) {
+    list.innerHTML = "<li>Could not list tokens: " + esc(e.message) + "</li>";
+  }
+  try {
+    const u = await authFetch("/v1/usage");
+    (u.recent || []).slice(0, 20).forEach(function (row) {
+      const li = document.createElement("li");
+      li.textContent = new Date(row.ts * 1000).toLocaleString() + " · " + row.method + " " + row.route + " · " + row.status + " · ip=" + (row.ip || "?");
+      usage.appendChild(li);
+    });
+    if (!(u.recent || []).length) {
+      const li = document.createElement("li");
+      li.textContent = "No usage yet.";
+      usage.appendChild(li);
+    }
+  } catch (e) {
+    usage.innerHTML = "<li>Usage unavailable: " + esc(e.message) + "</li>";
+  }
+}
+
+async function refreshAccount() {
+  const out = document.getElementById("acct-logged-out");
+  const inn = document.getElementById("acct-logged-in");
+  const userEl = document.getElementById("acct-user");
+  const aiBtn = document.getElementById("acct-mint-ai");
+  if (!out || !inn) return;
+  const tok = kcToken();
+  if (!tok) {
+    out.hidden = false;
+    inn.hidden = true;
+    return;
+  }
+  try {
+    const v = await authFetch("/v1/auth/verify");
+    out.hidden = true;
+    inn.hidden = false;
+    const roles = (v.user && v.user.roles) || [];
+    userEl.textContent = "Signed in as " + ((v.user && (v.user.email || v.user.sub)) || "?") +
+      (roles.length ? (" · roles: " + roles.join(", ")) : "");
+    if (aiBtn) aiBtn.hidden = roles.indexOf("admin") < 0;
+    await refreshAccountTokens();
+  } catch (e) {
+    setKcToken("");
+    out.hidden = false;
+    inn.hidden = true;
+    userEl.textContent = "";
+  }
+}
+
+
 // ---- boot ----
 
 window.addEventListener("DOMContentLoaded", function () {
@@ -460,6 +678,12 @@ window.addEventListener("DOMContentLoaded", function () {
   syncPlaybookGate();
   refreshIndex();
   loadModels();
+
+  captureOidcHash();
+  if (pageFromHash() === "account") refreshAccount();
+  window.addEventListener("hashchange", function () {
+    if (pageFromHash() === "account") refreshAccount();
+  });
 
   // Deep link: /?q=command+and+control pre-fills + runs a catalog search.
   const pre = new URLSearchParams(location.search).get("q");

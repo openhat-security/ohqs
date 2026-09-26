@@ -183,6 +183,121 @@ POST /v1/deps
 GET  /v1/history
 ```
 
+## Free Public API
+
+The hosted edge API at **https://api.openhat.io** provides free access to the catalog and playbook builder.
+
+### Endpoints
+
+| Endpoint | Method | Description | Rate Limit (min/hr/day) |
+| --- | --- | --- | --- |
+| `/v1/search` | GET | Search the security catalog (tools, guides, extensions, etc.) | 5 / 25 / 100 |
+| `/v1/bounties` | GET | List bug bounty platforms/programs/contracts | 30 / 100 / 300 |
+| `/v1/models` | GET | Get model recommendations for your hardware | 30 / 100 / 300 |
+| `/v1/tools/{id}` | GET | Get a single catalog record by ID | 10 / 50 / 200 |
+| `/v1/index` | GET | Check index status (records, vectors, embedder) | 30 / 100 / 300 |
+| `/v1/recommend` | POST | Build an authorized playbook (LLM-powered via OpenRouter free tier) | 2 / 10 / 25 |
+| `/v1/llm/models` | GET | List available LLM models (OpenRouter free router + Workers AI) | 20 / 50 / 150 |
+| `/v1/auth/signup` | POST | Self-serve Keycloak user (role `client`) | — |
+| `/v1/auth/login` | GET | Start Keycloak OIDC login | — |
+| `/v1/tokens` | POST/GET | Mint/list client API tokens (Keycloak session) | — |
+| `/v1/auth/verify` | GET | Verify Keycloak or API token | — |
+| `/healthz` | GET | Health check | — |
+
+### Rate Limits
+
+All endpoints are **strictly rate limited** per IP and per authenticated user (the stricter of the two applies) across **three time windows**:
+
+- **Catalog search (`/v1/search`)**: 5/min, 25/hr, 100/day
+- **Playbook creation (`/v1/recommend`)**: 2/min, 10/hr, 25/day
+- **Tool details (`/v1/tools/{id}`)**: 10/min, 50/hr, 200/day
+- Other endpoints have higher limits (see table)
+
+Rate limit headers are included in responses:
+- `X-RateLimit-Limit` — max requests in minute window
+- `X-RateLimit-Limit-Hour` — max requests in hour window
+- `X-RateLimit-Limit-Day` — max requests in day window
+- `X-RateLimit-Remaining` — requests left in the strictest window
+- `X-RateLimit-Reset` — Unix ms when the strictest window resets
+- `Retry-After` — seconds until next request allowed (on 429)
+
+On 429 responses, the JSON body includes `"window": "minute|hour|day"` indicating which limit was exceeded.
+
+### Authentication (optional)
+
+Authenticated calls use an opaque **client API token** (minted after Keycloak login). Client tokens are metered by `token_id` + IP; hashes only are stored at rest. See [docs/auth-keycloak.md](docs/auth-keycloak.md).
+
+```bash
+curl -H "Authorization: Bearer <CLIENT_API_TOKEN>" https://api.openhat.io/v1/search?q=nuclei
+```
+
+Admin AI tokens exist for ops embed/LLM work only — never put them in README examples, CLI defaults, or www.
+
+### CLI Authentication
+
+Generate a token via the CLI (mocks Keycloak/OIDC for now):
+
+```bash
+# Get a token (prints to stdout)
+ohqs auth token --email you@example.com
+
+# Save token locally for subsequent commands
+ohqs auth token --save --email you@example.com
+
+# Verify token
+ohqs auth verify
+
+# Login flow (opens browser to Keycloak in production)
+ohqs auth login --email you@example.com --no-browser
+```
+
+The token is saved to `data/token.json` (gitignored) and automatically used by CLI commands that call the edge API.
+
+### Examples
+
+**Search the catalog:**
+```bash
+curl "https://api.openhat.io/v1/search?q=nuclei&limit=10"
+```
+
+**Build a playbook (requires `--authorized` gate):**
+```bash
+curl -X POST https://api.openhat.io/v1/recommend \
+  -H "Content-Type: application/json" \
+  -d '{
+    "authorized": true,
+    "scope": "example.com, in-scope www and api",
+    "situation": "Next.js SaaS with auth and a chat feature"
+  }'
+```
+
+**Get model recommendations for your hardware:**
+```bash
+curl "https://api.openhat.io/v1/models?ramgb=16&vramgb=0&limit=6"
+```
+
+**List available LLM models (OpenRouter free router):**
+```bash
+curl "https://api.openhat.io/v1/llm/models"
+```
+
+### LLM Backend
+
+The `/v1/recommend` LLM planner uses **OpenRouter's free router** (`inclusionai/ling-3.0-flash-fin:free`) by default. No API key required for the free tier.
+
+To use a different model, pass `model` in the request body (must match an available OpenRouter model):
+
+```bash
+curl -X POST https://api.openhat.io/v1/recommend \
+  -H "Content-Type: application/json" \
+  -d '{
+    "authorized": true,
+    "scope": "...",
+    "situation": "...",
+    "model": "openrouter/auto"
+  }'
+```
+
 ## Local models
 
 `ohqs` can use any OpenAI-compatible endpoint.

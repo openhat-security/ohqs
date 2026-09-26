@@ -23,3 +23,6 @@ deploy/worker/node_modules/
 deploy/web/node_modules/
 deploy/web/.vercel/
 deploy/worker/.admin_token.txt
+deploy/worker/.dev.vars
+deploy/worker/.dev.vars.*
+!deploy/worker/.dev.vars.example

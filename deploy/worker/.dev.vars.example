@@ -1,0 +1,6 @@
+# Local wrangler secrets — copy to .dev.vars (gitignored). Never commit secrets.
+KEYCLOAK_ISSUER=http://localhost:8080/realms/openhat
+KEYCLOAK_CLIENT_ID=ohqs-api
+KEYCLOAK_CLIENT_SECRET=paste-from-keycloak-client-credentials
+# Optional emergency local-only embed gate. Prefer minting an ai_admin API token.
+# ADMIN_TOKEN=
