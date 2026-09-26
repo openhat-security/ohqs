@@ -235,23 +235,14 @@ Admin AI tokens exist for ops embed/LLM work only — never put them in README e
 
 ### CLI Authentication
 
-Generate a token via the CLI (mocks Keycloak/OIDC for now):
+Prefer minting a **client API token** from the console Account tab (Keycloak login → Mint client API token), then export it for CLI/edge calls:
 
 ```bash
-# Get a token (prints to stdout)
-ohqs auth token --email you@example.com
-
-# Save token locally for subsequent commands
-ohqs auth token --save --email you@example.com
-
-# Verify token
-ohqs auth verify
-
-# Login flow (opens browser to Keycloak in production)
-ohqs auth login --email you@example.com --no-browser
+export OHQS_API_TOKEN=ohqs_c_…   # client token only — never an ai_admin token
+curl -H "Authorization: Bearer $OHQS_API_TOKEN" "$OHQS_API/v1/search?q=nuclei"
 ```
 
-The token is saved to `data/token.json` (gitignored) and automatically used by CLI commands that call the edge API.
+Full local Keycloak setup: [docs/auth-keycloak.md](docs/auth-keycloak.md).
 
 ### Examples
 
