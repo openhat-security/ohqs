@@ -196,12 +196,10 @@ The hosted edge API at **https://api.openhat.io** provides free access to the ca
 | `/v1/models` | GET | Get model recommendations for your hardware | 30 / 100 / 300 |
 | `/v1/tools/{id}` | GET | Get a single catalog record by ID | 10 / 50 / 200 |
 | `/v1/index` | GET | Check index status (records, vectors, embedder) | 30 / 100 / 300 |
-| `/v1/recommend` | POST | Build an authorized playbook (LLM-powered via OpenRouter free tier) | 2 / 10 / 25 |
+| `/v1/recommend` | POST | Build an authorized playbook (LLM-powered via OpenRouter free tier; needs `ohqs_*`) | 2 / 10 / 25 |
 | `/v1/llm/models` | GET | List available LLM models (OpenRouter free router + Workers AI) | 20 / 50 / 150 |
-| `/v1/auth/signup` | POST | Self-serve Keycloak user (role `client`) | — |
-| `/v1/auth/login` | GET | Start Keycloak OIDC login | — |
-| `/v1/tokens` | POST/GET | Mint/list client API tokens (Keycloak session) | — |
-| `/v1/auth/verify` | GET | Verify Keycloak or API token | — |
+| `/v1/tokens` | POST/GET | Mint/list API tokens (Keycloak access JWT from portal) | — |
+| `/v1/auth/verify` | GET | Verify Keycloak JWT or `ohqs_*` API token | — |
 | `/healthz` | GET | Health check | — |
 
 ### Rate Limits
@@ -225,24 +223,31 @@ On 429 responses, the JSON body includes `"window": "minute|hour|day"` indicatin
 
 ### Authentication (optional)
 
-Authenticated calls use an opaque **client API token** (minted after Keycloak login). Client tokens are metered by `token_id` + IP; hashes only are stored at rest. See [docs/auth-keycloak.md](docs/auth-keycloak.md).
+OHQS web has **no login**. Mint an opaque **client API token** in **openhat-portal**
+(`/dashboard/tokens`), then call the API with `Authorization: Bearer ohqs_c_…`.
+Client tokens are metered by `token_id` + IP; hashes only are stored at rest.
+See [docs/auth-keycloak.md](docs/auth-keycloak.md).
 
 ```bash
 curl -H "Authorization: Bearer <CLIENT_API_TOKEN>" https://api.openhat.io/v1/search?q=nuclei
 ```
 
-Admin AI tokens exist for ops embed/LLM work only — never put them in README examples, CLI defaults, or www.
+Admin AI tokens exist for ops embed/LLM work only — mint in the portal admin
+Tokens section. Never put them in README examples, CLI defaults, or www.
 
 ### CLI Authentication
 
-Prefer minting a **client API token** from the console Account tab (Keycloak login → Mint client API token), then export it for CLI/edge calls:
+1. Sign in to openhat-portal (local `:3210`) and open **API tokens**.
+2. Mint a **client** token (shown once) and export it:
 
 ```bash
 export OHQS_API_TOKEN=ohqs_c_…   # client token only — never an ai_admin token
+export OHQS_API=http://127.0.0.1:8788   # local worker
 curl -H "Authorization: Bearer $OHQS_API_TOKEN" "$OHQS_API/v1/search?q=nuclei"
+# or: ohqs configure --save --api-token "$OHQS_API_TOKEN"
 ```
 
-Full local Keycloak setup: [docs/auth-keycloak.md](docs/auth-keycloak.md).
+Full local Keycloak + portal setup: [docs/auth-keycloak.md](docs/auth-keycloak.md).
 
 ### Examples
 

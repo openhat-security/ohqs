@@ -38,7 +38,7 @@ func New() *cobra.Command {
 		Short: "OpenHat Quick Start — catalog search and authorized engagement playbooks",
 		Long:  "ohqs is the OpenHat quick-start CLI. It is not named OpenHat. It does not generate exploits.",
 	}
-	root.AddCommand(searchCmd(), showCmd(), recommendCmd(), indexCmd(), modelsCmd(), ingestCmd(), serveCmd(), setupCmd(), configureCmd(), runCmd(), depsCmd(), installCmd(), installCLICmd(), jobWorkerCmd(), browserCmd(), submodulesCmd())
+	root.AddCommand(searchCmd(), showCmd(), recommendCmd(), indexCmd(), modelsCmd(), ingestCmd(), serveCmd(), setupCmd(), configureCmd(), authCmd(), runCmd(), depsCmd(), installCmd(), installCLICmd(), jobWorkerCmd(), browserCmd(), submodulesCmd())
 	return root
 }
 
@@ -974,6 +974,152 @@ func configureCmd() *cobra.Command {
 	cmd.Flags().StringVar(&oaBase, "openai-base-url", "", "OpenAI-compatible base URL to save")
 	cmd.Flags().StringVar(&oaKey, "openai-api-key", "", "API key to save (stored locally only)")
 	cmd.Flags().StringVar(&oaModel, "openai-model", "", "model name to save")
+	return cmd
+}
+
+func authCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "auth",
+		Short: "API token helpers (verify / configure)",
+		Long:  "Mint tokens in openhat-portal (/dashboard/tokens), then export OHQS_API_TOKEN or ohqs configure --save --api-token. OHQS web has no login.",
+	}
+	cmd.AddCommand(authLoginCmd(), authTokenCmd(), authVerifyCmd())
+	return cmd
+}
+
+func authLoginCmd() *cobra.Command {
+	var (
+		email     string
+		apiURL    string
+		noBrowser bool
+	)
+	cmd := &cobra.Command{
+		Use:   "login",
+		Short: "Deprecated — sign in at openhat-portal and mint an API token there",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			cfg, err := appconfig.Resolve()
+			if err != nil {
+				return err
+			}
+			if apiURL == "" {
+				apiURL = cfg.APIBaseURL
+			}
+			if apiURL == "" {
+				apiURL = "https://ohqs.ukryty.workers.dev"
+			}
+
+			if email == "" {
+				fmt.Print("Email: ")
+				fmt.Scanln(&email)
+			}
+
+			_ = email
+			_ = noBrowser
+			fmt.Println("OHQS console has no login.")
+			fmt.Println("1. Sign in at openhat-portal (local http://localhost:3210)")
+			fmt.Println("2. Open /dashboard/tokens → Mint client token")
+			fmt.Println("3. export OHQS_API_TOKEN=ohqs_c_…   # never an ai_admin token")
+			fmt.Println("   or: ohqs configure --save --api-token <token>")
+			if apiURL != "" {
+				fmt.Printf("API base: %s\n", apiURL)
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&email, "email", "", "Email to authenticate with")
+	cmd.Flags().StringVar(&apiURL, "api-url", "", "API base URL (default: from config or https://ohqs.ukryty.workers.dev)")
+	cmd.Flags().BoolVar(&noBrowser, "no-browser", false, "Print URL instead of opening browser")
+	return cmd
+}
+
+func authTokenCmd() *cobra.Command {
+	var (
+		email  string
+		apiURL string
+		save   bool
+	)
+	cmd := &cobra.Command{
+		Use:   "token",
+		Short: "Legacy — mint tokens in openhat-portal /dashboard/tokens",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			_ = email
+			_ = save
+			cfg, err := appconfig.Resolve()
+			if err != nil {
+				return err
+			}
+			if apiURL == "" {
+				apiURL = cfg.APIBaseURL
+			}
+			fmt.Println("Mock /v1/auth/token is removed (410).")
+			fmt.Println("Mint a client API token in openhat-portal → /dashboard/tokens")
+			fmt.Println("Then:  export OHQS_API_TOKEN=ohqs_c_…")
+			fmt.Println("   or: ohqs configure --save --api-token <token>")
+			if apiURL != "" {
+				fmt.Printf("Configured API base: %s\n", apiURL)
+			}
+			fmt.Printf("Token file path: %s\n", cfg.TokenPath)
+			return fmt.Errorf("use openhat-portal to mint tokens (OHQS_API_TOKEN)")
+		},
+	}
+	cmd.Flags().StringVar(&email, "email", "", "Ignored (legacy)")
+	cmd.Flags().StringVar(&apiURL, "api-url", "", "API base URL")
+	cmd.Flags().BoolVar(&save, "save", false, "Ignored (legacy)")
+	return cmd
+}
+
+func authVerifyCmd() *cobra.Command {
+	var (
+		apiURL string
+		token  string
+	)
+	cmd := &cobra.Command{
+		Use:   "verify",
+		Short: "Verify current token is valid",
+		RunE: func(_ *cobra.Command, _ []string) error {
+			cfg, err := appconfig.Resolve()
+			if err != nil {
+				return err
+			}
+			if apiURL == "" {
+				apiURL = cfg.APIBaseURL
+			}
+			if apiURL == "" {
+				apiURL = "https://ohqs.ukryty.workers.dev"
+			}
+			if token == "" {
+				token, _ = cfg.LoadToken()
+			}
+			if token == "" {
+				return fmt.Errorf("no token provided (use --token or run 'ohqs auth token --save' first)")
+			}
+
+			req, _ := http.NewRequest("GET", fmt.Sprintf("%s/v1/auth/verify", apiURL), nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				return fmt.Errorf("request failed: %w", err)
+			}
+			defer resp.Body.Close()
+
+			body, _ := io.ReadAll(resp.Body)
+			if resp.StatusCode != 200 {
+				return fmt.Errorf("verify failed: %s", string(body))
+			}
+
+			var result map[string]any
+			json.Unmarshal(body, &result)
+			fmt.Printf("Token valid: %v\n", result["valid"])
+			if user, ok := result["user"].(map[string]any); ok {
+				fmt.Printf("User: %v\n", user["email"])
+				fmt.Printf("Scope: %v\n", user["scope"])
+				fmt.Printf("Expires: %v\n", user["exp"])
+			}
+			return nil
+		},
+	}
+	cmd.Flags().StringVar(&apiURL, "api-url", "", "API base URL")
+	cmd.Flags().StringVar(&token, "token", "", "Token to verify (default: from config)")
 	return cmd
 }
 

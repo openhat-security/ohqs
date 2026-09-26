@@ -1,6 +1,7 @@
-// Keycloak OIDC helpers for OHQS: JWKS access-token validation, authorization-code
-// login/callback (confidential client ohqs-api), and self-serve user signup via
-// the client's service account. Direct Access Grants stay OFF.
+// Keycloak helpers for OHQS: JWKS access-token validation for portal mint calls
+// (Authorization: Bearer <kc_access_jwt>). Console cookie OIDC is removed —
+// openhat-portal owns login. Optional authorization-code / signup helpers remain
+// unused by the public worker path. Direct Access Grants stay OFF.
 
 export interface KeycloakEnv {
   KEYCLOAK_ISSUER?: string;
@@ -336,5 +337,6 @@ export async function signupClientUser(
 }
 
 export function keycloakConfigured(env: KeycloakEnv): boolean {
-  return !!(env.KEYCLOAK_ISSUER && env.KEYCLOAK_CLIENT_ID && env.KEYCLOAK_CLIENT_SECRET);
+  // JWKS verify only needs issuer; client secret was for console OIDC/signup.
+  return !!env.KEYCLOAK_ISSUER;
 }

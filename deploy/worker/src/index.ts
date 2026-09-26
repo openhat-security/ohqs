@@ -8,8 +8,10 @@
 // per client API token_id via a Durable Object, (b) gates credit-costing
 // /v1/index/embed behind ai_admin (or admin Keycloak / emergency ADMIN_TOKEN),
 // (c) audits every authenticated API-token call to D1, and (d) sets strict
-// response headers. Auth is Keycloak OIDC (realm openhat, client ohqs-api) plus
-// opaque hashed API tokens. ai_admin tokens skip rate limits but are still audited.
+// response headers. Auth: opaque hashed ohqs_* API tokens for metered routes;
+// Keycloak access JWTs (Bearer, JWKS) only for mint/list/revoke/usage from the
+// portal. No cookie session / console login on OHQS. ai_admin skips rate limits
+// but is still audited.
 
 import { search, searchBounties, embedderMeta } from "./search";
 import { BountyClass } from "./bounties";
@@ -19,9 +21,6 @@ import { buildPlan, markdown, RecommendRequest } from "./planner";
 import { llmRecommend, llmEnabled, resolveLlmConfig, listLlmModels } from "./llm";
 import {
   verifyAccessToken,
-  buildLoginUrl,
-  handleCallback,
-  signupClientUser,
   keycloakConfigured,
   isAdmin,
   type KeycloakUser,
@@ -142,7 +141,7 @@ function clientIP(request: Request): string {
 type AuthContext = {
   /** Opaque OHQS API token (client or ai_admin). */
   apiToken: ResolvedApiToken | null;
-  /** Validated Keycloak access-token session (console / OIDC). */
+  /** Validated Keycloak access JWT (Bearer only — used by portal for mint). */
   kcUser: KeycloakUser | null;
   /** Emergency ADMIN_TOKEN match (local only). */
   emergencyAdmin: boolean;
@@ -155,77 +154,9 @@ function bearer(request: Request): string | null {
   return t || null;
 }
 
-const SESSION_COOKIE = "ohqs_session";
-
-// TODO(non-local): ohqs_session currently stores the raw Keycloak access token
-// (HttpOnly; Secure only on HTTPS). Before non-local deploy, switch to an
-// opaque/encrypted session id (or sealed blob) so the JWT is not cookie-readable
-// even if HttpOnly is bypassed, and always set Secure on HTTPS.
-
-function cookieValue(request: Request, name: string): string | null {
-  const raw = request.headers.get("Cookie") || "";
-  for (const part of raw.split(";")) {
-    const trimmed = part.trim();
-    if (!trimmed) continue;
-    const eq = trimmed.indexOf("=");
-    if (eq < 0) continue;
-    if (trimmed.slice(0, eq) !== name) continue;
-    const v = trimmed.slice(eq + 1);
-    try {
-      return decodeURIComponent(v);
-    } catch {
-      return v;
-    }
-  }
-  return null;
-}
-
-/** Max-Age for session cookie from JWT exp, else ~1h. */
-function accessTokenMaxAge(accessToken: string): number {
-  try {
-    const parts = accessToken.split(".");
-    if (parts.length < 2) return 3600;
-    const pad = "=".repeat((4 - (parts[1].length % 4)) % 4);
-    const b64 = (parts[1] + pad).replace(/-/g, "+").replace(/_/g, "/");
-    const payload = JSON.parse(atob(b64)) as { exp?: number };
-    if (typeof payload.exp === "number") {
-      const age = payload.exp - Math.floor(Date.now() / 1000);
-      return Math.max(60, Math.min(age, 86_400));
-    }
-  } catch {
-    /* fall through */
-  }
-  return 3600;
-}
-
-function buildSessionCookie(
-  accessToken: string,
-  request: Request,
-  maxAge?: number,
-): string {
-  const secure = new URL(request.url).protocol === "https:";
-  const age = maxAge ?? accessTokenMaxAge(accessToken);
-  const parts = [
-    `${SESSION_COOKIE}=${encodeURIComponent(accessToken)}`,
-    "HttpOnly",
-    "Path=/",
-    "SameSite=Lax",
-    `Max-Age=${age}`,
-  ];
-  if (secure) parts.push("Secure");
-  return parts.join("; ");
-}
-
-function clearSessionCookie(request: Request): string {
-  const secure = new URL(request.url).protocol === "https:";
-  const parts = [`${SESSION_COOKIE}=`, "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=0"];
-  if (secure) parts.push("Secure");
-  return parts.join("; ");
-}
-
 async function resolveAuth(request: Request, env: Env): Promise<AuthContext> {
-  // Prefer Authorization: Bearer (API tokens / pasted KC); else HttpOnly session cookie.
-  const token = bearer(request) || cookieValue(request, SESSION_COOKIE);
+  // Bearer only — no cookie session on OHQS (portal mints with KC JWT).
+  const token = bearer(request);
   const out: AuthContext = { apiToken: null, kcUser: null, emergencyAdmin: false };
   if (!token) return out;
   if (env.ADMIN_TOKEN && token === env.ADMIN_TOKEN) {
@@ -244,25 +175,7 @@ async function resolveAuth(request: Request, env: Env): Promise<AuthContext> {
 
 function requireKc(auth: AuthContext): KeycloakUser | Response {
   if (auth.kcUser) return auth.kcUser;
-  return err("Keycloak access token required", 401);
-}
-
-function workerOrigin(request: Request): string {
-  const url = new URL(request.url);
-  return url.origin;
-}
-
-function safeReturnTo(raw: string | null, fallback: string): string {
-  if (!raw) return fallback;
-  try {
-    const u = new URL(raw);
-    if (u.protocol !== "http:" && u.protocol !== "https:") return fallback;
-    // Local console / worker only
-    if (!["localhost", "127.0.0.1"].includes(u.hostname)) return fallback;
-    return u.toString();
-  } catch {
-    return fallback;
-  }
+  return err("Keycloak access token required (Authorization: Bearer <kc_jwt>)", 401);
 }
 
 async function applyMeterAndAudit(
@@ -304,116 +217,9 @@ export default {
 
     const auth = await resolveAuth(request, env);
 
-    // ---- Auth / OIDC / API tokens (no client metering on these) ----
-
-    // Self-serve OHQS signup (creates Keycloak user + realm role `client`).
-    // Separate from invite-only engagement portal.
-    if (path === "/v1/auth/signup" && method === "POST") {
-      if (!keycloakConfigured(env)) return err("Keycloak not configured", 503);
-      let body: { email?: string; password?: string; name?: string } = {};
-      try {
-        body = (await request.json()) as typeof body;
-      } catch {
-        return err("invalid JSON body", 400);
-      }
-      try {
-        const result = await signupClientUser(env, {
-          email: body.email || "",
-          password: body.password || "",
-          name: body.name,
-        });
-        return json({
-          ok: true,
-          created: result.created,
-          email: result.email,
-          sub: result.sub,
-          next: "Login via GET /v1/auth/login (browser OIDC) then POST /v1/tokens",
-        });
-      } catch (e) {
-        return err((e as Error).message, 400);
-      }
-    }
-
-    // Start Keycloak authorization-code + PKCE login (confidential ohqs-api).
-    if (path === "/v1/auth/login" && method === "GET") {
-      if (!keycloakConfigured(env)) return err("Keycloak not configured", 503);
-      const origin = workerOrigin(request);
-      const returnTo = safeReturnTo(
-        url.searchParams.get("return_to"),
-        origin + "/",
-      );
-      try {
-        const loc = await buildLoginUrl(env, origin, returnTo);
-        return Response.redirect(loc, 302);
-      } catch (e) {
-        return err((e as Error).message, 500);
-      }
-    }
-
-    // OIDC callback — PKCE code exchange, then HttpOnly session cookie + clean #account redirect.
-    // Never put access_token in query or hash (local same-origin MVP).
-    if (path === "/v1/auth/callback" && method === "GET") {
-      if (!keycloakConfigured(env)) return err("Keycloak not configured", 503);
-      const code = url.searchParams.get("code") || "";
-      const state = url.searchParams.get("state") || "";
-      const oauthErr = url.searchParams.get("error");
-      if (oauthErr) return err("oidc error: " + oauthErr, 400);
-      if (!code || !state) return err("missing code/state", 400);
-      try {
-        const { accessToken, returnTo } = await handleCallback(
-          env,
-          workerOrigin(request),
-          code,
-          state,
-        );
-        const dest = new URL(returnTo);
-        dest.hash = "account";
-        return new Response(null, {
-          status: 302,
-          headers: {
-            Location: dest.toString(),
-            "Set-Cookie": buildSessionCookie(accessToken, request),
-            ...baseHeaders,
-          },
-        });
-      } catch (e) {
-        return err((e as Error).message, 400);
-      }
-    }
-
-    // Session identity: Bearer (API / pasted KC) or HttpOnly ohqs_session cookie.
-    if (path === "/v1/auth/me" && method === "GET") {
-      const viaBearer = !!bearer(request);
-      if (auth.kcUser) {
-        return json({
-          email: auth.kcUser.email ?? null,
-          roles: auth.kcUser.roles,
-          sub: auth.kcUser.sub,
-          auth: viaBearer ? "bearer" : "cookie",
-        });
-      }
-      if (auth.apiToken) {
-        return json({
-          email: auth.apiToken.email,
-          roles: auth.apiToken.type === "ai_admin" ? ["ai_admin"] : ["client"],
-          sub: auth.apiToken.user_sub,
-          auth: "bearer",
-        });
-      }
-      return err("not authenticated", 401);
-    }
-
-    // Clear HttpOnly session cookie (logout).
-    if (path === "/v1/auth/logout" && (method === "POST" || method === "GET")) {
-      return new Response(JSON.stringify({ ok: true }, null, 2), {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json; charset=utf-8",
-          "Set-Cookie": clearSessionCookie(request),
-          ...baseHeaders,
-        },
-      });
-    }
+    // ---- Auth / API tokens (no client metering on these) ----
+    // Cookie OIDC console login removed — mint via openhat-portal with Bearer KC JWT.
+    // Public console has no Account UI. CLI uses OHQS_API_TOKEN (ohqs_*).
 
     // Verify Keycloak access token or opaque API token.
     if (path === "/v1/auth/verify" && method === "GET") {
@@ -446,7 +252,7 @@ export default {
       return err("invalid or missing token", 401);
     }
 
-    // Mint API token (requires Keycloak session).
+    // Mint API token — requires Keycloak access JWT (portal sends Bearer).
     // Default type=client. type=ai_admin only if realm role admin (also POST /v1/tokens/ai).
     if ((path === "/v1/tokens" || path === "/v1/tokens/ai") && method === "POST") {
       const kc = requireKc(auth);
@@ -502,7 +308,7 @@ export default {
       return json({ revoked: true, id });
     }
 
-    // Own usage only (no cross-user leak). Alias /v1/tokens/usage for Account UI.
+    // Own usage only (no cross-user leak).
     if ((path === "/v1/usage" || path === "/v1/tokens/usage") && method === "GET") {
       const kc = requireKc(auth);
       if (kc instanceof Response) return kc;
@@ -513,7 +319,7 @@ export default {
     // Legacy mock endpoint retired.
     if (path === "/v1/auth/token" && method === "POST") {
       return err(
-        "Mock JWT auth removed. Use Keycloak: POST /v1/auth/signup, GET /v1/auth/login, then POST /v1/tokens",
+        "Mock JWT auth removed. Mint ohqs_* tokens in openhat-portal (/dashboard/tokens) with a Keycloak session, then use Authorization: Bearer ohqs_…",
         410,
       );
     }
@@ -656,7 +462,7 @@ export default {
         (a.apiToken && a.apiToken.type === "ai_admin") ||
         (a.kcUser && isAdmin(a.kcUser.roles));
       if (!allowed) {
-        return err("ai_admin token or admin Keycloak session required", 401);
+        return err("ai_admin API token or admin Keycloak Bearer JWT required", 401);
       }
       const model = url.searchParams.get("model") || EMBED_MODEL;
       const embedder = env.AI;
@@ -740,12 +546,9 @@ export default {
     // playbook.
     if (path === "/v1/recommend" && method === "POST") {
       const a = ((request as any).__ohqsAuth || auth) as AuthContext;
-      const allowed =
-        a.emergencyAdmin ||
-        !!a.apiToken ||
-        !!a.kcUser;
+      const allowed = a.emergencyAdmin || !!a.apiToken;
       if (!allowed) {
-        return err("API token or Keycloak session required for /v1/recommend", 401);
+        return err("ohqs_* API token required for /v1/recommend (mint in openhat-portal)", 401);
       }
       let body: RecommendRequest;
       try {

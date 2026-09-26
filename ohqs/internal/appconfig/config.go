@@ -18,6 +18,8 @@ type Config struct {
 	JobsDir      string
 	HistoryDir   string
 	SettingsPath string
+	TokenPath    string
+	APIBaseURL   string
 }
 
 func Resolve() (*Config, error) {
@@ -29,15 +31,18 @@ func Resolve() (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	dataDir := filepath.Join(root, "data")
 	return &Config{
 		Root:         root,
 		Catalog:      filepath.Join(root, "catalog"),
-		IndexPath:    filepath.Join(root, "data", "ohqs.sqlite"),
+		IndexPath:    filepath.Join(dataDir, "ohqs.sqlite"),
 		Listen:       "127.0.0.1:8787",
 		ToolBin:      filepath.Join(root, "bin", "tools"),
-		JobsDir:      filepath.Join(root, "data", "jobs"),
-		HistoryDir:   filepath.Join(root, "data", "history"),
-		SettingsPath: filepath.Join(root, "data", "config.json"),
+		JobsDir:      filepath.Join(dataDir, "jobs"),
+		HistoryDir:   filepath.Join(dataDir, "history"),
+		SettingsPath: filepath.Join(dataDir, "config.json"),
+		TokenPath:    filepath.Join(dataDir, "token.json"),
+		APIBaseURL:   "https://ohqs.ukryty.workers.dev",
 	}, nil
 }
 
@@ -85,4 +90,35 @@ func (c *Config) SaveLLM(cfg llm.Config) error {
 		return err
 	}
 	return os.WriteFile(c.SettingsPath, append(raw, '\n'), 0o600)
+}
+
+func (c *Config) SaveToken(token string) error {
+	if err := os.MkdirAll(filepath.Dir(c.TokenPath), 0o755); err != nil {
+		return err
+	}
+	type tokenFile struct {
+		Token string `json:"token"`
+	}
+	raw, err := json.MarshalIndent(tokenFile{Token: token}, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(c.TokenPath, append(raw, '\n'), 0o600)
+}
+
+func (c *Config) LoadToken() (string, error) {
+	raw, err := os.ReadFile(c.TokenPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", err
+	}
+	var tf struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(raw, &tf); err != nil {
+		return "", err
+	}
+	return tf.Token, nil
 }

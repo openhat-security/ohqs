@@ -16,7 +16,6 @@
     <a class="tab active" data-tab="catalog" href="#catalog">Catalog</a>
     <a class="tab" data-tab="playbook" href="#playbook">Playbook</a>
     <a class="tab" data-tab="bounties" href="#bounties">Bounties</a>
-    <a class="tab" data-tab="account" href="#account">Account</a>
   </nav>
 </header>
 <main>
@@ -57,7 +56,7 @@
 
   <section class="card page" data-page="playbook" hidden>
     <p class="label">Playbook generator</p>
-    <p class="meta">Live planner — a model (Workers AI, or your own OpenAI-compatible / OpenRouter endpoint) writes a tailored playbook per situation.</p>
+    <p class="meta">Live planner — a model (Workers AI, or your own OpenAI-compatible / OpenRouter endpoint) writes a tailored playbook per situation. Authenticated calls need an <code>ohqs_*</code> API token from the <strong>openhat-portal</strong> Tokens page (CLI: <code>OHQS_API_TOKEN</code>). This console has no login.</p>
     <label for="rely-situation">Situation</label>
     <textarea id="rely-situation" placeholder="Describe the target and context — e.g. Next.js SaaS payments page where invoices leak via IDOR…"></textarea>
     <div id="rely-gate" hidden>
@@ -83,68 +82,6 @@
     <div id="rely-out"></div>
   </section>
 
-
-  <section class="card page acct-card" data-page="account" hidden>
-    <p class="label">Account</p>
-    <p class="meta">Sign in with Keycloak (realm <code>openhat</code>, client <code>ohqs-api</code>). Mint a <strong>client</strong> API token for metered calls. Session uses an HttpOnly cookie — no token in the URL bar.</p>
-
-    <div id="acct-logged-out">
-      <div class="actions">
-        <button type="button" onclick="loginKeycloak()">Sign in</button>
-        <button type="button" class="btn ghost" onclick="document.getElementById('acct-signup').open = true; document.getElementById('signup-email').focus()">Sign up</button>
-      </div>
-      <details class="meta acct-details" id="acct-signup" style="margin-top:1rem">
-        <summary>Sign up (self-serve)</summary>
-        <p>Creates a Keycloak user with realm role <code>client</code>. Separate from the invite-only engagement portal.</p>
-        <label for="signup-email">Email</label>
-        <input id="signup-email" type="email" placeholder="you@example.com">
-        <label for="signup-password">Password (≥10 chars)</label>
-        <input id="signup-password" type="password" autocomplete="new-password">
-        <label for="signup-name">Name (optional)</label>
-        <input id="signup-name" type="text" placeholder="Ada">
-        <div class="actions">
-          <button type="button" onclick="signupOhqs()">Create account</button>
-        </div>
-        <p id="signup-status" class="meta"></p>
-      </details>
-      <details class="meta acct-details" style="margin-top:0.75rem">
-        <summary>Local debug: paste Keycloak access token</summary>
-        <div class="row" style="margin-top:0.5rem">
-          <div class="grow">
-            <input id="acct-paste-token" type="password" placeholder="Keycloak access_token…" autocomplete="off">
-          </div>
-          <button type="button" class="btn ghost" onclick="usePastedKcToken()">Use token</button>
-        </div>
-      </details>
-    </div>
-
-    <div id="acct-logged-in" hidden>
-      <p id="acct-user" class="meta"></p>
-      <div class="actions">
-        <button type="button" onclick="mintClientToken()">Mint client API token</button>
-        <button type="button" class="btn danger" id="acct-mint-ai" hidden onclick="mintAiToken()" title="Admin only — internal / unlimited / audited">Mint AI token</button>
-        <button type="button" class="btn ghost" onclick="logoutKc()">Sign out</button>
-      </div>
-      <p id="acct-ai-warn" class="callout warn-signal" hidden>AI tokens are <strong>internal / unlimited / audited</strong>. Realm role <code>admin</code> only. Never put them in README, CLI defaults, or www.</p>
-      <p id="acct-mint-status" class="meta"></p>
-      <div id="acct-raw-wrap" class="raw-reveal" hidden>
-        <p class="label">Copy now — shown once</p>
-        <pre id="acct-raw-token" class="callout"></pre>
-        <div class="actions">
-          <button type="button" class="btn ghost" onclick="copyRawToken()">Copy</button>
-          <button type="button" class="btn ghost" onclick="dismissRawToken()">Dismiss</button>
-        </div>
-      </div>
-      <p class="label">Your tokens</p>
-      <ul class="links" id="acct-token-list"></ul>
-      <p class="label">Usage summary</p>
-      <p id="acct-usage-summary" class="meta"></p>
-      <ul class="links" id="acct-usage-routes"></ul>
-      <p class="label">Recent calls</p>
-      <ul class="links" id="acct-usage-list"></ul>
-    </div>
-  </section>
-
   <section class="card" id="index-card">
     <p class="label">Index</p>
     <p id="index-status" class="meta">loading…</p>
@@ -153,11 +90,11 @@
         <input id="api-base" type="text" placeholder="https://…">
       </label>
       <button type="button" class="btn ghost" id="api-base-reset" hidden>reset to default</button>
-      <span class="hint">Optional. Only set if you run your own API. Searches run as you type.</span>
+      <span class="hint">Optional. Only set if you run your own API. Searches run as you type. API tokens: portal → CLI env <code>OHQS_API_TOKEN</code>.</span>
     </p>
   </section>
 
 </main>
-<script src="/app.js?v=20250926b" defer></script>
+<script src="/app.js?v=20250926c" defer></script>
 </body>
 </html>
