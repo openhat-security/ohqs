@@ -86,7 +86,7 @@ npx wrangler dev
    - Signup (optional) → Login with Keycloak → Mint client token
    - Admins see **Mint admin AI token**
 
-OIDC flow: console → `GET /v1/auth/login` → Keycloak → `GET /v1/auth/callback` → redirect back with access token in the URL hash (local only).
+OIDC flow: console → `GET /v1/auth/login` → Keycloak → `GET /v1/auth/callback` (PKCE code exchange) → set HttpOnly `ohqs_session` cookie → redirect to `return_to` with clean `#account` hash only. **Token-in-URL-hash is removed** — never put `access_token` in query or hash.
 
 ## API surface (auth)
 
@@ -94,7 +94,9 @@ OIDC flow: console → `GET /v1/auth/login` → Keycloak → `GET /v1/auth/callb
 |--------|------|------|-------|
 | POST | `/v1/auth/signup` | none | Self-serve Keycloak user + role `client` |
 | GET | `/v1/auth/login` | none | Start OIDC (PKCE) |
-| GET | `/v1/auth/callback` | none | OIDC code exchange |
+| GET | `/v1/auth/callback` | none | OIDC code exchange → HttpOnly cookie + `#account` |
+| GET | `/v1/auth/me` | Bearer or session cookie | `{ email, roles, sub, auth: "cookie"|"bearer" }` |
+| POST | `/v1/auth/logout` | none | Clears `ohqs_session` cookie |
 | GET | `/v1/auth/verify` | Bearer KC or API token | Session/token introspection |
 | POST | `/v1/tokens` | Keycloak access token | Mint `client` (or `ai_admin` if admin) |
 | POST | `/v1/tokens/ai` | Keycloak + role `admin` | Mint `ai_admin` |

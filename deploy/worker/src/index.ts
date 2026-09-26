@@ -155,8 +155,72 @@ function bearer(request: Request): string | null {
   return t || null;
 }
 
+const SESSION_COOKIE = "ohqs_session";
+
+function cookieValue(request: Request, name: string): string | null {
+  const raw = request.headers.get("Cookie") || "";
+  for (const part of raw.split(";")) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq < 0) continue;
+    if (trimmed.slice(0, eq) !== name) continue;
+    const v = trimmed.slice(eq + 1);
+    try {
+      return decodeURIComponent(v);
+    } catch {
+      return v;
+    }
+  }
+  return null;
+}
+
+/** Max-Age for session cookie from JWT exp, else ~1h. */
+function accessTokenMaxAge(accessToken: string): number {
+  try {
+    const parts = accessToken.split(".");
+    if (parts.length < 2) return 3600;
+    const pad = "=".repeat((4 - (parts[1].length % 4)) % 4);
+    const b64 = (parts[1] + pad).replace(/-/g, "+").replace(/_/g, "/");
+    const payload = JSON.parse(atob(b64)) as { exp?: number };
+    if (typeof payload.exp === "number") {
+      const age = payload.exp - Math.floor(Date.now() / 1000);
+      return Math.max(60, Math.min(age, 86_400));
+    }
+  } catch {
+    /* fall through */
+  }
+  return 3600;
+}
+
+function buildSessionCookie(
+  accessToken: string,
+  request: Request,
+  maxAge?: number,
+): string {
+  const secure = new URL(request.url).protocol === "https:";
+  const age = maxAge ?? accessTokenMaxAge(accessToken);
+  const parts = [
+    `${SESSION_COOKIE}=${encodeURIComponent(accessToken)}`,
+    "HttpOnly",
+    "Path=/",
+    "SameSite=Lax",
+    `Max-Age=${age}`,
+  ];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
+function clearSessionCookie(request: Request): string {
+  const secure = new URL(request.url).protocol === "https:";
+  const parts = [`${SESSION_COOKIE}=`, "HttpOnly", "Path=/", "SameSite=Lax", "Max-Age=0"];
+  if (secure) parts.push("Secure");
+  return parts.join("; ");
+}
+
 async function resolveAuth(request: Request, env: Env): Promise<AuthContext> {
-  const token = bearer(request);
+  // Prefer Authorization: Bearer (API tokens / pasted KC); else HttpOnly session cookie.
+  const token = bearer(request) || cookieValue(request, SESSION_COOKIE);
   const out: AuthContext = { apiToken: null, kcUser: null, emergencyAdmin: false };
   if (!token) return out;
   if (env.ADMIN_TOKEN && token === env.ADMIN_TOKEN) {
@@ -281,7 +345,8 @@ export default {
       }
     }
 
-    // OIDC callback — exchanges code, redirects to return_to with access_token in hash.
+    // OIDC callback — PKCE code exchange, then HttpOnly session cookie + clean #account redirect.
+    // Never put access_token in query or hash (local same-origin MVP).
     if (path === "/v1/auth/callback" && method === "GET") {
       if (!keycloakConfigured(env)) return err("Keycloak not configured", 503);
       const code = url.searchParams.get("code") || "";
@@ -290,24 +355,59 @@ export default {
       if (oauthErr) return err("oidc error: " + oauthErr, 400);
       if (!code || !state) return err("missing code/state", 400);
       try {
-        const { accessToken, user, returnTo } = await handleCallback(
+        const { accessToken, returnTo } = await handleCallback(
           env,
           workerOrigin(request),
           code,
           state,
         );
         const dest = new URL(returnTo);
-        dest.hash =
-          "ohqs_access_token=" +
-          encodeURIComponent(accessToken) +
-          "&ohqs_sub=" +
-          encodeURIComponent(user.sub) +
-          "&ohqs_roles=" +
-          encodeURIComponent(user.roles.join(","));
-        return Response.redirect(dest.toString(), 302);
+        dest.hash = "account";
+        return new Response(null, {
+          status: 302,
+          headers: {
+            Location: dest.toString(),
+            "Set-Cookie": buildSessionCookie(accessToken, request),
+            ...baseHeaders,
+          },
+        });
       } catch (e) {
         return err((e as Error).message, 400);
       }
+    }
+
+    // Session identity: Bearer (API / pasted KC) or HttpOnly ohqs_session cookie.
+    if (path === "/v1/auth/me" && method === "GET") {
+      const viaBearer = !!bearer(request);
+      if (auth.kcUser) {
+        return json({
+          email: auth.kcUser.email ?? null,
+          roles: auth.kcUser.roles,
+          sub: auth.kcUser.sub,
+          auth: viaBearer ? "bearer" : "cookie",
+        });
+      }
+      if (auth.apiToken) {
+        return json({
+          email: auth.apiToken.email,
+          roles: auth.apiToken.type === "ai_admin" ? ["ai_admin"] : ["client"],
+          sub: auth.apiToken.user_sub,
+          auth: "bearer",
+        });
+      }
+      return err("not authenticated", 401);
+    }
+
+    // Clear HttpOnly session cookie (logout).
+    if (path === "/v1/auth/logout" && (method === "POST" || method === "GET")) {
+      return new Response(JSON.stringify({ ok: true }, null, 2), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Set-Cookie": clearSessionCookie(request),
+          ...baseHeaders,
+        },
+      });
     }
 
     // Verify Keycloak access token or opaque API token.

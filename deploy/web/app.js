@@ -435,9 +435,14 @@ function setStoredApiToken(t) {
 async function authFetch(path, opts) {
   opts = opts || {};
   const headers = Object.assign({}, opts.headers || {});
+  // Optional local debug: pasted / stored KC access token as Bearer.
+  // Prefer HttpOnly cookie session (credentials: include) when no paste token.
   const tok = kcToken();
   if (tok) headers["Authorization"] = "Bearer " + tok;
-  const r = await fetch(apiBase() + path, Object.assign({}, opts, { headers: headers }));
+  const r = await fetch(apiBase() + path, Object.assign({}, opts, {
+    headers: headers,
+    credentials: "include",
+  }));
   const text = await r.text();
   let data = null;
   try { data = text ? JSON.parse(text) : null; } catch (_) { data = { raw: text }; }
@@ -445,18 +450,12 @@ async function authFetch(path, opts) {
   return data;
 }
 
+/** Legacy no-op: token-in-hash removed; strip any leftover #ohqs_access_token=… */
 function captureOidcHash() {
   const h = location.hash || "";
-  // Callback may set #ohqs_access_token=...&ohqs_roles=...
   if (h.indexOf("ohqs_access_token=") < 0) return false;
-  const q = new URLSearchParams(h.replace(/^#/, ""));
-  const tok = q.get("ohqs_access_token");
-  if (tok) {
-    setKcToken(tok);
-    history.replaceState(null, "", location.pathname + location.search + "#account");
-    return true;
-  }
-  return false;
+  history.replaceState(null, "", location.pathname + location.search + "#account");
+  return true;
 }
 
 window.loginKeycloak = function () {
@@ -473,9 +472,12 @@ window.usePastedKcToken = function () {
   refreshAccount();
 };
 
-window.logoutKc = function () {
+window.logoutKc = async function () {
   setKcToken("");
   setStoredApiToken("");
+  try {
+    await fetch(apiBase() + "/v1/auth/logout", { method: "POST", credentials: "include" });
+  } catch (_) { /* ignore */ }
   refreshAccount();
 };
 
@@ -593,26 +595,21 @@ async function refreshAccount() {
   const userEl = document.getElementById("acct-user");
   const aiBtn = document.getElementById("acct-mint-ai");
   if (!out || !inn) return;
-  const tok = kcToken();
-  if (!tok) {
-    out.hidden = false;
-    inn.hidden = true;
-    return;
-  }
+  // Cookie session (credentials) preferred; paste-token / localStorage KC is optional fallback.
   try {
-    const v = await authFetch("/v1/auth/verify");
+    const me = await authFetch("/v1/auth/me");
     out.hidden = true;
     inn.hidden = false;
-    const roles = (v.user && v.user.roles) || [];
-    userEl.textContent = "Signed in as " + ((v.user && (v.user.email || v.user.sub)) || "?") +
-      (roles.length ? (" · roles: " + roles.join(", ")) : "");
+    const roles = me.roles || [];
+    userEl.textContent = "Signed in as " + (me.email || me.sub || "?") +
+      (roles.length ? (" · roles: " + roles.join(", ")) : "") +
+      (me.auth ? (" · via " + me.auth) : "");
     if (aiBtn) aiBtn.hidden = roles.indexOf("admin") < 0;
     await refreshAccountTokens();
   } catch (e) {
-    setKcToken("");
     out.hidden = false;
     inn.hidden = true;
-    userEl.textContent = "";
+    if (userEl) userEl.textContent = "";
   }
 }
 
