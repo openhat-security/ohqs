@@ -157,6 +157,11 @@ function bearer(request: Request): string | null {
 
 const SESSION_COOKIE = "ohqs_session";
 
+// TODO(non-local): ohqs_session currently stores the raw Keycloak access token
+// (HttpOnly; Secure only on HTTPS). Before non-local deploy, switch to an
+// opaque/encrypted session id (or sealed blob) so the JWT is not cookie-readable
+// even if HttpOnly is bypassed, and always set Secure on HTTPS.
+
 function cookieValue(request: Request, name: string): string | null {
   const raw = request.headers.get("Cookie") || "";
   for (const part of raw.split(";")) {
@@ -475,7 +480,7 @@ export default {
         created_at: minted.record.created_at,
         warning:
           want === "ai_admin"
-            ? "Admin AI token — never embed in CLI defaults, README examples, or www. Store securely; shown once."
+            ? "INTERNAL / UNLIMITED / AUDITED — admin AI token. Never embed in CLI defaults, README, or www. Shown once."
             : "Store this token now — it will not be shown again. Only a hash is kept at rest.",
       });
     }
@@ -497,7 +502,8 @@ export default {
       return json({ revoked: true, id });
     }
 
-    if (path === "/v1/usage" && method === "GET") {
+    // Own usage only (no cross-user leak). Alias /v1/tokens/usage for Account UI.
+    if ((path === "/v1/usage" || path === "/v1/tokens/usage") && method === "GET") {
       const kc = requireKc(auth);
       if (kc instanceof Response) return kc;
       const summary = await usageSummary(env.D1, kc.sub);

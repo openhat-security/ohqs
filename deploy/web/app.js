@@ -493,23 +493,53 @@ window.signupOhqs = async function () {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: email, password: password, name: name || undefined }),
     });
-    status.textContent = (r.created ? "Created " : "Existing ") + r.email + " — now Login with Keycloak.";
+    status.textContent = (r.created ? "Created " : "Existing ") + r.email + " — now Sign in.";
   } catch (e) {
     status.textContent = "signup failed: " + e.message;
   }
 };
 
+function showRawTokenOnce(token, warning) {
+  const wrap = document.getElementById("acct-raw-wrap");
+  const pre = document.getElementById("acct-raw-token");
+  if (!wrap || !pre) return;
+  pre.textContent = token + (warning ? ("\n\n" + warning) : "");
+  wrap.dataset.raw = token;
+  wrap.hidden = false;
+}
+
+window.copyRawToken = async function () {
+  const wrap = document.getElementById("acct-raw-wrap");
+  const raw = (wrap && wrap.dataset.raw) || "";
+  if (!raw) return;
+  try {
+    await navigator.clipboard.writeText(raw);
+    const status = document.getElementById("acct-mint-status");
+    if (status) status.textContent = (status.textContent || "") + " · copied";
+  } catch (e) {
+    alert("Copy failed — select the token and copy manually.");
+  }
+};
+
+window.dismissRawToken = function () {
+  const wrap = document.getElementById("acct-raw-wrap");
+  const pre = document.getElementById("acct-raw-token");
+  if (wrap) {
+    delete wrap.dataset.raw;
+    wrap.hidden = true;
+  }
+  if (pre) pre.textContent = "";
+};
+
 window.mintClientToken = async function () {
   const status = document.getElementById("acct-mint-status");
-  const pre = document.getElementById("acct-raw-token");
   status.textContent = "minting…";
-  pre.hidden = true;
+  dismissRawToken();
   try {
     const r = await authFetch("/v1/tokens", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
     setStoredApiToken(r.token);
-    status.textContent = "Client token minted (prefix " + r.prefix + "). Copy now — shown once.";
-    pre.textContent = r.token + "\n\n" + (r.warning || "");
-    pre.hidden = false;
+    status.textContent = "Client token minted (prefix " + r.prefix + "). Copy now — will not be shown again.";
+    showRawTokenOnce(r.token, r.warning || "");
     await refreshAccountTokens();
   } catch (e) {
     status.textContent = "mint failed: " + e.message;
@@ -518,14 +548,15 @@ window.mintClientToken = async function () {
 
 window.mintAiToken = async function () {
   const status = document.getElementById("acct-mint-status");
-  const pre = document.getElementById("acct-raw-token");
+  if (!confirm("Mint an AI token?\n\nINTERNAL / UNLIMITED / AUDITED.\nAdmin only. Never put in README, CLI defaults, or www.\nShown once — copy then dismiss.")) {
+    return;
+  }
   status.textContent = "minting AI token…";
-  pre.hidden = true;
+  dismissRawToken();
   try {
     const r = await authFetch("/v1/tokens/ai", { method: "POST" });
-    status.textContent = "Admin AI token minted (prefix " + r.prefix + "). Keep offline — never in README/CLI/www.";
-    pre.textContent = r.token + "\n\n" + (r.warning || "");
-    pre.hidden = false;
+    status.textContent = "AI token minted (prefix " + r.prefix + "). INTERNAL / UNLIMITED / AUDITED — copy once, then dismiss.";
+    showRawTokenOnce(r.token, r.warning || "");
     await refreshAccountTokens();
   } catch (e) {
     status.textContent = "mint AI failed: " + e.message;
@@ -533,6 +564,7 @@ window.mintAiToken = async function () {
 };
 
 window.revokeToken = async function (id) {
+  if (!confirm("Revoke this token? It cannot be used again.")) return;
   try {
     await authFetch("/v1/tokens/" + encodeURIComponent(id) + "/revoke", { method: "POST" });
     await refreshAccountTokens();
@@ -544,15 +576,20 @@ window.revokeToken = async function (id) {
 async function refreshAccountTokens() {
   const list = document.getElementById("acct-token-list");
   const usage = document.getElementById("acct-usage-list");
+  const routes = document.getElementById("acct-usage-routes");
+  const summary = document.getElementById("acct-usage-summary");
   if (!list) return;
   list.innerHTML = "";
-  usage.innerHTML = "";
+  if (usage) usage.innerHTML = "";
+  if (routes) routes.innerHTML = "";
+  if (summary) summary.textContent = "";
   try {
     const r = await authFetch("/v1/tokens");
     (r.tokens || []).forEach(function (tok) {
       const li = document.createElement("li");
       const revoked = tok.revoked_at ? " · REVOKED" : "";
-      li.innerHTML = "<strong>" + esc(tok.type) + "</strong> " + esc(tok.prefix) + "… <span class='muted'>id=" + esc(tok.id) + revoked + "</span>";
+      const last = tok.last_used_at ? (" · last used " + new Date(tok.last_used_at * 1000).toLocaleString()) : "";
+      li.innerHTML = "<strong>" + esc(tok.type) + "</strong> " + esc(tok.prefix) + "… <span class='muted'>" + esc(tok.id.slice(0, 8)) + "…" + revoked + last + "</span>";
       if (!tok.revoked_at) {
         const b = document.createElement("button");
         b.type = "button";
@@ -573,19 +610,48 @@ async function refreshAccountTokens() {
     list.innerHTML = "<li>Could not list tokens: " + esc(e.message) + "</li>";
   }
   try {
-    const u = await authFetch("/v1/usage");
-    (u.recent || []).slice(0, 20).forEach(function (row) {
-      const li = document.createElement("li");
-      li.textContent = new Date(row.ts * 1000).toLocaleString() + " · " + row.method + " " + row.route + " · " + row.status + " · ip=" + (row.ip || "?");
-      usage.appendChild(li);
-    });
-    if (!(u.recent || []).length) {
-      const li = document.createElement("li");
-      li.textContent = "No usage yet.";
-      usage.appendChild(li);
+    // Prefer /v1/tokens/usage alias; fall back to /v1/usage.
+    let u;
+    try {
+      u = await authFetch("/v1/tokens/usage");
+    } catch (_) {
+      u = await authFetch("/v1/usage");
+    }
+    const byRoute = u.by_route || [];
+    const lastIp = u.last_ip || null;
+    if (summary) {
+      const total = byRoute.reduce(function (n, row) { return n + (row.n || 0); }, 0);
+      summary.textContent = (total ? (total + " audited call(s)") : "No usage yet") +
+        (lastIp ? (" · last IP " + lastIp) : "");
+    }
+    if (routes) {
+      byRoute.slice(0, 12).forEach(function (row) {
+        const li = document.createElement("li");
+        li.innerHTML = "<code>" + esc(row.route) + "</code> · <strong>" + esc(String(row.n)) + "</strong>";
+        routes.appendChild(li);
+      });
+      if (!byRoute.length) {
+        const li = document.createElement("li");
+        li.textContent = "No route counts yet.";
+        routes.appendChild(li);
+      }
+    }
+    if (usage) {
+      (u.recent || []).slice(0, 15).forEach(function (row) {
+        const li = document.createElement("li");
+        li.textContent = new Date(row.ts * 1000).toLocaleString() + " · " + row.method + " " + row.route + " · " + row.status +
+          (row.ip ? (" · " + row.ip) : "");
+        usage.appendChild(li);
+      });
+      if (!(u.recent || []).length) {
+        const li = document.createElement("li");
+        li.textContent = "No recent calls.";
+        usage.appendChild(li);
+      }
     }
   } catch (e) {
-    usage.innerHTML = "<li>Usage unavailable: " + esc(e.message) + "</li>";
+    if (summary) summary.textContent = "Usage unavailable: " + e.message;
+    if (usage) usage.innerHTML = "<li>Usage unavailable: " + esc(e.message) + "</li>";
   }
 }
 
@@ -594,6 +660,7 @@ async function refreshAccount() {
   const inn = document.getElementById("acct-logged-in");
   const userEl = document.getElementById("acct-user");
   const aiBtn = document.getElementById("acct-mint-ai");
+  const aiWarn = document.getElementById("acct-ai-warn");
   if (!out || !inn) return;
   // Cookie session (credentials) preferred; paste-token / localStorage KC is optional fallback.
   try {
@@ -601,15 +668,20 @@ async function refreshAccount() {
     out.hidden = true;
     inn.hidden = false;
     const roles = me.roles || [];
+    const isAdm = roles.indexOf("admin") >= 0;
     userEl.textContent = "Signed in as " + (me.email || me.sub || "?") +
       (roles.length ? (" · roles: " + roles.join(", ")) : "") +
       (me.auth ? (" · via " + me.auth) : "");
-    if (aiBtn) aiBtn.hidden = roles.indexOf("admin") < 0;
+    if (aiBtn) aiBtn.hidden = !isAdm;
+    if (aiWarn) aiWarn.hidden = !isAdm;
     await refreshAccountTokens();
   } catch (e) {
     out.hidden = false;
     inn.hidden = true;
     if (userEl) userEl.textContent = "";
+    if (aiBtn) aiBtn.hidden = true;
+    if (aiWarn) aiWarn.hidden = true;
+    dismissRawToken();
   }
 }
 

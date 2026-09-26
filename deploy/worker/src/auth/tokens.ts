@@ -223,6 +223,8 @@ export async function usageSummary(
     ip: string | null;
   }>;
   by_route: Array<{ route: string; n: number }>;
+  /** Most recent non-null IP for this user only (never other users). */
+  last_ip: string | null;
 }> {
   const { results: recent } = await db
     .prepare(
@@ -245,5 +247,13 @@ export async function usageSummary(
     )
     .bind(userSub)
     .all<{ route: string; n: number }>();
-  return { recent: recent ?? [], by_route: byRoute ?? [] };
+  const rows = recent ?? [];
+  let lastIp: string | null = null;
+  for (const row of rows) {
+    if (row.ip) {
+      lastIp = row.ip;
+      break;
+    }
+  }
+  return { recent: rows, by_route: byRoute ?? [], last_ip: lastIp };
 }

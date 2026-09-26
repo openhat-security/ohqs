@@ -84,23 +84,17 @@
   </section>
 
 
-  <section class="card page" data-page="account" hidden>
-    <p class="label">Account &amp; API tokens</p>
-    <p class="meta">Sign in with Keycloak (realm <code>openhat</code>, client <code>ohqs-api</code>). Mint a <strong>client</strong> API token for metered calls. Admin AI tokens require realm role <code>admin</code> and must never appear in README / CLI defaults / www.</p>
+  <section class="card page acct-card" data-page="account" hidden>
+    <p class="label">Account</p>
+    <p class="meta">Sign in with Keycloak (realm <code>openhat</code>, client <code>ohqs-api</code>). Mint a <strong>client</strong> API token for metered calls. Session uses an HttpOnly cookie — no token in the URL bar.</p>
 
     <div id="acct-logged-out">
       <div class="actions">
-        <button type="button" onclick="loginKeycloak()">Login with Keycloak</button>
+        <button type="button" onclick="loginKeycloak()">Sign in</button>
+        <button type="button" class="btn ghost" onclick="document.getElementById('acct-signup').open = true; document.getElementById('signup-email').focus()">Sign up</button>
       </div>
-      <p class="meta">Or paste a Keycloak access token (local debug):</p>
-      <div class="row">
-        <div class="grow">
-          <input id="acct-paste-token" type="password" placeholder="Keycloak access_token…" autocomplete="off">
-        </div>
-        <button type="button" class="btn ghost" onclick="usePastedKcToken()">Use token</button>
-      </div>
-      <details class="meta" style="margin-top:1rem">
-        <summary>Self-serve signup (OHQS clients)</summary>
+      <details class="meta acct-details" id="acct-signup" style="margin-top:1rem">
+        <summary>Sign up (self-serve)</summary>
         <p>Creates a Keycloak user with realm role <code>client</code>. Separate from the invite-only engagement portal.</p>
         <label for="signup-email">Email</label>
         <input id="signup-email" type="email" placeholder="you@example.com">
@@ -113,20 +107,40 @@
         </div>
         <p id="signup-status" class="meta"></p>
       </details>
+      <details class="meta acct-details" style="margin-top:0.75rem">
+        <summary>Local debug: paste Keycloak access token</summary>
+        <div class="row" style="margin-top:0.5rem">
+          <div class="grow">
+            <input id="acct-paste-token" type="password" placeholder="Keycloak access_token…" autocomplete="off">
+          </div>
+          <button type="button" class="btn ghost" onclick="usePastedKcToken()">Use token</button>
+        </div>
+      </details>
     </div>
 
     <div id="acct-logged-in" hidden>
       <p id="acct-user" class="meta"></p>
       <div class="actions">
         <button type="button" onclick="mintClientToken()">Mint client API token</button>
-        <button type="button" class="btn ghost" id="acct-mint-ai" hidden onclick="mintAiToken()">Mint admin AI token</button>
-        <button type="button" class="btn ghost" onclick="logoutKc()">Log out</button>
+        <button type="button" class="btn danger" id="acct-mint-ai" hidden onclick="mintAiToken()" title="Admin only — internal / unlimited / audited">Mint AI token</button>
+        <button type="button" class="btn ghost" onclick="logoutKc()">Sign out</button>
       </div>
+      <p id="acct-ai-warn" class="callout warn-signal" hidden>AI tokens are <strong>internal / unlimited / audited</strong>. Realm role <code>admin</code> only. Never put them in README, CLI defaults, or www.</p>
       <p id="acct-mint-status" class="meta"></p>
-      <pre id="acct-raw-token" class="callout" hidden></pre>
+      <div id="acct-raw-wrap" class="raw-reveal" hidden>
+        <p class="label">Copy now — shown once</p>
+        <pre id="acct-raw-token" class="callout"></pre>
+        <div class="actions">
+          <button type="button" class="btn ghost" onclick="copyRawToken()">Copy</button>
+          <button type="button" class="btn ghost" onclick="dismissRawToken()">Dismiss</button>
+        </div>
+      </div>
       <p class="label">Your tokens</p>
       <ul class="links" id="acct-token-list"></ul>
-      <p class="label">Usage (recent)</p>
+      <p class="label">Usage summary</p>
+      <p id="acct-usage-summary" class="meta"></p>
+      <ul class="links" id="acct-usage-routes"></ul>
+      <p class="label">Recent calls</p>
       <ul class="links" id="acct-usage-list"></ul>
     </div>
   </section>
@@ -144,6 +158,6 @@
   </section>
 
 </main>
-<script src="/app.js?v=20250926a" defer></script>
+<script src="/app.js?v=20250926b" defer></script>
 </body>
 </html>

@@ -7,6 +7,10 @@
   --accent: #3fb950;
   --warn: #d29922;
   --code: #0d1117;
+  /* Soft OpenHat accents (Account tab) — cream / ink / signal-red */
+  --cream: #f4efe6;
+  --ink: #1c1917;
+  --signal: #c62828;
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 ui-sans-serif, system-ui, sans-serif; }
@@ -35,7 +39,7 @@ form.card, .card {
   margin-bottom: 1.25rem;
 }
 label { display: block; font-size: 0.8rem; color: var(--muted); margin: 0.75rem 0 0.25rem; }
-input[type=text], textarea {
+input[type=text], input[type=email], input[type=password], textarea {
   width: 100%;
   background: var(--code);
   border: 1px solid var(--border);
@@ -134,3 +138,44 @@ pre.log { margin-top: 0.75rem; max-height: 22rem; overflow: auto; white-space: p
 .label.inline input { width: 22rem; margin-left: 0.25rem; }
 .hint { color: var(--muted); }
 @media (max-width: 700px) { .row { grid-template-columns: 1fr; } }
+
+/* Account tab — soft brand accents without portal chrome */
+.acct-card {
+  border-color: color-mix(in srgb, var(--cream) 18%, var(--border));
+}
+.acct-card > .label:first-child {
+  color: var(--cream);
+}
+.btn.danger {
+  background: var(--signal);
+  color: var(--cream);
+}
+.btn.danger:hover { filter: brightness(1.08); }
+.callout.warn-signal {
+  border-color: var(--signal);
+  background: color-mix(in srgb, var(--signal) 12%, var(--panel));
+}
+.raw-reveal {
+  margin: 0.75rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px dashed var(--cream);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--cream) 6%, var(--panel));
+}
+.raw-reveal pre {
+  margin: 0.35rem 0 0.5rem;
+  word-break: break-all;
+  white-space: pre-wrap;
+  border-color: color-mix(in srgb, var(--cream) 25%, var(--border));
+}
+.acct-details summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.acct-details summary:hover { color: var(--cream); }
+#acct-token-list .btn.ghost,
+#acct-usage-list .btn.ghost {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}

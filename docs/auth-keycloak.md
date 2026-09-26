@@ -83,10 +83,12 @@ npx wrangler dev
 ```
 
 4. Open the console → **Account** tab:
-   - Signup (optional) → Login with Keycloak → Mint client token
-   - Admins see **Mint admin AI token**
+   - Sign up (optional) → Sign in (Keycloak) → Mint client token
+   - Admins see **Mint AI token** (internal / unlimited / audited)
 
 OIDC flow: console → `GET /v1/auth/login` → Keycloak → `GET /v1/auth/callback` (PKCE code exchange) → set HttpOnly `ohqs_session` cookie → redirect to `return_to` with clean `#account` hash only. **Token-in-URL-hash is removed** — never put `access_token` in query or hash.
+
+> **TODO (before non-local):** `ohqs_session` currently holds the raw Keycloak access token (HttpOnly; `Secure` on HTTPS). Switch to an opaque/encrypted session id (or sealed blob) so the JWT is not sitting in the cookie value, and keep `Secure` on HTTPS.
 
 ## API surface (auth)
 
@@ -102,7 +104,8 @@ OIDC flow: console → `GET /v1/auth/login` → Keycloak → `GET /v1/auth/callb
 | POST | `/v1/tokens/ai` | Keycloak + role `admin` | Mint `ai_admin` |
 | GET | `/v1/tokens` | Keycloak | List own tokens (prefix/type/dates; never hash/raw) |
 | POST | `/v1/tokens/:id/revoke` | Keycloak | Revoke |
-| GET | `/v1/usage` | Keycloak | Own usage summary |
+| GET | `/v1/usage` | Keycloak | Own usage summary (route counts + recent + `last_ip`) |
+| GET | `/v1/tokens/usage` | Keycloak | Alias of `/v1/usage` (current user only) |
 
 Public catalog reads (`/v1/search`, `/v1/bounties`, `/v1/models`, `/v1/index`, `/v1/tools/*`, `/v1/llm/models`) stay public with IP rate limits. Costly routes:
 
