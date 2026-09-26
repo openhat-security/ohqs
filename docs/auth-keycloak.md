@@ -77,6 +77,9 @@ npx wrangler d1 migrations apply ohqs --local
 ```bash
 npx wrangler dev
 # → http://127.0.0.1:8787
+# If 8787 is already taken (e.g. local Go UI), use:
+# npx wrangler dev --ip 127.0.0.1 --port 8788
+# (ohqs-api redirects already allow :8788)
 ```
 
 4. Open the console → **Account** tab:
