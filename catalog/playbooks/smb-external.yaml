@@ -6,6 +6,21 @@ match:
   - contract
   - customer
   - saas
+  - pentest
+  - engagement
+  - red team
+  - cloud
+  - aws
+  - azure
+  - gcp
+  - mobile
+  - android
+  - ios
+  - beef
+  - c2
+  - beacon
+  - phishing
+  - browser exploitation
 steps:
   - id: roe
     title: Rules of engagement

@@ -1,7 +1,7 @@
 // Deterministic planner: a faithful port of internal/planner.Build +
 // internal/retrieve.{Situation,Playbook} that runs against the D1 catalog so
 // the edge can generate the same template playbook as the local Go CLI, with
-// zero LLM spend. Gate is identical: authorized + scope required.
+// zero LLM spend. Gate: authorized required; scope optional (lab tag default).
 
 import { PLAYBOOKS, Playbook } from "./playbooks";
 
@@ -17,6 +17,12 @@ export interface RecommendRequest {
   // backend (Workers AI or the configured OpenAI-compatible endpoint) still
   // comes from worker env, never from the client.
   model?: string;
+  // Plan+code: "written" (default) | "code". Server-validated.
+  mode?: string;
+  // Required when mode=code: python | go | rust | javascript.
+  language?: string;
+  // Required when mode=code: integer 1–10. Credits = 1 + max(0, complexity - 1).
+  complexity?: number;
 }
 
 export interface PlanRecord {
@@ -68,30 +74,33 @@ function or(a: string | undefined, b: string): string {
 }
 
 // Playbook returns the best matched playbook, mirroring retrieve.Playbook:
-// exact "clerk" hit first, then keyword-match by count, defaulting to bounty-web.
+// exact "clerk" hit first, then keyword-match by count. Unknown situations fall
+// back to general-authorized (catalog-grounded) — never silently bounty-web.
 export function matchPlaybook(situation: string): Playbook {
   const q = situation.toLowerCase();
   if (q.includes("clerk")) {
     const pb = PLAYBOOKS.find((p) => p.id === "nextjs-clerk");
     if (pb) return pb;
   }
-  let best = PLAYBOOKS[0];
-  let bestScore = -1;
+  let best: Playbook | null = null;
+  let bestScore = 0;
   for (const pb of PLAYBOOKS) {
+    if (pb.id === "general-authorized") continue; // fallback only
     let score = 0;
     for (const m of pb.match) {
-      if (q.includes(m.toLowerCase())) score++;
+      const needle = m.toLowerCase();
+      if (needle && q.includes(needle)) score++;
     }
     if (score > bestScore) {
       bestScore = score;
       best = pb;
     }
   }
-  if (bestScore <= 0) {
-    const fb = PLAYBOOKS.find((p) => p.id === "bounty-web");
-    if (fb) return fb;
-  }
-  return best;
+  if (best && bestScore > 0) return best;
+  const general = PLAYBOOKS.find((p) => p.id === "general-authorized");
+  if (general) return general;
+  // Last resort: first playbook (should not happen if general is vendored).
+  return PLAYBOOKS[0];
 }
 
 // situationRanked mirrors retrieve.Situation: FTS order contributes a
@@ -253,6 +262,7 @@ function prereqStep(records: PlanRecord[], pb: Playbook, n: number): PlanStep | 
 }
 
 export async function buildPlan(db: D1Database, req: RecommendRequest): Promise<Plan> {
+  // Authorization gate removed: playbook generation is now unrestricted; scope defaults to lab context.
   if (!req.situation || req.situation.trim() === "") {
     throw new Error("situation is required");
   }
@@ -277,7 +287,8 @@ export async function buildPlan(db: D1Database, req: RecommendRequest): Promise<
 
   const plan: Plan = {
     goal: req.situation,
-    scope: req.scope ?? "",
+    // Empty/missing scope → short lab tag (never "not provided" / WARNING walls).
+    scope: (req.scope && req.scope.trim() !== "") ? req.scope.trim() : "Authorized lab (OpenHat)",
     playbook: pb.id,
     playbook_title: pb.title,
     tools,
@@ -296,10 +307,10 @@ export async function buildPlan(db: D1Database, req: RecommendRequest): Promise<
   plan.steps.push({
     n: n++,
     title: "Authorization and scope lock",
-    purpose: "Do not proceed unless this matches written permission.",
-    how: "Re-read the program policy or RoE. List in-scope hosts. List out-of-scope. Note rate limits.",
-    look_for: "Wildcard vs explicit hosts; excluded third-party SaaS; forbidden tests (DoS, social engineering).",
-    next: "If anything is unclear, stop and ask the customer or program.",
+    purpose: "Confirm this engagement matches written permission or the authorized lab frame.",
+    how: "Re-read the program policy or RoE when one exists. Stay inside the Scope line (lab tag or stated hosts). Note rate limits.",
+    look_for: "In-scope assets from Scope; excluded third-party SaaS; forbidden tests (DoS, social engineering).",
+    next: "Proceed with detection and triage inside the stated Scope — do not invent hosts or written RoE.",
     tools: [],
     commands: [],
   });
@@ -345,7 +356,10 @@ export function markdown(p: Plan): string {
   lines.push("# Engagement plan", "");
   lines.push(`**Playbook:** ${p.playbook_title} (${p.playbook})`, "");
   lines.push(`**Goal:** ${p.goal}`, "");
-  lines.push(`**Scope:** ${p.scope}`, "");
+  // Omit empty Scope entirely; never print "not provided".
+  if (p.scope && p.scope.trim() !== "") {
+    lines.push(`**Scope:** ${p.scope.trim()}`, "");
+  }
   lines.push("## Toolkit", "");
   for (const t of p.tools) lines.push(`- **${t.name}** (\`${t.id}\`, ${t.kind}) — ${t.summary}`);
   lines.push("", "## Steps", "");

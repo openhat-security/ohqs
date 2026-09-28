@@ -18,7 +18,13 @@ import { BountyClass } from "./bounties";
 import { recommend, activeLabel } from "./models";
 import { rateLimit, RateLimiter } from "./ratelimit";
 import { buildPlan, markdown, RecommendRequest } from "./planner";
-import { llmRecommend, llmEnabled, resolveLlmConfig, listLlmModels } from "./llm";
+import { llmRecommend, llmEnabled, resolveLlmConfig, listLlmModels, llmScaffoldChat } from "./llm";
+import {
+  validateCodeRequest,
+  buildLabZip,
+  bytesToBase64,
+  recommendCreditsCharged,
+} from "./codepack";
 import {
   verifyAccessToken,
   keycloakConfigured,
@@ -36,6 +42,7 @@ import {
   type ResolvedApiToken,
   type TokenType,
 } from "./auth/tokens";
+import { ingestUsageEvent } from "./flexprice";
 
 export interface Env {
   D1: D1Database;
@@ -55,6 +62,12 @@ export interface Env {
   LLM_BASE_URL?: string;
   LLM_API_KEY?: string;
   LLM_MODEL?: string;
+  /** Flexprice sandbox API key — set in .dev.vars / wrangler secret. Missing = no-op. */
+  FLEXPRICE_API_KEY?: string;
+  /** Default https://api.cloud.flexprice.io/v1 ; US: https://us.api.flexprice.io/v1 */
+  FLEXPRICE_API_BASE?: string;
+  /** Metered feature/event name in Flexprice dashboard. Default tokens-total */
+  FLEXPRICE_EVENT_NAME?: string;
 }
 
 const EMBED_MODEL = "@cf/baai/bge-small-en-v1.5";
@@ -186,13 +199,16 @@ async function applyMeterAndAudit(
   auth: AuthContext,
   limits: { minute: { limit: number; window: number }; hour: { limit: number; window: number }; day: { limit: number; window: number } } | null,
   response: Response,
+  /** Recommend credits (and similar). Default 1. Charged at job accept / successful response. */
+  units = 1,
 ): Promise<Response> {
   const ip = clientIP(request);
   const ua = request.headers.get("User-Agent") || "";
   const bytes = parseInt(response.headers.get("Content-Length") || "0", 10) || 0;
+  const charge = Math.max(0, Math.floor(units));
   if (auth.apiToken) {
     await touchToken(env.D1, auth.apiToken.id);
-    await logUsage(env.D1, {
+    const logged = await logUsage(env.D1, {
       tokenId: auth.apiToken.id,
       userSub: auth.apiToken.user_sub,
       route: path,
@@ -202,6 +218,22 @@ async function applyMeterAndAudit(
       status: response.status,
       bytes,
     });
+    // Flexprice: only metered client tokens (same skip as skipMeter / ai_admin).
+    // After successful D1 audit; failures must not affect the OHQS response.
+    if (logged && auth.apiToken.type !== "ai_admin" && charge > 0) {
+      try {
+        await ingestUsageEvent(env, {
+          externalCustomerId: auth.apiToken.user_sub,
+          tokenId: auth.apiToken.id,
+          route: path,
+          status: response.status,
+          bytes,
+          units: charge,
+        });
+      } catch (e) {
+        console.warn("Flexprice hook error:", (e as Error).message);
+      }
+    }
   }
   return response;
 }
@@ -339,7 +371,7 @@ export default {
       else if (path === "/v1/recommend") limits = LIMITS.recommend;
       else if (path === "/v1/llm/models") limits = LIMITS.llmModels;
     }
-    const skipMeter = !!(auth.apiToken && auth.apiToken.type === "ai_admin");
+    const skipMeter = !!(auth.emergencyAdmin || (auth.apiToken && auth.apiToken.type === "ai_admin"));
     if (limits && !headersOnly && !skipMeter) {
       const windows = ["minute", "hour", "day"] as const;
       let combinedRL: { limited: boolean; retryAfterMs: number | null; reset: number; remaining: number } = { limited: false, retryAfterMs: null, reset: 0, remaining: Infinity };
@@ -377,7 +409,7 @@ export default {
           headers: { "Content-Type": "application/json; charset=utf-8", ...baseHeaders, "Retry-After": String(retry) },
         });
         if (auth.apiToken) {
-          await logUsage(env.D1, {
+          const logged = await logUsage(env.D1, {
             tokenId: auth.apiToken.id,
             userSub: auth.apiToken.user_sub,
             route: path,
@@ -387,6 +419,21 @@ export default {
             status: 429,
             bytes: 0,
           });
+          // Rate-limited calls still count as usage for client tokens (not ai_admin).
+          if (logged && auth.apiToken.type !== "ai_admin") {
+            try {
+              await ingestUsageEvent(env, {
+                externalCustomerId: auth.apiToken.user_sub,
+                tokenId: auth.apiToken.id,
+                route: path,
+                status: 429,
+                bytes: 0,
+                units: 1,
+              });
+            } catch (e) {
+              console.warn("Flexprice hook error:", (e as Error).message);
+            }
+          }
         }
         return limitedResp;
       }
@@ -425,7 +472,8 @@ export default {
       const cls: BountyClass = clsParam === "program" ? "program" : clsParam === "contract" ? "contract" : "marketplace";
       const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "200", 10) || 200, 200);
       const result = await searchBounties(env.D1, env.AI ?? null, q, limit, cls);
-      return json(result, 200, (request as any).rateLimitHeaders ?? {});
+      const bountiesResp = json(result, 200, (request as any).rateLimitHeaders ?? {});
+      return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, bountiesResp);
     }
 
     // /v1/index
@@ -436,7 +484,7 @@ export default {
       const vec = await env.D1.prepare(`SELECT COUNT(*) AS n FROM vectors`).all<{ n: number }>();
       const nVectors = (vec.results?.[0]?.n as number) ?? 0;
       const meta = await embedderMeta(env.D1);
-      return json({
+      const indexResp = json({
         exists,
         path: "d1",
         records,
@@ -444,6 +492,7 @@ export default {
         embedder: meta?.name || undefined,
         vector_dim: meta?.dim || undefined,
       }, 200, (request as any).rateLimitHeaders ?? {});
+      return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, indexResp);
     }
 
     // /v1/index/embed — costs Workers AI credits, so an admin token is required
@@ -531,19 +580,25 @@ export default {
         ...r,
         model: { ...r.model, activeb_label: activeLabel(r.model) },
       }));
-      return json({ host, fits }, 200, (request as any).rateLimitHeaders ?? {});
+      const modelsResp = json({ host, fits }, 200, (request as any).rateLimitHeaders ?? {});
+      return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, modelsResp);
     }
 
     // /v1/llm/models — what the playbook model dropdown should offer: OpenRouter
     // routers + free models (when LLM_BASE_URL points there), any other
     // endpoint's readable /models list, else preset Workers AI models.
     if (path === "/v1/llm/models" && method === "GET") {
-      return json(await listLlmModels(resolveLlmConfig(env)), 200, (request as any).rateLimitHeaders ?? {});
+      const llmModelsResp = json(await listLlmModels(resolveLlmConfig(env)), 200, (request as any).rateLimitHeaders ?? {});
+      return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, llmModelsResp);
     }
 
     // /v1/recommend — the live playbook planner. Mirrors the local `ohqs
-    // recommend` gate: situation required. ?fmt=markdown for the renderable
-    // playbook.
+    // recommend` gate: situation required. Modes: written (default) | code.
+    // Plan+code returns lab-scaffold zip (PLAYBOOK.md + authorized stubs).
+    // Credits: written=1; code full 1+max(0,complexity-1) ONLY when BOTH plan
+    // and scaffold are live LLM. Template plan or stub scaffold → max 1.
+    // Split status: plan live|template · scaffold live|stub.
+    // ?fmt=markdown | zip | json (default).
     if (path === "/v1/recommend" && method === "POST") {
       const a = ((request as any).__ohqsAuth || auth) as AuthContext;
       const allowed = a.emergencyAdmin || !!a.apiToken;
@@ -556,6 +611,11 @@ export default {
       } catch {
         return err("invalid JSON body", 400);
       }
+      const codeOpts = validateCodeRequest(body);
+      if (codeOpts.error) {
+        return err(codeOpts.error, 400);
+      }
+      const recommendUnits = codeOpts.credits;
       // Optional client-selectable model / router override (e.g.
       // openrouter/auto). The backend + its credentials always come from worker
       // env; we only map a validated name onto it.
@@ -564,6 +624,7 @@ export default {
         return err("invalid model", 400);
       }
       let plan: Awaited<ReturnType<typeof buildPlan>>;
+      let planStatus: "live" | "template" = "template";
       // Live LLM planner when a backend is configured (Workers AI binding by
       // default, or an OpenAI-compatible endpoint via LLM_BASE_URL); any failure
       // falls back to the deterministic template — mirrors internal/llm.Build.
@@ -574,6 +635,7 @@ export default {
         const active = modelSel ? Object.assign({}, llmCfg, { model: modelSel }) : llmCfg;
         try {
           plan = await llmRecommend(env.D1, active, body);
+          planStatus = "live";
         } catch (e) {
           console.warn("LLM plan failed, using template:", (e as Error).message);
           try {
@@ -581,6 +643,7 @@ export default {
           } catch (e2) {
             return err((e2 as Error).message, 400);
           }
+          planStatus = "template";
           (plan as typeof plan & { planner_note?: string }).planner_note =
             "LLM plan failed (" + (e as Error).message + "); using template";
         }
@@ -590,16 +653,124 @@ export default {
         } catch (e) {
           return err((e as Error).message, 400);
         }
+        planStatus = "template";
+        (plan as typeof plan & { planner_note?: string }).planner_note =
+          "LLM not configured (no Workers AI / OpenRouter key); using template";
       }
-      const fmt = url.searchParams.get("fmt") ?? "json";
+
+      const fmt = (url.searchParams.get("fmt") ?? "json").toLowerCase();
+      const meterAuth = (request as any).__ohqsAuth || auth;
+
+      // Plan+code: build authorized lab zip (LLM scaffold optional; deterministic fallback).
+      // Written plan above already succeeded — scaffold failure must not fail the job.
+      if (codeOpts.mode === "code") {
+        const language = codeOpts.language!;
+        const complexity = codeOpts.complexity!;
+        let chatFn: ((system: string, user: string) => Promise<string>) | undefined;
+        if (llmEnabled(llmCfg)) {
+          const active = modelSel ? Object.assign({}, llmCfg, { model: modelSel }) : llmCfg;
+          chatFn = async (system, user) => {
+            const r = await llmScaffoldChat(active, system, user);
+            return r.content;
+          };
+        }
+        const pack = await buildLabZip(language, complexity, plan, { chatFn });
+        const scaffoldStatus: "live" | "stub" = pack.llm_scaffold ? "live" : "stub";
+        // Complexity premium ONLY when both plan and scaffold are live LLM.
+        const recommendUnits = recommendCreditsCharged(
+          "code",
+          complexity,
+          planStatus === "live",
+          scaffoldStatus === "live",
+        );
+        let failNote = (plan as typeof plan & { planner_note?: string }).planner_note;
+        if (pack.note) {
+          failNote = failNote ? failNote + "; " + pack.note : pack.note;
+        }
+        if (!pack.llm_scaffold && !failNote) {
+          failNote = "deterministic lab stubs (no LLM scaffold)";
+        }
+        const splitStatus =
+          "plan: " + planStatus + " · scaffold: " + scaffoldStatus;
+        // Always surface split status; append failure detail only when relevant.
+        const statusNote = failNote
+          ? splitStatus + " — " + failNote
+          : (planStatus === "live" && scaffoldStatus === "live" ? undefined : splitStatus);
+        if (fmt === "zip") {
+          const zipResp = new Response(pack.bytes, {
+            status: 200,
+            headers: {
+              "Content-Type": "application/zip",
+              "Content-Disposition": 'attachment; filename="ohqs-lab.zip"',
+              "X-OHQS-Recommend-Credits": String(recommendUnits),
+              "X-OHQS-Mode": "code",
+              "X-OHQS-Language": language,
+              "X-OHQS-Complexity": String(complexity),
+              "X-OHQS-Plan": planStatus,
+              "X-OHQS-Scaffold": scaffoldStatus,
+              ...baseHeaders,
+              ...((request as any).rateLimitHeaders || {}),
+            },
+          });
+          return applyMeterAndAudit(env, request, path, method, meterAuth, limits, zipResp, recommendUnits);
+        }
+        const payload = {
+          ...plan,
+          mode: "code" as const,
+          language,
+          complexity,
+          recommend_credits: recommendUnits,
+          plan_status: planStatus,
+          scaffold: scaffoldStatus,
+          scaffold_status: scaffoldStatus,
+          planner_note: statusNote,
+          zip_base64: bytesToBase64(pack.bytes),
+          // Clean file list for VS Code–style console preview (already secret-stripped).
+          zip_files: pack.files.map((f) => ({ path: f.path, content: f.content })),
+          lab_notice:
+            "Authorized lab scaffold only — detection/setup/reporting stubs. No weaponized payloads. Do not auto-exec model code. Secrets stripped from zip.",
+        };
+        const planResp = json(payload, 200, {
+          ...((request as any).rateLimitHeaders ?? {}),
+          "X-OHQS-Recommend-Credits": String(recommendUnits),
+          "X-OHQS-Plan": planStatus,
+          "X-OHQS-Scaffold": scaffoldStatus,
+        });
+        return applyMeterAndAudit(env, request, path, method, meterAuth, limits, planResp, recommendUnits);
+      }
+
+      // Written plan (default) — always 1 credit; surface plan live|template.
       if (fmt === "markdown") {
         const mdResp = new Response(markdown(plan), {
-          headers: { "Content-Type": "text/markdown; charset=utf-8", ...baseHeaders, ...(request as any).rateLimitHeaders },
+          headers: {
+            "Content-Type": "text/markdown; charset=utf-8",
+            "X-OHQS-Recommend-Credits": String(recommendUnits),
+            "X-OHQS-Plan": planStatus,
+            ...baseHeaders,
+            ...((request as any).rateLimitHeaders || {}),
+          },
         });
-        return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, mdResp);
+        return applyMeterAndAudit(env, request, path, method, meterAuth, limits, mdResp, recommendUnits);
       }
-      const planResp = json(plan, 200, (request as any).rateLimitHeaders ?? {});
-      return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, planResp);
+      if (fmt === "zip") {
+        return err("fmt=zip requires mode=code", 400);
+      }
+      const planNote = (plan as typeof plan & { planner_note?: string }).planner_note;
+      const writtenPayload = {
+        ...plan,
+        mode: "written" as const,
+        recommend_credits: recommendUnits,
+        plan_status: planStatus,
+        planner_note: planNote
+          ? "plan: " + planStatus + " — " + planNote
+          : undefined,
+      };
+      const planResp = json(writtenPayload, 200, {
+        ...((request as any).rateLimitHeaders ?? {}),
+        "X-OHQS-Recommend-Credits": String(recommendUnits),
+        "X-OHQS-Plan": planStatus,
+      });
+      return applyMeterAndAudit(env, request, path, method, meterAuth, limits, planResp, recommendUnits);
     }
 
     // /v1/tools/{id}
@@ -609,7 +780,8 @@ export default {
       const found = await env.D1.prepare(`SELECT data FROM records WHERE id = ?`).bind(id).first<{ data: string }>();
       if (!found?.data) return err("not found", 404);
       try {
-        return json(JSON.parse(found.data) as unknown, 200, (request as any).rateLimitHeaders ?? {});
+        const toolResp = json(JSON.parse(found.data) as unknown, 200, (request as any).rateLimitHeaders ?? {});
+        return applyMeterAndAudit(env, request, path, method, (request as any).__ohqsAuth || auth, limits, toolResp);
       } catch {
         return err("invalid record json", 500);
       }

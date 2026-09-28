@@ -1,0 +1,144 @@
+package ui
+
+templ ResultPanel(v ResultView) {
+	<section class="card result" id="result-panel">
+		<div class="result-head">
+			<div>
+				<p class="eyebrow">Result</p>
+				<h2 class="result-title">{ v.Title }</h2>
+				<p class="meta">
+					{ v.Playbook }
+					if v.Scope != "" {
+						· Scope: { v.Scope }
+					}
+					if v.Mode == "code" {
+						· plan+code/{ v.Language }/c{ v.Complexity }
+					}
+					· { v.Credits } credit
+					if v.Credits != 1 {
+						s
+					}
+					used
+				</p>
+			</div>
+			if v.ZipBase64 != "" {
+				<button type="button" class="btn primary" data-action="download-zip">Download .zip</button>
+			}
+		</div>
+
+		if v.LabNotice != "" {
+			<p class="callout">{ v.LabNotice }</p>
+		}
+
+		<div class="tabs" role="tablist" aria-label="Result preview">
+			<button type="button" class="tab active" role="tab" aria-selected="true" data-rtab="playbook">PLAYBOOK</button>
+			if len(v.Files) == 0 {
+				<button type="button" class="tab" role="tab" aria-selected="false" data-rtab="files" disabled>files</button>
+			} else {
+				<button type="button" class="tab" role="tab" aria-selected="false" data-rtab="files">files</button>
+			}
+			<button type="button" class="tab" role="tab" aria-selected="false" data-rtab="status">status</button>
+		</div>
+
+		<div class="tab-panels">
+			<div class="tab-panel active" data-rtab-panel="playbook" role="tabpanel">
+				if len(v.Steps) == 0 {
+					<p class="meta">No steps returned.</p>
+				}
+				for _, st := range v.Steps {
+					<article class="step">
+						<h3>{ st.N }. { st.Title }</h3>
+						if st.Purpose != "" {
+							<p class="meta">{ st.Purpose }</p>
+						}
+						if len(st.Tools) > 0 {
+							<p class="tools">
+								for _, t := range st.Tools {
+									<span>{ t }</span>
+								}
+							</p>
+						}
+						if st.How != "" {
+							<p class="label">How</p>
+							<p class="prewrap">{ st.How }</p>
+						}
+						if len(st.Commands) > 0 {
+							<pre>{ joinLines(st.Commands) }</pre>
+						}
+						if st.LookFor != "" {
+							<p class="label">Look for</p>
+							<p class="prewrap">{ st.LookFor }</p>
+						}
+						if st.Next != "" {
+							<p class="meta"><span class="label">Next</span> { st.Next }</p>
+						}
+					</article>
+				}
+			</div>
+
+			<div class="tab-panel" data-rtab-panel="files" role="tabpanel" hidden>
+				if len(v.Files) == 0 {
+					<p class="meta">No scaffold files (written plan only).</p>
+				} else {
+					<div class="files-shell">
+						<aside class="file-tree" aria-label="Scaffold file tree">
+							<ul>
+								for _, f := range v.Files {
+									<li>
+										<button
+											type="button"
+											class="file-node"
+											data-path={ f.Path }
+											data-action="select-file"
+										>{ f.Path }</button>
+									</li>
+								}
+							</ul>
+						</aside>
+						<div class="file-editor">
+							<div class="file-path muted" id="file-path">Select a file</div>
+							<pre class="file-body" id="file-body" tabindex="0" aria-readonly="true"></pre>
+						</div>
+					</div>
+					@jsonScript("zip-files-json", filePayload(v.Files))
+					if v.ZipBase64 != "" {
+						@jsonScript("zip-b64-json", v.ZipBase64)
+					}
+				}
+			</div>
+
+			<div class="tab-panel" data-rtab-panel="status" role="tabpanel" hidden>
+				<dl class="status-grid">
+					<div>
+						<dt>Credits used</dt>
+						<dd>{ creditsLabel(v.Credits) }</dd>
+					</div>
+					<div>
+						<dt>Plan</dt>
+						<dd class={ statusClass(v.PlanStatus) }>{ v.PlanStatus }</dd>
+					</div>
+					<div>
+						<dt>Scaffold</dt>
+						<dd class={ statusClass(scaffoldLabel(v)) }>{ scaffoldLabel(v) }</dd>
+					</div>
+					<div>
+						<dt>Mode</dt>
+						<dd>
+							{ v.Mode }
+							if v.Mode == "code" {
+								· { v.Language } · complexity { v.Complexity }
+							}
+						</dd>
+					</div>
+				</dl>
+				<p class="meta">
+					Premium complexity credits apply only when <strong>both</strong> plan and scaffold are live LLM.
+					Template/stub fallbacks stay at base pricing. UI preview is not the billing control — worker charges at job start.
+				</p>
+				if v.Note != "" {
+					<p class="callout">{ v.Note }</p>
+				}
+			</div>
+		</div>
+	</section>
+}

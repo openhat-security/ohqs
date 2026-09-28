@@ -3,19 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ohqs — catalog & playbook</title>
+  <title>OpenHat · ohqs console</title>
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
 <header>
   <div class="brand">
-    <strong>ohqs</strong>
-    <span>OpenHat Quick Start — authorized playbooks only · edge API</span>
+    <strong>OpenHat</strong>
+    <span>ohqs console — authorized playbooks only · edge API</span>
   </div>
   <nav>
     <a class="tab active" data-tab="catalog" href="#catalog">Catalog</a>
     <a class="tab" data-tab="playbook" href="#playbook">Playbook</a>
     <a class="tab" data-tab="bounties" href="#bounties">Bounties</a>
+    <a class="tab ext" href="https://github.com/openhat-security" target="_blank" rel="noreferrer">GitHub</a>
   </nav>
 </header>
 <main>
@@ -56,10 +57,42 @@
 
   <section class="card page" data-page="playbook" hidden>
     <p class="label">Playbook generator</p>
-    <p class="meta">Live planner — a model (Workers AI, or your own OpenAI-compatible / OpenRouter endpoint) writes a tailored playbook per situation. Authenticated calls need an <code>ohqs_*</code> API token from the <strong>openhat-portal</strong> Tokens page (CLI: <code>OHQS_API_TOKEN</code>). This console has no login.</p>
+    <p class="meta">Live planner — a model (Workers AI, or your own OpenAI-compatible / OpenRouter endpoint) writes a tailored playbook per situation. Paste your portal API token below (or set <code>OHQS_API_TOKEN</code> in the CLI). This console has no login.</p>
+    <p id="rely-fallback-banner" class="meta" hidden style="color:#b45309;background:#fffbeb;border:1px solid #f59e0b;padding:0.5rem 0.75rem;border-radius:6px;"></p>
     <label for="rely-situation">Situation</label>
     <textarea id="rely-situation" placeholder="Describe the target and context — e.g. Next.js SaaS payments page where invoices leak via IDOR…"></textarea>
     <div id="rely-gate" hidden>
+      <div class="row">
+        <div>
+          <label>Mode</label>
+          <div class="seg" id="rely-mode-seg" role="group" aria-label="Playbook mode">
+            <button type="button" class="btn ghost active" data-mode="written" id="rely-mode-written">Written plan</button>
+            <button type="button" class="btn ghost" data-mode="code" id="rely-mode-code">Plan + code</button>
+          </div>
+          <p class="meta" id="rely-mode-hint">Written plan returns a markdown engagement playbook. Plan + code adds a downloadable <code>.zip</code> with the written plan plus an <strong>authorized lab scaffold</strong> (setup / detect / report stubs only — never weaponized payloads).</p>
+        </div>
+        <div>
+          <label for="rely-target">Target (optional)</label>
+          <input id="rely-target" type="text" placeholder="https://app.example.com">
+        </div>
+      </div>
+      <div class="row" id="rely-code-opts" hidden>
+        <div>
+          <label for="rely-language">Language</label>
+          <select id="rely-language">
+            <option value="python">Python</option>
+            <option value="go">Go</option>
+            <option value="rust">Rust</option>
+            <option value="javascript">JavaScript</option>
+          </select>
+          <p class="meta">Server-side whitelist only.</p>
+        </div>
+        <div>
+          <label for="rely-complexity">Complexity (1–10)</label>
+          <input id="rely-complexity" type="number" min="1" max="10" step="1" value="3">
+          <p class="meta" id="rely-credits-preview">Est. credits: <strong>3</strong> (base 1; complexity premium only when both plan and scaffold are live LLM)</p>
+        </div>
+      </div>
       <div class="row">
         <div>
           <label for="rely-model">Model / router</label>
@@ -68,33 +101,77 @@
           </select>
           <p class="meta">Server default is pre-selected; OpenRouter options include the auto/free routers and free models when a key is configured.</p>
         </div>
-        <div>
-          <label for="rely-target">Target (optional)</label>
-          <input id="rely-target" type="text" placeholder="https://app.example.com">
-        </div>
+        <div></div>
       </div>
       <div class="actions">
         <button type="button" onclick="runRecommend()">Build playbook</button>
         <button type="button" class="btn ghost" id="rely-md" onclick="downloadMarkdown()" hidden>Download .md</button>
+        <button type="button" class="btn ghost" id="rely-zip" onclick="downloadZip()" hidden>Download .zip</button>
+      </div>
+      <div id="rely-progress" class="ohqs-progress" hidden aria-live="polite">
+        <div class="ohqs-progress-track"><div class="ohqs-progress-bar"></div></div>
+        <p id="rely-progress-text" class="ohqs-progress-text"></p>
       </div>
       <p id="rely-status" class="meta"></p>
     </div>
-    <div id="rely-out"></div>
+    <div id="rely-out" hidden></div>
+    <!-- steps render into #rely-out-playbook after Plan+code tabs -->
+
+    <div id="result-preview" class="result-preview" hidden>
+      <div class="zip-preview-header">
+        <div>
+          <p class="label" style="margin:0">Result preview</p>
+          <p class="meta" style="margin:0.2rem 0 0">PLAYBOOK · files · status · read-only · no auto-exec</p>
+        </div>
+        <button type="button" class="btn" id="zip-preview-download" onclick="downloadZip()" hidden>Download .zip</button>
+      </div>
+      <div class="result-tabs" role="tablist" aria-label="Result preview">
+        <button type="button" class="rtab active" data-rtab="playbook" role="tab">PLAYBOOK</button>
+        <button type="button" class="rtab" data-rtab="files" role="tab">files</button>
+        <button type="button" class="rtab" data-rtab="status" role="tab">status</button>
+      </div>
+      <div class="result-tab-panel active" data-rtab-panel="playbook" role="tabpanel">
+        <div id="rely-out-playbook"></div>
+      </div>
+      <div class="result-tab-panel" data-rtab-panel="files" role="tabpanel" hidden>
+        <div id="zip-preview" class="zip-preview" style="margin:0;border:0;border-radius:0">
+          <div class="zip-preview-body">
+            <aside id="zip-tree" class="zip-tree" aria-label="Zip file tree"></aside>
+            <div class="zip-editor">
+              <div id="zip-editor-path" class="zip-editor-path muted">Select a file</div>
+              <pre id="zip-editor-body" class="zip-editor-body" tabindex="0" aria-readonly="true"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="result-tab-panel" data-rtab-panel="status" role="tabpanel" hidden>
+        <dl class="status-grid" id="rely-status-grid"></dl>
+        <p class="meta">Premium complexity credits apply only when <strong>both</strong> plan and scaffold are live LLM.</p>
+      </div>
+    </div>
   </section>
 
   <section class="card" id="index-card">
     <p class="label">Index</p>
     <p id="index-status" class="meta">loading…</p>
     <p class="meta">
+      <label class="inline">Paste your portal API token
+        <input id="api-token" type="password" placeholder="ohqs_…" autocomplete="off" spellcheck="false">
+      </label>
+      <button type="button" class="btn ghost" id="api-token-clear" hidden>Clear token</button>
+      <span class="hint" id="api-token-hint">Mint in openhat-portal → Tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.</span>
+      <span class="hint" id="api-token-helper">Need a token? <a href="http://localhost:3210/dashboard/tokens">Register and create one in the OpenHat portal</a>, then paste it here.</span>
+    </p>
+    <p class="meta">
       <label class="inline">API base override
         <input id="api-base" type="text" placeholder="https://…">
       </label>
       <button type="button" class="btn ghost" id="api-base-reset" hidden>reset to default</button>
-      <span class="hint">Optional. Only set if you run your own API. Searches run as you type. API tokens: portal → CLI env <code>OHQS_API_TOKEN</code>.</span>
+      <span class="hint">Optional. Only set if you run your own API. Searches run as you type.</span>
     </p>
   </section>
 
 </main>
-<script src="/app.js?v=20250926c" defer></script>
+<script src="/app.js?v=20250926k" defer></script>
 </body>
 </html>

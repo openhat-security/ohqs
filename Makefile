@@ -203,3 +203,7 @@ convert-submodules:
 
 clean:
 	rm -f $(BIN) data/ohqs.sqlite
+
+.PHONY: console
+console:
+	@$(MAKE) -C deploy/console run

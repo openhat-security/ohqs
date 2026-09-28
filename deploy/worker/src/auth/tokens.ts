@@ -181,7 +181,7 @@ export async function logUsage(
     status: number;
     bytes: number;
   },
-): Promise<void> {
+): Promise<boolean> {
   const id = newId();
   const ts = Math.floor(Date.now() / 1000);
   try {
@@ -203,8 +203,10 @@ export async function logUsage(
         ts,
       )
       .run();
+    return true;
   } catch (e) {
     console.warn("api_usage insert failed:", (e as Error).message);
+    return false;
   }
 }
 

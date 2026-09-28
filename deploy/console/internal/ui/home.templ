@@ -1,0 +1,215 @@
+package ui
+
+templ Home(d HomeData) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>OpenHat · ohqs console</title>
+			<link rel="stylesheet" href="/assets/css/app.css"/>
+			<script src="/assets/vendor/htmx.min.js" defer></script>
+			<script src="/assets/js/console.js" defer></script>
+		</head>
+		<body>
+			<header class="top">
+				<div class="brand">
+					<span class="mark" aria-hidden="true"></span>
+					<div>
+						<strong>OpenHat</strong>
+						<span class="sub">ohqs console · authorized playbooks only</span>
+					</div>
+				</div>
+				<nav class="nav" aria-label="Primary">
+					<a class="nav-link active" href="#playbook" data-page="playbook">Playbook</a>
+					<a class="nav-link" href="#catalog" data-page="catalog">Catalog</a>
+					<a class="nav-link" href="#bounties" data-page="bounties">Bounties</a>
+					<a class="nav-link ext" href="https://github.com/openhat-security" target="_blank" rel="noreferrer">GitHub</a>
+				</nav>
+			</header>
+
+			<main>
+				<section class="card page" data-page="catalog" id="catalog" hidden>
+					<p class="eyebrow">Catalog search</p>
+					<p class="lede">Search the OpenHat tool/extension index via the worker. Results render as text only.</p>
+					<div class="row search">
+						<div class="grow">
+							<label for="search-q" class="sr-only">Catalog query</label>
+							<input id="search-q" type="text" placeholder="I want to find leaked secrets in the source…"/>
+						</div>
+						<button type="button" class="btn primary" data-action="run-search">Search</button>
+					</div>
+					<p id="search-source" class="meta">Type a query to see sources.</p>
+					<ul class="links" id="search-results"></ul>
+					<p class="actions" id="search-to-playbook" hidden>
+						<button type="button" class="btn ghost" data-action="go-playbook">Build playbook from this query →</button>
+					</p>
+				</section>
+
+				<section class="card page" data-page="bounties" id="bounties" hidden>
+					<p class="eyebrow">Bug bounties &amp; VDPs</p>
+					<p class="lede">
+						<strong>Marketplaces</strong> are aggregators you join to pick programs (HackerOne, Bugcrowd, Immunefi…).
+						<strong>Programs</strong> are a single organization's own bounty or disclosure channel (MSRC, Apple, CERTs/NCSCs…).
+						<strong>Contracts</strong> are the individual program listings hosted inside marketplaces — live on the Contracts tab, refreshed on a schedule.
+						Search by company, asset, or vuln class; blank lists all.
+					</p>
+					<div class="seg bounty-class" id="bounty-class" role="group" aria-label="Bounty class">
+						<button type="button" class="btn ghost active" data-class="marketplace" data-action="bounty-class">Marketplaces</button>
+						<button type="button" class="btn ghost" data-class="program" data-action="bounty-class">Programs</button>
+						<button type="button" class="btn ghost" data-class="contract" data-action="bounty-class">Contracts</button>
+					</div>
+					<div class="row search" id="bounty-search-row">
+						<div class="grow">
+							<label for="bounty-q" class="sr-only">Bounty query</label>
+							<input id="bounty-q" type="text" placeholder="web3 audit, government CERT, WordPress… (blank lists all)"/>
+						</div>
+						<button type="button" class="btn primary" data-action="run-bounty-search">Search</button>
+					</div>
+					<p id="bounty-source" class="meta"></p>
+					<div id="bounty-note" class="callout" hidden></div>
+					<ul class="links" id="bounty-results"></ul>
+				</section>
+
+				<section class="card hero page" data-page="playbook" id="playbook">
+					<div class="card-head">
+						<p class="eyebrow">Plan generator</p>
+						<div
+							id="worker-pill"
+							class="pill"
+							hx-get="/hx/ping"
+							hx-trigger="load, every 30s"
+							hx-swap="outerHTML"
+						>
+							<span class="dot"></span> checking worker…
+						</div>
+					</div>
+					<p class="lede">
+						Live planner on the edge worker. Paste a portal API token — this console has no login.
+						Worker API stays at <code>{ d.APIBase }</code>; UI is this Go + templ + HTMX surface.
+					</p>
+
+					<label for="situation">Situation</label>
+					<textarea
+						id="situation"
+						name="situation"
+						form="rec-form"
+						placeholder="Describe the authorized target and context — e.g. Next.js SaaS invoices page where IDs leak via IDOR…"
+						required
+					></textarea>
+
+					<form
+						id="rec-form"
+						hx-post="/hx/recommend"
+						hx-target="#result-mount"
+						hx-swap="innerHTML"
+						hx-indicator="#progress"
+						hx-disabled-elt="button[type=submit]"
+						class="gate"
+					>
+						<input type="hidden" name="api_token" id="api_token_field" value=""/>
+
+						<div class="grid-2">
+							<div>
+								<label>Mode</label>
+								<div class="seg" role="group" aria-label="Playbook mode">
+									<label class="seg-item">
+										<input type="radio" name="mode" value="written" checked/>
+										<span>Written plan</span>
+									</label>
+									<label class="seg-item">
+										<input type="radio" name="mode" value="code"/>
+										<span>Plan + code</span>
+									</label>
+								</div>
+								<p class="meta" id="mode-hint">
+									Written plan returns a markdown engagement playbook. Plan + code adds a downloadable
+									<code>.zip</code> with PLAYBOOK.md plus an authorized lab scaffold (setup / detect / report stubs only — never weaponized).
+								</p>
+							</div>
+							<div>
+								<label for="target">Target (optional)</label>
+								<input id="target" name="target" type="text" placeholder="https://app.example.com"/>
+							</div>
+						</div>
+
+						<div class="grid-2 code-opts" id="code-opts" hidden>
+							<div>
+								<label for="language">Language</label>
+								<select id="language" name="language">
+									<option value="python">Python</option>
+									<option value="go">Go</option>
+									<option value="rust">Rust</option>
+									<option value="javascript">JavaScript</option>
+								</select>
+								<p class="meta">Server-side whitelist only.</p>
+							</div>
+							<div>
+								<label for="complexity">Complexity (1–10)</label>
+								<input id="complexity" name="complexity" type="number" min="1" max="10" step="1" value="3"/>
+								<p class="meta" id="credits-preview">Est. credits: <strong>3</strong> (base 1; complexity premium only when both plan and scaffold are live LLM)</p>
+							</div>
+						</div>
+
+						<div class="grid-2">
+							<div>
+								<label for="model">Model / router</label>
+								<select id="model" name="model">
+									<option value="">server default…</option>
+								</select>
+								<p class="meta">Loaded from worker <code>/v1/llm/models</code>.</p>
+							</div>
+							<div></div>
+						</div>
+
+						<div class="actions">
+							<button type="submit" class="btn primary">Build playbook</button>
+							<button type="button" class="btn ghost" id="btn-zip" hidden data-action="download-zip">Download .zip</button>
+						</div>
+
+						<div id="progress" class="progress htmx-indicator" hidden aria-live="polite">
+							<div class="progress-track"><div class="progress-bar"></div></div>
+							<p class="progress-text">planning… charged at job start</p>
+						</div>
+					</form>
+				</section>
+
+				<div id="result-mount" class="page" data-page="playbook"></div>
+
+				<section class="card" id="account">
+					<p class="eyebrow">Session</p>
+					<label for="api-token">Portal API token</label>
+					<div class="token-row">
+						<input id="api-token" type="password" placeholder="ohqs_…" autocomplete="off" spellcheck="false"/>
+						<button type="button" class="btn ghost" id="api-token-clear" hidden>Clear</button>
+					</div>
+					<p class="meta" id="api-token-hint">Mint in openhat-portal → Tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.</p>
+					<p class="meta">
+						Need a token?
+						<a href="http://localhost:3210/dashboard/tokens">Register and create one in the OpenHat portal</a>, then paste it here.
+					</p>
+					<p class="meta muted">Console listen: <code>{ d.ListenTip }</code> · Worker: <code>{ d.APIBase }</code> · Stack: templ v0.3.1020 + HTMX 2.0.11 (vendored)</p>
+				</section>
+			</main>
+		</body>
+	</html>
+}
+
+templ WorkerStatus(ok bool, detail string) {
+	if ok {
+		<div id="worker-pill" class="pill ok" hx-get="/hx/ping" hx-trigger="every 30s" hx-swap="outerHTML">
+			<span class="dot"></span> { detail }
+		</div>
+	} else {
+		<div id="worker-pill" class="pill bad" hx-get="/hx/ping" hx-trigger="every 10s" hx-swap="outerHTML">
+			<span class="dot"></span> { detail }
+		</div>
+	}
+}
+
+templ ResultError(msg string) {
+	<section class="card result error-card">
+		<p class="eyebrow signal">Build failed</p>
+		<p class="error-text">{ msg }</p>
+	</section>
+}

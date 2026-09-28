@@ -36,7 +36,7 @@ export const PLAYBOOKS: Playbook[] = [
   {
     id: "bounty-web",
     title: "In-scope web bug bounty",
-    match: ["bounty", "hackerone", "bugcrowd", "intigriti", "web", "subdomain"],
+    match: ["bounty", "bug bounty", "hackerone", "bugcrowd", "intigriti", "yeswehack", "vdp", "vulnerability disclosure", "subdomain"],
     steps: [
       { id: "scope", title: "Read the program policy", purpose: "Stay in scope. Note wildcards, rate limits, and excluded assets.", tool_ids: [] },
       { id: "recon", title: "Enumerate and probe live hosts", purpose: "Passive subs, then live HTTP fingerprinting.", tool_ids: ["subfinder", "amass", "httpx"] },
@@ -67,13 +67,25 @@ export const PLAYBOOKS: Playbook[] = [
   {
     id: "smb-external",
     title: "External SMB web/app audit",
-    match: ["smb", "audit", "contract", "customer", "saas"],
+    match: ["smb", "audit", "contract", "customer", "saas", "pentest", "penetration", "engagement", "red team", "redteam", "external", "cloud", "aws", "azure", "gcp", "iam", "mobile", "android", "ios", "api assessment", "beef", "c2", "beacon", "phishing", "browser exploitation"],
     steps: [
       { id: "roe", title: "Rules of engagement", purpose: "Written authorization, time window, contacts, no DoS unless allowed.", tool_ids: [] },
       { id: "inventory", title: "Inventory the agreed hosts", purpose: "Only the customer’s list plus agreed wildcards.", tool_ids: ["nmap", "httpx"] },
       { id: "slop", title: "If the app was AI-built, run the AI-slop pass", purpose: "Secrets, SAST, deps, then live mapping.", tool_ids: ["gitleaks", "semgrep", "trivy"] },
       { id: "app", title: "Application mapping and access control", purpose: "Same as bounty-web but on the contracted hosts only.", tool_ids: ["zaproxy", "nuclei", "ffuf"] },
       { id: "report", title: "Deliver the report stub", purpose: "Severity, impact, evidence, fix for the customer.", tool_ids: [] },
+    ],
+  },
+  {
+    id: "general-authorized",
+    title: "Authorized engagement (catalog-grounded)",
+    match: ["authorized", "roe", "rules of engagement", "general", "assessment", "security review"],
+    steps: [
+      { id: "roe", title: "Confirm authorization and scope", purpose: "Written RoE, in-scope assets, contacts, and out-of-scope exclusions. Do not proceed without authorization.", tool_ids: [] },
+      { id: "inventory", title: "Inventory in-scope assets", purpose: "List hosts, apps, APIs, or packages you are allowed to touch. Prefer passive/catalog tools first.", tool_ids: ["httpx", "nmap"] },
+      { id: "detect", title: "Detection and triage with catalog tools", purpose: "Pick catalog tools that match the situation — secrets, SAST, misconfig templates, crawl — detection only, no weaponized payloads.", tool_ids: ["gitleaks", "semgrep", "nuclei", "katana"] },
+      { id: "access", title: "Authorized access-control checks", purpose: "If credentials/roles are in scope, exercise authz with a proxy. Stay inside RoE.", tool_ids: ["zaproxy", "pwnfox", "cookie-editor"] },
+      { id: "report", title: "Report findings", purpose: "Evidence, impact, and fix. Detection, triage, and reporting only.", tool_ids: [] },
     ],
   },
 ];

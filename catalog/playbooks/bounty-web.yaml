@@ -5,8 +5,7 @@ match:
   - hackerone
   - bugcrowd
   - intigriti
-  - web
-  - subdomain
+    - subdomain
 steps:
   - id: scope
     title: Read the program policy

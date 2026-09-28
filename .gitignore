@@ -1,10 +1,5 @@
 bin/
-data/config.json
-data/*.sqlite
-data/jobs/
-data/history/
-data/browser-profiles/
-data/snapshots/
+data/
 ohqs-out/
 dist/
 evidence/
@@ -16,6 +11,7 @@ amass.txt
 .env
 .DS_Store
 *.exe
+.claude/
 deploy/worker/.wrangler/
 .wrangler/
 deploy/worker/wrangler.dev.toml

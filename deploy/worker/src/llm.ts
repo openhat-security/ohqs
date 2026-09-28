@@ -187,12 +187,13 @@ const DEFAULT_WORDLIST = "third-party-resources/guides/SecLists/Discovery/Web-Co
 const LLM_SYSTEM_PROMPT = `You write authorized security-engagement playbooks for OpenHat Quick Start (ohqs).
 
 Rules:
-- The operator already asserted written authorization and a scope. Stay inside that scope.
+- The operator already asserted authorization (authorized lab). Stay inside the Scope line from the user message.
+- When Scope is exactly "Authorized lab (OpenHat)", copy that string into JSON "scope". Do NOT invent hosts, program RoE, WARNING walls, "scope not provided", STOP-for-clarification, or "obtain clarification" paragraphs.
+- Never invent domain-specific written-RoE language for any hostname mentioned in the situation (or any other host) unless that host already appears in the Scope line.
 - Plan detection, triage, and reporting only. Do not invent exploit payloads, shellcode, phishing kits, or bypass recipes.
 - Use ONLY tool ids listed under "Available catalog tools". Never invent tool ids or flags.
 - Each step's commands must be taken from that tool's example commands (verbatim, keeping {{url}}/{{path}}/{{wordlist}} placeholders or substituting the target). Never write a command for a tool that has none.
 - Do not add destructive flags (DoS, wipe, mass exploit).
-- If something is out of scope or unclear, say so in a step instead of guessing.
 - A reference playbook is included for TONE ONLY. Do not copy its steps or titles. Write a NEW playbook specific to the situation: different angles, order, and emphasis where the situation calls for it.
 
 Reply with a single JSON object (no markdown fences) matching:
@@ -240,6 +241,48 @@ function or(a: string | undefined, b: string | undefined): string {
   return a && a.trim() !== "" ? a : b ?? "";
 }
 
+/** Default scope tag when the client omits scope (console dropped scope UI). */
+export const DEFAULT_LAB_SCOPE = "Authorized lab (OpenHat)";
+
+/** True when model-invented scope looks like a WARNING / STOP / not-provided wall. */
+function looksLikeScopeWall(s: string): boolean {
+  const t = s.toLowerCase();
+  if (t.length > 160) return true;
+  return /not provided|obtain clarification|must be confirmed|halt and request|do not proceed|stop.for|\bwarning\b|scope was listed|beyond reconnaissance/.test(t);
+}
+
+/**
+ * Resolve plan.scope after the authorized gate: prefer client scope; otherwise
+ * the short lab tag. Never keep LLM-invented WARNING / clarification walls.
+ */
+export function resolvePlanScope(reqScope: string | undefined, draftScope?: string): string {
+  const fromReq = (reqScope ?? "").trim();
+  if (fromReq) return fromReq;
+  const fromDraft = (draftScope ?? "").trim();
+  if (
+    fromDraft &&
+    fromDraft !== "not provided" &&
+    !looksLikeScopeWall(fromDraft) &&
+    fromDraft.length <= 80 &&
+    !/https?:\/\//i.test(fromDraft)
+  ) {
+    return fromDraft;
+  }
+  return DEFAULT_LAB_SCOPE;
+}
+
+/** Strip STOP / "not provided" clarification walls from step prose. */
+function scrubScopeWallProse(s: string): string {
+  if (!s) return s;
+  if (!looksLikeScopeWall(s) && !/scope (was listed as )?not provided|obtain clarification|halt and request/i.test(s)) {
+    return s;
+  }
+  // Drop the wall; keep short non-wall sentences if any.
+  const parts = s.split(/(?<=[.!?])\s+/);
+  const kept = parts.filter((x) => x.trim() && !looksLikeScopeWall(x) && !/not provided|obtain clarification|halt and request|do not proceed beyond/i.test(x));
+  return kept.join(" ").trim() || "Stay inside the Scope line; detection and triage only.";
+}
+
 // extractJSON pulls the first {...} block out of the model reply, tolerating
 // lens wrapping in markdown fences or stray prose (mirrors llm/extractJSON).
 function extractJSON(s: string): string {
@@ -259,9 +302,26 @@ function extractJSON(s: string): string {
 // chat dispatches to the configured backend: an OpenAI-compatible endpoint when
 // baseURL is set, otherwise the Workers AI binding. Both return the assistant's
 // text content or throw, leaving fallback decisions to the caller.
-async function chat(cfg: LlmConfig, system: string, user: string): Promise<string> {
+export interface LlmChatOpts {
+  /** External retry count (default 3). Scaffold uses 1 so empty content fails over fast. */
+  retries?: number;
+  /** max_tokens for the completion (default 4096; scaffold uses 2048). */
+  maxTokens?: number;
+}
+
+export async function llmChat(
+  cfg: LlmConfig,
+  system: string,
+  user: string,
+  opts?: LlmChatOpts,
+): Promise<string> {
+  const maxTokens = opts?.maxTokens ?? 4096;
+  const retries = opts?.retries ?? 3;
   if (cfg.baseURL) {
-    return chatExternal(cfg.baseURL, cfg.apiKey, cfg.model, system, user);
+    return chatExternal(cfg.baseURL, cfg.apiKey, cfg.model, system, user, {
+      retries,
+      maxTokens,
+    });
   }
   if (!cfg.ai) throw new Error("no LLM backend configured");
   const raw = await (cfg.ai.run(cfg.model, {
@@ -271,7 +331,7 @@ async function chat(cfg: LlmConfig, system: string, user: string): Promise<strin
     ],
     // 8B-instruct-fast truncates long JSON at its default budget; give it
     // enough room to close the object.
-    max_tokens: 4096,
+    max_tokens: maxTokens,
     temperature: 0.2,
   }) as unknown as Promise<Record<string, unknown>>);
   const content = extractContent(raw);
@@ -281,18 +341,95 @@ async function chat(cfg: LlmConfig, system: string, user: string): Promise<strin
   return content;
 }
 
+/** Free / cheap scaffold failover candidates (tried after empty primary content). */
+export const SCAFFOLD_FAILOVER_MODELS = [
+  "openrouter/free",
+  "openrouter/auto",
+] as const;
+
+/**
+ * Code-mode scaffold chat: retry on empty content, then failover to
+ * openrouter/free (when on OpenRouter) and finally Workers AI if bound.
+ * Throws only when every attempt returns empty / errors.
+ */
+
+/** True when the reply looks like our scaffold JSON contract (has a files array). */
+function looksLikeScaffoldPayload(content: string): boolean {
+  const t = content.trim();
+  if (!t) return false;
+  if (/"files"\s*:\s*\[/.test(t)) return true;
+  // Fence-stripped object that at least contains path/content pairs
+  return /"path"\s*:/.test(t) && /"content"\s*:/.test(t);
+}
+
+export async function llmScaffoldChat(
+  cfg: LlmConfig,
+  system: string,
+  user: string,
+): Promise<{ content: string; model: string }> {
+  const tried: string[] = [];
+  const models: string[] = [];
+  const push = (m: string) => {
+    if (m && !models.includes(m)) models.push(m);
+  };
+  push(cfg.model);
+  if (cfg.baseURL && cfg.baseURL.includes("openrouter.ai")) {
+    for (const m of SCAFFOLD_FAILOVER_MODELS) push(m);
+  }
+  // Workers AI backup when binding exists (even if primary is OpenRouter).
+  if (cfg.ai) push(DEFAULT_LLM_MODEL);
+
+  let lastErr: Error | null = null;
+  for (const model of models) {
+    tried.push(model);
+    const attemptCfg: LlmConfig = { ...cfg, model };
+    // Prefer Workers AI binding when model is a @cf/… id.
+    if (model.startsWith("@cf/") && cfg.ai) {
+      attemptCfg.baseURL = undefined;
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        // retries=1: empty 200 from free models should failover, not burn 3× same model
+        const content = await llmChat(attemptCfg, system, user, {
+          retries: 1,
+          maxTokens: 4096,
+        });
+        // Free models often return 200 with prose and no {"files":...} — treat as empty so we failover.
+        if (content && content.trim() && looksLikeScaffoldPayload(content)) {
+          return { content, model };
+        }
+        const why =
+          content && content.trim()
+            ? " returned non-JSON scaffold content"
+            : " returned empty content";
+        console.warn("scaffold skip", model + why);
+        lastErr = new Error(model + why);
+      } catch (e) {
+        lastErr = e as Error;
+        // Empty-content and 5xx are retryable once; auth errors move on.
+        const msg = (e as Error).message || "";
+        if (/401|403|invalid api/i.test(msg)) break;
+      }
+      if (attempt < 1) await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+  throw lastErr ?? new Error("scaffold LLM failed (tried: " + tried.join(", ") + ")");
+}
+
+
 // chatExternal talks to any OpenAI-compatible /chat/completions endpoint, which
 // covers hosted providers (OpenAI, Groq, OpenRouter, Together, Fireworks...) and
 // self-hosted ones (llama.cpp/llamafile, vLLM, LocalAI, Ollama). Mirrors
 // internal/llm/client.go: Bearer auth when apiKey is set, max_tokens overall,
-// lenient message extraction, and a hard 25s deadline so the /v1/recommend
-// handler can fall back to the template instead of hanging.
+// lenient message extraction. Per-attempt deadlines live in llmPlanChat /
+// llmScaffoldChat so free OpenRouter can fail over before the overall race.
 async function chatExternal(
   baseURL: string,
   apiKey: string | undefined,
   model: string,
   system: string,
   user: string,
+  chatOpts?: { retries?: number; maxTokens?: number },
 ): Promise<string> {
   const base = baseURL.replace(/\/+$/, "");
   const url = /\/chat\/completions$/.test(base)
@@ -300,6 +437,8 @@ async function chatExternal(
     : base + "/chat/completions";
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (apiKey) headers["Authorization"] = "Bearer " + apiKey;
+  const maxTokens = chatOpts?.maxTokens ?? 4096;
+  const maxAttempts = Math.max(1, chatOpts?.retries ?? 3);
 
   const opts: RequestInit = {
     method: "POST",
@@ -311,7 +450,7 @@ async function chatExternal(
         { role: "user", content: user },
       ],
       temperature: 0.2,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
     }),
   };
   // openrouter/free and openrouter/auto route across many providers; a free slot
@@ -319,12 +458,12 @@ async function chatExternal(
   // when the failure is instant), bounded overall by llmRecommend's race — a
   // persistently hung provider still ends in the template fallback.
   let lastErr: Error | null = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await chatExternalOnce(url, opts);
     } catch (e) {
       lastErr = e as Error;
-      if (attempt < 2) await new Promise((res) => setTimeout(res, 600));
+      if (attempt < maxAttempts - 1) await new Promise((res) => setTimeout(res, 600));
     }
   }
   throw lastErr ?? new Error("LLM endpoint failed");
@@ -395,9 +534,12 @@ async function userPrompt(db: D1Database, req: RecommendRequest): Promise<string
   const pb = matchPlaybook(req.situation);
   const records = await allRecords(db);
   const tools = await situationRanked(db, records, req.situation, 12);
+  const scopeLine = req.scope && req.scope.trim() !== ""
+    ? req.scope.trim()
+    : DEFAULT_LAB_SCOPE;
   const lines: string[] = [
     "Situation: " + req.situation,
-    "Scope: " + (req.scope && req.scope.trim() !== "" ? req.scope : "not provided"),
+    "Scope: " + scopeLine,
   ];
   if (req.target) lines.push("Target: " + req.target);
   if (req.path) lines.push("Local path: " + req.path);
@@ -435,14 +577,22 @@ function parseDraft(content: string): DraftPlan & { steps: DraftStep[] } {
 
 // hydrate resolves the LLM's tool_ids against the catalog and builds the same
 // Plan shape the frontend and markdown() consume (mirrors llm/hydrate).
+
+function looksLikePlaybookId(s: string | undefined): boolean {
+  if (!s) return false;
+  const t = s.trim();
+  return t.length > 0 && t.length <= 64 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(t);
+}
+
 async function hydrate(db: D1Database, req: RecommendRequest, d: DraftPlan & { steps: DraftStep[] }): Promise<Plan> {
   const records = await allRecords(db);
   const byId = new Map(records.map((r) => [r.id, r]));
   const pb = matchPlaybook(req.situation);
   const plan: Plan = {
     goal: or(d.goal, req.situation),
-    scope: or(d.scope, req.scope) || "",
-    playbook: or(d.playbook, pb.id),
+    scope: resolvePlanScope(req.scope, d.scope),
+    // Prefer catalog playbook id; LLM often puts prose in "playbook".
+    playbook: looksLikePlaybookId(d.playbook) ? (d.playbook as string).trim() : pb.id,
     playbook_title: or(d.playbook_title, pb.title + " (LLM)"),
     checklist: d.checklist && d.checklist.length > 0
       ? d.checklist
@@ -478,11 +628,11 @@ async function hydrate(db: D1Database, req: RecommendRequest, d: DraftPlan & { s
     plan.steps.push({
       n,
       title: or(st.title, "Step " + n),
-      purpose: or(st.purpose, ""),
+      purpose: scrubScopeWallProse(or(st.purpose, "")),
       tools: stepRecs,
-      how: or(st.how, ""),
-      look_for: or(st.look_for, "Notes in each step's how and the tool look_for."),
-      next: or(st.next, "If you have a finding: save request/response or scanner JSON and note it. If not: continue."),
+      how: scrubScopeWallProse(or(st.how, "")),
+      look_for: scrubScopeWallProse(or(st.look_for, "Notes in each step's how and the tool look_for.")),
+      next: scrubScopeWallProse(or(st.next, "If you have a finding: save request/response or scanner JSON and note it. If not: continue.")),
       // The model picks the tools and structure; commands are synthesized from
       // the catalog records so they are always real flags, never model-made-up.
       commands: cmds,
@@ -499,6 +649,86 @@ function expand(cmd: string, subs: Record<string, string>): string {
   return out;
 }
 
+/** Free / cheap plan failover candidates (after primary empties or times out). */
+export const PLAN_FAILOVER_MODELS = [
+  "openrouter/free",
+  "openrouter/auto",
+] as const;
+
+/** Per-attempt budget — fail over before a single hung free model burns the wall. */
+export const PLAN_ATTEMPT_MS = 10_000;
+
+/** Overall plan budget (room for primary → free/auto → Workers AI). */
+export const PLAN_OVERALL_MS = 45_000;
+
+/** True when the reply looks like our plan JSON contract (has a steps array). */
+function looksLikePlanPayload(content: string): boolean {
+  const t = content.trim();
+  if (!t) return false;
+  if (/"steps"\s*:\s*\[/.test(t)) return true;
+  // Fence-stripped object that at least mentions step-ish fields
+  return /"title"\s*:/.test(t) && /"tool_ids"\s*:/.test(t);
+}
+
+/**
+ * Plan chat: short per-attempt timeout, then failover to openrouter/free →
+ * openrouter/auto → Workers AI when bound. Mirrors llmScaffoldChat so free
+ * OpenRouter does not sit until the overall race and amber as "timed out".
+ */
+export async function llmPlanChat(
+  cfg: LlmConfig,
+  system: string,
+  user: string,
+): Promise<{ content: string; model: string }> {
+  const tried: string[] = [];
+  const models: string[] = [];
+  const push = (m: string) => {
+    if (m && !models.includes(m)) models.push(m);
+  };
+  push(cfg.model);
+  if (cfg.baseURL && cfg.baseURL.includes("openrouter.ai")) {
+    for (const m of PLAN_FAILOVER_MODELS) push(m);
+  }
+  if (cfg.ai) push(DEFAULT_LLM_MODEL);
+
+  let lastErr: Error | null = null;
+  for (const model of models) {
+    tried.push(model);
+    const attemptCfg: LlmConfig = { ...cfg, model };
+    if (model.startsWith("@cf/") && cfg.ai) {
+      attemptCfg.baseURL = undefined;
+    }
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const content = await raceTimeout(
+          llmChat(attemptCfg, system, user, {
+            retries: 1,
+            maxTokens: 4096,
+          }),
+          PLAN_ATTEMPT_MS,
+          "LLM plan attempt timed out after " + PLAN_ATTEMPT_MS / 1000 + "s (" + model + ")",
+        );
+        if (content && content.trim() && looksLikePlanPayload(content)) {
+          return { content, model };
+        }
+        const why =
+          content && content.trim()
+            ? " returned non-JSON plan content"
+            : " returned empty content";
+        console.warn("plan skip", model + why);
+        lastErr = new Error(model + why);
+      } catch (e) {
+        lastErr = e as Error;
+        const msg = (e as Error).message || "";
+        console.warn("plan attempt failed", model + ":", msg);
+        if (/401|403|invalid api/i.test(msg)) break;
+      }
+      if (attempt < 1) await new Promise((r) => setTimeout(r, 300));
+    }
+  }
+  throw lastErr ?? new Error("plan LLM failed (tried: " + tried.join(", ") + ")");
+}
+
 // llmRecommend validates the gate, schools the configured LLM on the
 // situation + matched template, and returns a hydrated Plan. Any failure throws,
 // letting the caller fall back to the deterministic template.
@@ -507,6 +737,9 @@ export async function llmRecommend(
   cfg: LlmConfig,
   req: RecommendRequest,
 ): Promise<Plan> {
+  if (!req.authorized) {
+    throw new Error("refusing to plan: pass authorized=true for work you are allowed to do (RoE / authorized lab)");
+  }
   if (!req.situation || req.situation.trim() === "") {
     throw new Error("situation is required");
   }
@@ -515,13 +748,12 @@ export async function llmRecommend(
   }
   const system = LLM_SYSTEM_PROMPT;
   const user = await userPrompt(db, req);
-  // Race the model call so a slow/hung inference still lets the caller fall
-  // back to the deterministic template before the Workers wall-clock limit
-  // (~30s). 28s gives retries + the fallback just enough room to finish first.
-  const content = await raceTimeout(
-    chat(cfg, system, user),
-    28_000,
-    "LLM plan timed out after 28s",
+  // Overall race still caps the chain; per-attempt timeouts inside llmPlanChat
+  // fail over free OpenRouter before we amber at a single hung model.
+  const { content } = await raceTimeout(
+    llmPlanChat(cfg, system, user),
+    PLAN_OVERALL_MS,
+    "LLM plan timed out after " + PLAN_OVERALL_MS / 1000 + "s",
   );
   const draft = parseDraft(content);
   return hydrate(db, req, draft);

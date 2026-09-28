@@ -53,6 +53,10 @@ KEYCLOAK_ISSUER=http://localhost:8080/realms/openhat
 # KEYCLOAK_CLIENT_SECRET=…
 # Optional emergency local-only embed gate — prefer ai_admin token instead:
 # ADMIN_TOKEN=
+# Optional Flexprice sandbox metering (see section below):
+# FLEXPRICE_API_KEY=
+# FLEXPRICE_API_BASE=https://api.cloud.flexprice.io/v1
+# FLEXPRICE_EVENT_NAME=ohqs.api_call
 ```
 
 `.dev.vars` is gitignored. Never commit secrets.
@@ -101,6 +105,30 @@ Public catalog reads (`/v1/search`, `/v1/bounties`, `/v1/models`, `/v1/index`, `
 - `/v1/index/embed` — requires `ai_admin` token, admin Keycloak Bearer JWT, or emergency `ADMIN_TOKEN`
 
 When a client API token is presented on any route, metering + audit apply. `ai_admin` skips metering, still audits.
+
+
+## Flexprice usage metering (optional, local)
+
+After a successful D1 `api_usage` insert for **client** API tokens, the worker
+can POST a usage event to Flexprice sandbox. `ai_admin` is skipped (same as
+rate-limit `skipMeter`). Missing `FLEXPRICE_API_KEY` → no-op (API still works).
+
+In `deploy/worker/.dev.vars` (gitignored; copy from `.dev.vars.example`):
+
+```
+FLEXPRICE_API_KEY=your-sandbox-key-from-dashboard
+# optional overrides:
+# FLEXPRICE_API_BASE=https://api.cloud.flexprice.io/v1
+# FLEXPRICE_EVENT_NAME=ohqs.api_call
+```
+
+Restart wrangler so env loads (`npx wrangler dev --ip 127.0.0.1 --port 8788`).
+
+**Dashboard note:** create a matching metered feature/event name (`ohqs.api_call`
+by default) and customers whose `external_customer_id` equals the Keycloak
+`user_sub` used as the token owner. OHQS only ingests events; billing setup is
+in Flexprice. Never put phones, emails, JWTs, or raw `ohqs_*` tokens in event
+properties.
 
 ## Explicit policy
 
