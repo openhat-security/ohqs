@@ -1,7 +1,7 @@
 // Deterministic planner: a faithful port of internal/planner.Build +
 // internal/retrieve.{Situation,Playbook} that runs against the D1 catalog so
 // the edge can generate the same template playbook as the local Go CLI, with
-// zero LLM spend. Gate: authorized required; scope optional (lab tag default).
+// zero LLM spend. Situation required; scope optional (lab tag default).
 
 import { PLAYBOOKS, Playbook } from "./playbooks";
 

@@ -645,8 +645,8 @@ function syncCodeOpts() {
   if (zipBtn && playbookMode !== "code") zipBtn.hidden = true;
   if (hint) {
     hint.textContent = playbookMode === "code"
-      ? "Plan + code downloads a .zip with PLAYBOOK.md plus an authorized lab scaffold (install/setup/detect stubs). Never weaponized. Server charges credits at job start — UI preview is not the control."
-      : "Written plan returns a markdown engagement playbook. Plan + code adds a downloadable .zip with the written plan plus an authorized lab scaffold (setup / detect / report stubs only — never weaponized payloads).";
+      ? "Plan + code downloads a .zip with PLAYBOOK.md plus a lab scaffold (install/setup/detect stubs). Server charges credits at job start — UI preview is not the control."
+      : "Written plan returns a markdown engagement playbook. Plan + code adds a downloadable .zip with the written plan plus a lab scaffold (setup / detect / report stubs).";
   }
   updateCreditsPreview();
 }
@@ -732,7 +732,7 @@ async function loadModels() {
   }
 }
 
-// situation unlocks the scope/target/authorized gate.
+// situation unlocks playbook options (mode, target, model).
 function syncPlaybookGate() {
   const has = (document.getElementById("rely-situation").value || "").trim() !== "";
   const gate = document.getElementById("rely-gate");

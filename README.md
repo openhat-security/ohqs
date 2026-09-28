@@ -407,11 +407,17 @@ Run `./bin/ohqs ingest --help` for all available options.
 - `REFERENCES.md` — catalog inventory
 - `third-party-resources/README.md` — upstream resources
 
+## Deploy (Cloudflare Worker)
+
+Hosted edge API + static UI deploy from GitHub Actions on push to `main` when `deploy/worker` or `deploy/web` change. Setup: [`deploy/worker/README.md`](deploy/worker/README.md).
+
 ## Project layout
 
 ```
 ohqs/                    Go application
 catalog/                 YAML catalog
+deploy/worker/           Cloudflare Worker (API + web assets)
+deploy/web/              Static console served by the Worker
 third-party-resources/   Optional upstream repositories
 REFERENCES.md            Catalog inventory
 docs/                    Additional documentation

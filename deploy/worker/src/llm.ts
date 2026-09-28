@@ -729,17 +729,15 @@ export async function llmPlanChat(
   throw lastErr ?? new Error("plan LLM failed (tried: " + tried.join(", ") + ")");
 }
 
-// llmRecommend validates the gate, schools the configured LLM on the
-// situation + matched template, and returns a hydrated Plan. Any failure throws,
-// letting the caller fall back to the deterministic template.
+// llmRecommend schools the configured LLM on the situation + matched template
+// and returns a hydrated Plan. Any failure throws, letting the caller fall back
+// to the deterministic template.
 export async function llmRecommend(
   db: D1Database,
   cfg: LlmConfig,
   req: RecommendRequest,
 ): Promise<Plan> {
-  if (!req.authorized) {
-    throw new Error("refusing to plan: pass authorized=true for work you are allowed to do (RoE / authorized lab)");
-  }
+  // Authorization body gate removed (matches buildPlan): situation required; scope defaults in hydrate.
   if (!req.situation || req.situation.trim() === "") {
     throw new Error("situation is required");
   }
