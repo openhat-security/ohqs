@@ -1,8 +1,16 @@
-// Plan+code: authorized lab scaffold zip for /v1/recommend when mode=code.
-// Setup / detect / report stubs only — never weaponized payloads or exploit PoCs.
+// Plan+code: runnable lab zip for /v1/recommend when mode=code (full E2E runners).
 // Credits: written = 1; code full = 1 + max(0, complexity - 1)
 
 import { markdown, type Plan, type RecommendRequest } from "./planner";
+import {
+  goE2eFiles,
+  jsE2eFiles,
+  pythonE2eFiles,
+  rustE2eFiles,
+} from "./codepack-e2e";
+import type { LabFile, LabKind } from "./codepack-types";
+
+export type { LabFile, LabKind } from "./codepack-types";
 
 export const CODE_LANGUAGES = ["python", "go", "rust", "javascript"] as const;
 export type CodeLanguage = (typeof CODE_LANGUAGES)[number];
@@ -91,14 +99,6 @@ export function validateCodeRequest(req: RecommendRequest): {
   };
 }
 
-export interface LabFile {
-  path: string;
-  content: string;
-}
-
-/** Situation-specific lab module family (drives setup/detect/report stubs). */
-export type LabKind = "browser_beef" | "secrets" | "web_generic" | "general";
-
 /**
  * Infer lab module kind from plan goal / playbook.
  */
@@ -174,58 +174,51 @@ function lines(...rows: string[]): string {
 const ENV_EXAMPLE = lines(
   "# Placeholders only — never commit real keys or ohqs_* tokens.",
   "TARGET_URL=https://lab.example.invalid",
-  "SCOPE_NOTE=written RoE required before any testing",
+  "SCOPE_NOTE=optional RoE / program note",
   "OHQS_API_TOKEN=",
 );
 
-function labReadme(complexity: number, kind: LabKind): string {
+function labReadme(complexity: number, kind: LabKind, language: CodeLanguage): string {
   const kindLine =
     kind === "browser_beef"
-      ? "Lab kind: **browser / BeEF authorized lab** — setup, detect, report only. Never mint hooks, hook.js, or browser exploit payloads."
+      ? "Lab kind: **browser / BeEF** — live HTTP recon plus browser-hint triage."
       : kind === "secrets"
-        ? "Lab kind: **secrets / credential triage** — evidence scan and reporting stubs only."
+        ? "Lab kind: **secrets** — repo secret scan + web probes."
         : kind === "web_generic"
-          ? "Lab kind: **authorized web assessment** — setup / detect / report stubs. No mock `check_sqli` / `check_xss` toys."
-          : "Lab kind: **general authorized engagement** — setup / detect / report stubs only.";
+          ? "Lab kind: **web assessment** — recon, SQLi/XSS/CMDi probes, evidence JSON."
+          : "Lab kind: **general offsec** — full probe chain.";
+  const runHint =
+    language === "python"
+      ? "`./run.sh full` or `python -m src.main full` after `pip install -r requirements.txt`"
+      : language === "go"
+        ? "`go run . full`"
+        : language === "rust"
+          ? "`cargo run -- full`"
+          : "`npm run full`";
   return lines(
-    "# Authorized lab scaffold (OHQS)",
+    "# OpenHat lab pack (OHQS)",
     "",
-    "This archive is a **detection / triage / reporting** lab stub for an engagement",
-    "you already have written authorization to perform. It is **not** a weaponized",
-    "toolkit.",
+    "Runnable end-to-end research code generated from your playbook.",
     "",
     kindLine,
     "",
-    "## Rules of engagement",
+    "## Quick start",
     "",
-    "- Stay inside the stated scope and program rules.",
-    "- Detection, triage, and reporting only — no exploit payloads, shells,",
-    "  credential stealers, BeEF hooks, or bypass recipes.",
-    "- **Forbidden in this zip:** weaponized payloads, BeEF hook JS, exploit PoCs,",
-    "  mock `check_sqli` / `check_xss` return-dict toys, attack procedures.",
-    "- Do **not** paste real `ohqs_*` tokens, API keys, or customer secrets into",
-    "  `.env` (use `.env.example` placeholders only).",
-    "- Do **not** auto-execute model-generated code in production or against",
-    "  out-of-scope hosts.",
+    "1. Copy `.env.example` → `.env` and set `TARGET_URL`.",
+    "2. Run: " + runHint,
+    "3. Inspect `evidence/*.json` and append to `FINDINGS.md`.",
     "",
-    "## Layout",
-    "",
-    "- `PLAYBOOK.md` — markdown engagement steps only (never lab Python dumped here)",
-    "- `FINDINGS.md` — client report stub",
-    "- `evidence/` — drop scanner / proxy / panel notes here",
-    "- Language stubs under `src/` for **setup / detect / report** matching this situation",
+    "Do not commit real API keys or `ohqs_*` tokens.",
     "",
     "## Complexity",
     "",
-    `This pack was generated at complexity **${complexity}** (1 = minimal stubs,`,
-    "10 = more modules / checks). Higher complexity adds more *detection scaffolding*,",
-    "not attack capability.",
+    `Pack complexity **${complexity}** (metadata for billing; runner is always full-chain).`,
   );
 }
 
 function findingsStub(goal: string, language: string, complexity: number): string {
   return lines(
-    "# Findings report stub",
+    "# Findings report",
     "",
     `**Goal:** ${goal}`,
     `**Language:** ${language}`,
@@ -246,7 +239,7 @@ function findingsStub(goal: string, language: string, complexity: number): strin
     "- **Steps to reproduce:** (authorized scope only)",
     "- **Evidence:** `evidence/_file_`",
     "- **Impact:**",
-    "- **Exploit PoC:**",
+    "- **Exploit PoC:** (attach evidence/*.json, request/response)",
     "- **Fix:**",
     "",
     "## Coverage checklist",
@@ -261,803 +254,40 @@ function findingsStub(goal: string, language: string, complexity: number): strin
   );
 }
 
-function pythonFiles(complexity: number, kind: LabKind): LabFile[] {
-  const files: LabFile[] = [
-    {
-      path: "requirements.txt",
-      content: lines(
-        "# Authorized lab deps only (stdlib preferred).",
-        "# Add pinned packages you already use for detection/reporting.",
-      ),
-    },
-    {
-      path: "src/__init__.py",
-      content: lines('"""OHQS authorized lab package — setup/detect/exploit stubs."""'),
-    },
-  ];
-
-  if (kind === "browser_beef") {
-    files.push(
-      {
-        path: "src/setup.py",
-        content: lines(
-          '"""Browser / BeEF authorized-lab setup helpers.',
-          "",
-          "Creates evidence dirs and prints a lab checklist. Does NOT mint BeEF hooks,",
-          "hook.js, XSS payloads, or any browser exploit. Wire your own authorized",
-          "lab panel under written RoE.",
-          '"""',
-          "from __future__ import annotations",
-          "import json",
-          "import os",
-          "from pathlib import Path",
-          "",
-          "ROOT = Path(__file__).resolve().parents[1]",
-          'EVIDENCE = ROOT / "evidence"',
-          "",
-          "LAB_CHECKLIST = [",
-          '    "Confirm written RoE covers browser-agent / BeEF lab use",',
-          '    "Use OHQS isolated browser (ohqs browser) — not daily profile",',
-          '    "Note authorized lab panel URL in TARGET_URL (placeholder only)",',
-          '    "Never paste real hooks, credentials, or ohqs_* tokens into this repo",',
-          "]",
-          "",
-          "",
-          "def ensure_layout() -> None:",
-          "    EVIDENCE.mkdir(parents=True, exist_ok=True)",
-          '    (EVIDENCE / ".gitkeep").write_text("", encoding="utf-8")',
-          '    (EVIDENCE / "browser_lab_notes.md").write_text(',
-          '        "# Browser lab notes\\n\\n"',
-          '        "- Panel URL: (authorized lab only)\\n"',
-          '        "- Operator: \\n"',
-          '        "- Session window: \\n"',
-          '        "- Evidence paths: \\n",',
-          "        encoding=\"utf-8\",",
-          "    )",
-          '    print("browser lab layout ok:", EVIDENCE)',
-          "",
-          "",
-          "def load_target() -> str:",
-          '    return os.environ.get("TARGET_URL", "https://lab.example.invalid").strip()',
-          "",
-          "",
-          "def checklist() -> list[str]:",
-          "    return list(LAB_CHECKLIST)",
-          "",
-          "",
-          'if __name__ == "__main__":',
-          "    ensure_layout()",
-          "    print(json.dumps({\"target\": load_target(), \"checklist\": checklist()}, indent=2))",
-        ),
-      },
-      {
-        path: "src/detect.py",
-        content: lines(
-          '"""Browser / BeEF lab detection stubs — triage evidence already collected.',
-          "",
-          "Reads local evidence notes only. No hooks, no XSS/SQLi probes, no live",
-          "HTTP attack clients. Forbidden: check_sqli / check_xss return-dict toys.",
-          '"""',
-          "from __future__ import annotations",
-          "import json",
-          "from pathlib import Path",
-          "",
-          "ROOT = Path(__file__).resolve().parents[1]",
-          'EVIDENCE = ROOT / "evidence"',
-          "",
-          "BROWSER_HINTS = (",
-          '    "beef",',
-          '    "browser",',
-          '    "panel",',
-          '    "hook",  # filename keyword only — never emit hook payloads',
-          '    "extension",',
-          '    "cookie",',
-          ")",
-          "",
-          "",
-          "def list_evidence_files() -> list[str]:",
-          "    files: list[str] = []",
-          "    if EVIDENCE.is_dir():",
-          '        for p in sorted(EVIDENCE.rglob("*")):',
-          '            if p.is_file() and p.name != ".gitkeep":',
-          "                files.append(str(p.relative_to(ROOT)))",
-          "    return files",
-          "",
-          "",
-          "def classify_evidence_names(names: list[str] | None = None) -> dict:",
-          '    """Map evidence filenames to coarse browser-lab buckets (name only)."""',
-          "    names = names if names is not None else list_evidence_files()",
-          '    buckets = {"browser_lab": [], "other": []}',
-          "    for n in names:",
-          "        low = n.lower()",
-          "        if any(h in low for h in BROWSER_HINTS):",
-          '            buckets["browser_lab"].append(n)',
-          "        else:",
-          '            buckets["other"].append(n)',
-          "    return {",
-          '        "evidence_files": names,',
-          '        "buckets": buckets,',
-          '        "note": "Filename triage only — review under RoE; no payloads generated",',
-          "    }",
-          "",
-          "",
-          "def summarize_evidence_dir() -> dict:",
-          "    return classify_evidence_names()",
-          "",
-          "",
-          'if __name__ == "__main__":',
-          "    print(json.dumps(summarize_evidence_dir(), indent=2))",
-        ),
-      },
-      {
-        path: "src/report.py",
-        content: lines(
-          '"""Browser / BeEF engagement report helpers — markdown only, no payloads."""',
-          "from __future__ import annotations",
-          "",
-          "",
-          "def appendix(summary: dict) -> str:",
-          '    lines_out = ["## Browser lab triage appendix", ""]',
-          '    files = summary.get("evidence_files") or []',
-          "    if not files:",
-          '        lines_out.append("_No evidence files yet — drop panel notes under evidence/._")',
-          '        return "\\n".join(lines_out)',
-          '    buckets = summary.get("buckets") or {}',
-          '    lines_out.append(f"- Evidence files: {len(files)}")',
-          '    lines_out.append(f"- Browser-lab named: {len(buckets.get(\'browser_lab\') or [])}")',
-          '    lines_out.append("")',
-          '    lines_out.append("Review under RoE. Do not attach weaponized hooks to client reports.")',
-          '    return "\\n".join(lines_out)',
-        ),
-      },
-      {
-        path: "src/main.py",
-        content: lines(
-          '"""CLI entry — browser/BeEF authorized lab. setup / detect / report only."""',
-          "from __future__ import annotations",
-          "import argparse",
-          "import json",
-          "from . import setup, detect, report",
-          "",
-          "",
-          "def main() -> None:",
-          '    ap = argparse.ArgumentParser(description="OHQS browser/BeEF lab scaffold")',
-          '    ap.add_argument("cmd", choices=["setup", "detect", "report"])',
-          "    args = ap.parse_args()",
-          '    if args.cmd == "setup":',
-          "        setup.ensure_layout()",
-          "        print(json.dumps({\"checklist\": setup.checklist()}, indent=2))",
-          '    elif args.cmd == "detect":',
-          "        print(json.dumps(detect.summarize_evidence_dir(), indent=2))",
-          "    else:",
-          "        print(report.appendix(detect.summarize_evidence_dir()))",
-          "",
-          "",
-          'if __name__ == "__main__":',
-          "    main()",
-        ),
-      },
-    );
-    return files;
+function languagePack(
+  language: CodeLanguage,
+  complexity: number,
+  plan: Plan,
+  kind: LabKind,
+): LabFile[] {
+  const goal = plan.goal || "engagement";
+  switch (language) {
+    case "python":
+      return pythonE2eFiles(complexity, kind);
+    case "go":
+      return goE2eFiles(complexity, goal, kind);
+    case "rust":
+      return rustE2eFiles(complexity, kind);
+    case "javascript":
+      return jsE2eFiles(complexity, kind);
   }
-
-  // secrets / web_generic / general — setup + detect + optional report
-  // NEVER emit check_sqli / check_xss return-dict toys.
-  files.push(
-    {
-      path: "src/setup.py",
-      content: lines(
-        '"""Lab setup helpers — create dirs, validate config. No network attacks."""',
-        "from __future__ import annotations",
-        "import os",
-        "from pathlib import Path",
-        "",
-        "ROOT = Path(__file__).resolve().parents[1]",
-        'EVIDENCE = ROOT / "evidence"',
-        "",
-        "",
-        "def ensure_layout() -> None:",
-        "    EVIDENCE.mkdir(parents=True, exist_ok=True)",
-        '    (EVIDENCE / ".gitkeep").write_text("", encoding="utf-8")',
-        '    print("lab layout ok:", EVIDENCE)',
-        "",
-        "",
-        "def load_target() -> str:",
-        '    return os.environ.get("TARGET_URL", "https://lab.example.invalid").strip()',
-        "",
-        "",
-        'if __name__ == "__main__":',
-        "    ensure_layout()",
-        '    print("target placeholder:", load_target())',
-      ),
-    },
-    {
-      path: "src/detect.py",
-      content: lines(
-        '"""Detection stubs — triage helpers only. No payloads or exploit PoCs.',
-        "",
-        "Forbidden: mock check_sqli / check_xss return-dict toys; live attack clients.",
-        '"""',
-        "from __future__ import annotations",
-        "import json",
-        "import re",
-        "from pathlib import Path",
-        "",
-        "ROOT = Path(__file__).resolve().parents[1]",
-        'EVIDENCE = ROOT / "evidence"',
-        "",
-        "SECRET_HINT = re.compile(",
-        '    r"(?i)(api[_-]?key|password|secret|authorization)\\s*[:=]\\s*\\S+"',
-        ")",
-        "",
-        "",
-        "def scan_evidence_text(text: str) -> list[dict]:",
-        "    hits = []",
-        "    for i, line in enumerate(text.splitlines(), 1):",
-        "        if SECRET_HINT.search(line):",
-        '            hits.append({"line": i, "kind": "secret_hint", "note": "review manually"})',
-        "    return hits",
-        "",
-        "",
-        "def summarize_evidence_dir() -> dict:",
-        "    files = []",
-        "    if EVIDENCE.is_dir():",
-        '        for p in sorted(EVIDENCE.rglob("*")):',
-        '            if p.is_file() and p.name != ".gitkeep":',
-        "                files.append(str(p.relative_to(ROOT)))",
-        '    return {"evidence_files": files}',
-        "",
-        "",
-        'if __name__ == "__main__":',
-        "    print(json.dumps(summarize_evidence_dir(), indent=2))",
-      ),
-    },
-    {
-      path: "src/main.py",
-      content: lines(
-        '"""CLI entry — authorized lab only. Does not auto-attack targets."""',
-        "from __future__ import annotations",
-        "import argparse",
-        "import json",
-        "from . import setup, detect",
-        "",
-        "",
-        "def main() -> None:",
-        '    ap = argparse.ArgumentParser(description="OHQS authorized lab scaffold")',
-        '    ap.add_argument("cmd", choices=["setup", "detect"])',
-        "    args = ap.parse_args()",
-        '    if args.cmd == "setup":',
-        "        setup.ensure_layout()",
-        "    else:",
-        "        print(json.dumps(detect.summarize_evidence_dir(), indent=2))",
-        "",
-        "",
-        'if __name__ == "__main__":',
-        "    main()",
-      ),
-    },
-  );
-  if (complexity >= 4 && (kind === "web_generic" || kind === "general")) {
-    files.push({
-      path: "src/headers_check.py",
-      content: lines(
-        '"""Document expected security headers for an in-scope lab URL.',
-        "No HTTP requests are made from this stub — wire a client under RoE yourself.",
-        '"""',
-        "EXPECTED = [",
-        '    "content-security-policy",',
-        '    "strict-transport-security",',
-        '    "x-content-type-options",',
-        '    "x-frame-options",',
-        "]",
-        "",
-        "",
-        "def missing_headers(present: dict[str, str]) -> list[str]:",
-        "    lower = {k.lower(): v for k, v in present.items()}",
-        "    return [h for h in EXPECTED if h not in lower]",
-      ),
-    });
-  }
-  if (complexity >= 7) {
-    files.push({
-      path: "src/report.py",
-      content: lines(
-        '"""Turn detect() hits into FINDINGS.md appendices — reporting only."""',
-        "from __future__ import annotations",
-        "",
-        "",
-        "def appendix(hits: list[dict]) -> str:",
-        '    lines_out = ["## Automated triage appendix", ""]',
-        "    if not hits:",
-        '        lines_out.append("_No secret-hint matches in scanned evidence._")',
-        '        return "\\n".join(lines_out)',
-        "    for h in hits:",
-        '        lines_out.append(f"- line {h.get(\'line\')}: {h.get(\'kind\')} — {h.get(\'note\')}")',
-        '    lines_out.append("")',
-        '    lines_out.append("Review under RoE before filing a finding.")',
-        '    return "\\n".join(lines_out)',
-      ),
-    });
-  }
-  return files;
 }
 
-function goFiles(complexity: number, goal: string, kind: LabKind): LabFile[] {
-  const mod = "ohqs.lab/" + slug(goal);
-  const files: LabFile[] = [
-    { path: "go.mod", content: lines("module " + mod, "", "go 1.22") },
-    {
-      path: "internal/setup/setup.go",
-      content: lines(
-        "// Package setup prepares the authorized lab workspace. No network attacks.",
-        "package setup",
-        "",
-        "import (",
-        '\t"fmt"',
-        '\t"os"',
-        '\t"path/filepath"',
-        ")",
-        "",
-        "func EnsureLayout(root string) error {",
-        '\tev := filepath.Join(root, "evidence")',
-        "\tif err := os.MkdirAll(ev, 0o755); err != nil {",
-        "\t\treturn err",
-        "\t}",
-        '\t_ = os.WriteFile(filepath.Join(ev, ".gitkeep"), []byte{}, 0o644)',
-        '\tfmt.Println("lab layout ok:", ev)',
-        "\treturn nil",
-        "}",
-        "",
-        "func Target() string {",
-        '\tif v := os.Getenv("TARGET_URL"); v != "" {',
-        "\t\treturn v",
-        "\t}",
-        '\treturn "https://lab.example.invalid"',
-        "}",
-      ),
-    },
-    {
-      path: "internal/detect/detect.go",
-      content: lines(
-        "// Package detect: triage helpers for evidence you already collected. No exploits.",
-        "package detect",
-        "",
-        "import (",
-        '\t"encoding/json"',
-        '\t"os"',
-        '\t"path/filepath"',
-        '\t"regexp"',
-        ")",
-        "",
-        "var secretHint = regexp.MustCompile(`(?i)(api[_-]?key|password|secret|authorization)\\s*[:=]\\s*\\S+`)",
-        "",
-        "func SummarizeEvidence(root string) (map[string]any, error) {",
-        '\tev := filepath.Join(root, "evidence")',
-        "\tvar files []string",
-        "\t_ = filepath.Walk(ev, func(path string, info os.FileInfo, err error) error {",
-        "\t\tif err != nil || info == nil || info.IsDir() {",
-        "\t\t\treturn nil",
-        "\t\t}",
-        '\t\tif info.Name() == ".gitkeep" {',
-        "\t\t\treturn nil",
-        "\t\t}",
-        "\t\trel, _ := filepath.Rel(root, path)",
-        "\t\tfiles = append(files, rel)",
-        "\t\treturn nil",
-        "\t})",
-        "\t_ = secretHint",
-        '\treturn map[string]any{"evidence_files": files}, nil',
-        "}",
-        "",
-        "func PrintJSON(v any) {",
-        "\tenc := json.NewEncoder(os.Stdout)",
-        '\tenc.SetIndent("", "  ")',
-        "\t_ = enc.Encode(v)",
-        "}",
-      ),
-    },
-    {
-      path: "main.go",
-      content: lines(
-        "// OHQS authorized lab CLI — setup / detect only.",
-        "package main",
-        "",
-        "import (",
-        '\t"fmt"',
-        '\t"os"',
-        "",
-        '\t"' + mod + '/internal/detect"',
-        '\t"' + mod + '/internal/setup"',
-        ")",
-        "",
-        "func main() {",
-        "\tif len(os.Args) < 2 {",
-        '\t\tfmt.Fprintln(os.Stderr, "usage: go run . <setup|detect>")',
-        "\t\tos.Exit(2)",
-        "\t}",
-        "\troot, _ := os.Getwd()",
-        "\tswitch os.Args[1] {",
-        '\tcase "setup":',
-        "\t\tif err := setup.EnsureLayout(root); err != nil {",
-        "\t\t\tfmt.Fprintln(os.Stderr, err)",
-        "\t\t\tos.Exit(1)",
-        "\t\t}",
-        '\t\tfmt.Println("target placeholder:", setup.Target())',
-        '\tcase "detect":',
-        "\t\tsum, err := detect.SummarizeEvidence(root)",
-        "\t\tif err != nil {",
-        "\t\t\tfmt.Fprintln(os.Stderr, err)",
-        "\t\t\tos.Exit(1)",
-        "\t\t}",
-        "\t\tdetect.PrintJSON(sum)",
-        "\tdefault:",
-        '\t\tfmt.Fprintln(os.Stderr, "unknown cmd")',
-        "\t\tos.Exit(2)",
-        "\t}",
-        "}",
-      ),
-    },
-  ];
-  if (kind === "browser_beef") {
-    files.push({
-      path: "internal/browserlab/browserlab.go",
-      content: lines(
-        "// Package browserlab: filename triage for browser/BeEF lab evidence.",
-        "// No hooks, no XSS/SQLi probes, no check_sqli/check_xss toys.",
-        "package browserlab",
-        "",
-        'import "strings"',
-        "",
-        'var hints = []string{"beef", "browser", "panel", "extension", "cookie"}',
-        "",
-        "func ClassifyNames(names []string) map[string][]string {",
-        '	out := map[string][]string{"browser_lab": {}, "other": {}}',
-        "	for _, n := range names {",
-        "\t\tlow := strings.ToLower(n)",
-        "\t\tmatch := false",
-        "\t\tfor _, h := range hints {",
-        "\t\t\tif strings.Contains(low, h) {",
-        "\t\t\t\tmatch = true",
-        "\t\t\t\tbreak",
-        "\t\t\t}",
-        "\t\t}",
-        "\t\tif match {",
-        '\t\t\tout["browser_lab"] = append(out["browser_lab"], n)',
-        "\t\t} else {",
-        '\t\t\tout["other"] = append(out["other"], n)',
-        "\t\t}",
-        "\t}",
-        "	return out",
-        "}",
-      ),
-    });
-  } else if (complexity >= 5) {
-    files.push({
-      path: "internal/headers/headers.go",
-      content: lines(
-        "// Package headers documents expected security headers. No HTTP client here.",
-        "package headers",
-        "",
-        "var Expected = []string{",
-        '\t"content-security-policy",',
-        '\t"strict-transport-security",',
-        '\t"x-content-type-options",',
-        '\t"x-frame-options",',
-        "}",
-        "",
-        "func Missing(present map[string]string) []string {",
-        "\tvar miss []string",
-        "\tfor _, h := range Expected {",
-        "\t\tfound := false",
-        "\t\tfor k := range present {",
-        "\t\t\tif equalFold(k, h) {",
-        "\t\t\t\tfound = true",
-        "\t\t\t\tbreak",
-        "\t\t\t}",
-        "\t\t}",
-        "\t\tif !found {",
-        "\t\t\tmiss = append(miss, h)",
-        "\t\t}",
-        "\t}",
-        "\treturn miss",
-        "}",
-        "",
-        "func equalFold(a, b string) bool {",
-        "\tif len(a) != len(b) {",
-        "\t\treturn false",
-        "\t}",
-        "\tfor i := 0; i < len(a); i++ {",
-        "\t\tca, cb := a[i], b[i]",
-        "\t\tif ca >= 'A' && ca <= 'Z' {",
-        "\t\t\tca += 'a' - 'A'",
-        "\t\t}",
-        "\t\tif cb >= 'A' && cb <= 'Z' {",
-        "\t\t\tcb += 'a' - 'A'",
-        "\t\t}",
-        "\t\tif ca != cb {",
-        "\t\t\treturn false",
-        "\t\t}",
-        "\t}",
-        "\treturn true",
-        "}",
-      ),
-    });
-  }
-  return files;
-}
 
-function rustFiles(complexity: number, kind: LabKind): LabFile[] {
-  const files: LabFile[] = [
-    {
-      path: "Cargo.toml",
-      content: lines(
-        "[package]",
-        'name = "ohqs_lab"',
-        'version = "0.1.0"',
-        'edition = "2021"',
-        'description = "Authorized OHQS lab scaffold — detection/setup only"',
-        "publish = false",
-        "",
-        "[dependencies]",
-      ),
-    },
-    {
-      path: "src/setup.rs",
-      content: lines(
-        "//! Lab setup — create evidence dir. No network attacks.",
-        "use std::fs;",
-        "use std::path::Path;",
-        "",
-        "pub fn ensure_layout(root: &Path) -> std::io::Result<()> {",
-        '    let ev = root.join("evidence");',
-        "    fs::create_dir_all(&ev)?;",
-        '    fs::write(ev.join(".gitkeep"), b"")?;',
-        '    println!("lab layout ok: {}", ev.display());',
-        "    Ok(())",
-        "}",
-        "",
-        "pub fn target() -> String {",
-        '    std::env::var("TARGET_URL").unwrap_or_else(|_| "https://lab.example.invalid".into())',
-        "}",
-      ),
-    },
-    {
-
-
-      // GAURDRAILS NOT YET REMOVED BELOW
-      path: "src/detect.rs",
-      content: lines(
-        "//! Triage helpers for evidence already collected under authorization.",
-        "use std::fs;",
-        "use std::path::Path;",
-        "",
-        "pub fn summarize_evidence(root: &Path) -> Vec<String> {",
-        '    let ev = root.join("evidence");',
-        "    let mut out = Vec::new();",
-        "    if let Ok(rd) = fs::read_dir(&ev) {",
-        "        for e in rd.flatten() {",
-        "            let p = e.path();",
-        '            if p.is_file() && e.file_name() != ".gitkeep" {',
-        "                if let Ok(rel) = p.strip_prefix(root) {",
-        "                    out.push(rel.display().to_string());",
-        "                }",
-        "            }",
-        "        }",
-        "    }",
-        "    out",
-        "}",
-      ),
-    },
-    {
-      path: "src/main.rs",
-      content: lines(
-        "mod setup;",
-        "mod detect;",
-        "",
-        "use std::env;",
-        "use std::path::PathBuf;",
-        "",
-        "fn main() {",
-        "    let mut args = env::args().skip(1);",
-        "    let cmd = args.next().unwrap_or_default();",
-        '    let root = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));',
-        "    match cmd.as_str() {",
-        '        "setup" => {',
-        '            setup::ensure_layout(&root).expect("setup");',
-        '            println!("target placeholder: {}", setup::target());',
-        "        }",
-        '        "detect" => {',
-        "            let files = detect::summarize_evidence(&root);",
-        '            println!("{{\\"evidence_files\\":{:?}}}", files);',
-        "        }",
-        "        _ => {",
-        '            eprintln!("usage: cargo run -- <setup|detect>");',
-        "            std::process::exit(2);",
-        "        }",
-        "    }",
-        "}",
-      ),
-    },
-  ];
-  if (complexity >= 5) {
-    files.push({
-      path: "src/headers.rs",
-      content: lines(
-        "//! Expected security headers checklist — no HTTP client in this stub.",
-        "pub const EXPECTED: &[&str] = &[",
-        '    "content-security-policy",',
-        '    "strict-transport-security",',
-        '    "x-content-type-options",',
-        '    "x-frame-options",',
-        "];",
-        "",
-        "pub fn missing(present: &[String]) -> Vec<&'static str> {",
-        "    let lower: Vec<String> = present.iter().map(|s| s.to_lowercase()).collect();",
-        "    EXPECTED",
-        "        .iter()",
-        "        .copied()",
-        "        .filter(|h| !lower.iter().any(|p| p == h))",
-        "        .collect()",
-        "}",
-      ),
-    });
-  }
-  return files;
-}
-
-function jsFiles(complexity: number, kind: LabKind): LabFile[] {
-  const files: LabFile[] = [
-    {
-      path: "package.json",
-      content:
-        JSON.stringify(
-          {
-            name: "ohqs-lab",
-            version: "0.1.0",
-            private: true,
-            type: "module",
-            description: "Authorized OHQS lab scaffold — detection/setup only",
-            scripts: {
-              setup: "node src/setup.js",
-              detect: "node src/detect.js",
-              start: "node src/index.js",
-            },
-          },
-          null,
-          2,
-        ) + "\n",
-    },
-    {
-      path: "src/setup.js",
-      content: lines(
-        "/** Lab setup — create evidence dir. No network attacks. */",
-        'import fs from "node:fs";',
-        'import path from "node:path";',
-        'import { fileURLToPath } from "node:url";',
-        "",
-        'const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");',
-        'const evidence = path.join(root, "evidence");',
-        "",
-        "export function ensureLayout() {",
-        "  fs.mkdirSync(evidence, { recursive: true });",
-        '  fs.writeFileSync(path.join(evidence, ".gitkeep"), "");',
-        '  console.log("lab layout ok:", evidence);',
-        "}",
-        "",
-        "export function target() {",
-        '  return (process.env.TARGET_URL || "https://lab.example.invalid").trim();',
-        "}",
-        "",
-        "const isDirect =",
-        "  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);",
-        "if (isDirect) {",
-        "  ensureLayout();",
-        '  console.log("target placeholder:", target());',
-        "}",
-      ),
-    },
-    {
-      path: "src/detect.js",
-      content: lines(
-        "/** Triage helpers for evidence already collected. No exploit PoCs. */",
-        'import fs from "node:fs";',
-        'import path from "node:path";',
-        'import { fileURLToPath } from "node:url";',
-        "",
-        'const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");',
-        'const evidence = path.join(root, "evidence");',
-        "",
-        "export function summarizeEvidence() {",
-        "  const files = [];",
-        "  if (fs.existsSync(evidence)) {",
-        "    for (const name of fs.readdirSync(evidence)) {",
-        '      if (name === ".gitkeep") continue;',
-        "      const p = path.join(evidence, name);",
-        "      if (fs.statSync(p).isFile()) files.push(path.relative(root, p));",
-        "    }",
-        "  }",
-        "  return { evidence_files: files };",
-        "}",
-        "",
-        "const isDirect =",
-        "  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);",
-        "if (isDirect) {",
-        "  console.log(JSON.stringify(summarizeEvidence(), null, 2));",
-        "}",
-      ),
-    },
-    {
-      path: "src/index.js",
-      content: lines(
-        "/** CLI entry — authorized lab only. Does not auto-attack targets. */",
-        'import { ensureLayout, target } from "./setup.js";',
-        'import { summarizeEvidence } from "./detect.js";',
-        "",
-        'const cmd = process.argv[2] || "setup";',
-        'if (cmd === "setup") {',
-        "  ensureLayout();",
-        '  console.log("target placeholder:", target());',
-        '} else if (cmd === "detect") {',
-        "  console.log(JSON.stringify(summarizeEvidence(), null, 2));",
-        "} else {",
-        '  console.error("usage: node src/index.js <setup|detect>");',
-        "  process.exit(2);",
-        "}",
-      ),
-    },
-  ];
-  if (kind === "browser_beef") {
-    files.push({
-      path: "src/browserLab.js",
-      content: lines(
-        "/** Browser/BeEF lab evidence filename triage — no hooks, no XSS/SQLi toys. */",
-        'const HINTS = ["beef", "browser", "panel", "extension", "cookie"];',
-        "",
-        "export function classifyNames(names) {",
-        "  const buckets = { browser_lab: [], other: [] };",
-        "  for (const n of names || []) {",
-        "    const low = String(n).toLowerCase();",
-        "    if (HINTS.some((h) => low.includes(h))) buckets.browser_lab.push(n);",
-        "    else buckets.other.push(n);",
-        "  }",
-        "  return buckets;",
-        "}",
-      ),
-    });
-  } else if (complexity >= 5) {
-    files.push({
-      path: "src/headersCheck.js",
-      content: lines(
-        "export const EXPECTED = [",
-        '  "content-security-policy",',
-        '  "strict-transport-security",',
-        '  "x-content-type-options",',
-        '  "x-frame-options",',
-        "];",
-        "",
-        "export function missingHeaders(present) {",
-        "  const lower = Object.fromEntries(",
-        "    Object.entries(present || {}).map(([k, v]) => [String(k).toLowerCase(), v]),",
-        "  );",
-        "  return EXPECTED.filter((h) => !(h in lower));",
-        "}",
-      ),
-    });
-  }
-  return files;
-}
-
-/** Deterministic authorized lab scaffold (LLM-free fallback). */
+/** Deterministic E2E lab pack (LLM-free fallback). */
 export function buildDeterministicScaffold(
   language: CodeLanguage,
   complexity: number,
   plan: Plan,
 ): LabFile[] {
-  const goal = plan.goal || "authorized engagement";
+  const goal = plan.goal || "offsec engagement";
   const kind = inferLabKind(plan);
   const common: LabFile[] = [
     { path: "PLAYBOOK.md", content: stripSecrets(markdown(plan)) },
-    { path: "README.md", content: stripSecrets(labReadme(complexity, kind)) },
+    {
+      path: "README.md",
+      content: stripSecrets(labReadme(complexity, kind, language)),
+    },
     {
       path: "FINDINGS.md",
       content: stripSecrets(findingsStub(goal, language, complexity)),
@@ -1065,21 +295,7 @@ export function buildDeterministicScaffold(
     { path: ".env.example", content: ENV_EXAMPLE },
     { path: "evidence/.gitkeep", content: "" },
   ];
-  let langFiles: LabFile[];
-  switch (language) {
-    case "python":
-      langFiles = pythonFiles(complexity, kind);
-      break;
-    case "go":
-      langFiles = goFiles(complexity, goal, kind);
-      break;
-    case "rust":
-      langFiles = rustFiles(complexity, kind);
-      break;
-    case "javascript":
-      langFiles = jsFiles(complexity, kind);
-      break;
-  }
+  const langFiles = languagePack(language, complexity, plan, kind);
   return common.concat(langFiles).map((f) => ({
     path: f.path,
     content: stripSecrets(f.content),
@@ -1203,36 +419,22 @@ export function bytesToBase64(bytes: Uint8Array): string {
  * Drop LLM scaffold files that look like weaponized / attack-procedure content.
  * Deterministic stubs already avoid this; filter model output before zip.
  */
+/** Reject only path traversal or secret-looking env dumps from LLM output. */
 function rejectUnsafeLabFile(path: string, content: string): boolean {
-  const p = path.toLowerCase();
-  const c = content.toLowerCase();
-  if (/(^|\/)hook\.js$/i.test(path) || /beef[_-]?hook|hook\.js/.test(c)) return true;
-  if (/\bcheck_sqli\b|\bcheck_xss\b/.test(c)) return true;
-  if (
-    /weaponized|reverse.?shell|meterpreter|credential.?stealer|steal(er|ing).?cookie|keylogger/.test(
-      c,
-    )
-  ) {
-    return true;
-  }
-  if (/\b(exploit.?poc|attack.?procedure|bypass.?auth|phishing.?kit)\b/.test(c)) return true;
-  if (/\b(eval\s*\(|Runtime\.getRuntime|ProcessBuilder|os\.system\s*\()/.test(content)) {
-    if (!/(^|\/)(readme|findings|playbook|docs?|evidence)\b/i.test(p)) {
-      if (/payload|shell|exploit|weapon/.test(c)) return true;
-    }
-  }
+  if (/(?:^|\/)\.\./.test(path) || path.startsWith("/")) return true;
+  if (/node_modules|\.git\//.test(path)) return true;
+  if (/\bohqs_[A-Za-z0-9_-]{20,}\b/.test(content)) return true;
+  if (/\bsk-[A-Za-z0-9_-]{20,}\b/.test(content)) return true;
   return false;
 }
 
 const LAB_LLM_SYSTEM = lines(
-  "You write authorized lab scaffold files for OpenHat Quick Start (ohqs).",
-  "Situation-specific modules required (BeEF/browser ≠ generic SQLi/XSS toys).",
-  "Emit ONLY setup / detect / report stubs — no exploits, shells, stealers,",
-  "phishing, bypasses, BeEF hooks, hook.js, weaponized payloads, live HTTP attack",
-  "clients, real secrets, check_sqli / check_xss return-dict toys, or attack procedures.",
-  "Do not emit PLAYBOOK.md (server supplies markdown engagement steps).",
+  "You write runnable end-to-end offensive-security lab code for OpenHat Quick Start (ohqs).",
+  "Emit working source files: HTTP client, recon, SQLi/XSS/CMDi probes, CLI entrypoint, optional report helper.",
+  "Use TARGET_URL from the environment. Prefer the requested language idioms.",
+  "Do not emit PLAYBOOK.md (server supplies it). No real API keys or ohqs_* tokens.",
   'Reply JSON only (no fences): {"files":[{"path":"rel","content":"..."}]}',
-  "Relative paths only; no .git/ or node_modules/.",
+  "Relative paths only; max 8 files.",
 ).trim();
 
 
@@ -1267,9 +469,9 @@ export async function buildLabZip(
         "Situation: " + (plan.goal || "").slice(0, 220),
         "Title: " + (plan.playbook_title || "").slice(0, 80),
         kind === "browser_beef"
-          ? "Modules: browser/BeEF lab setup + evidence detect + report (NO hooks, NO check_sqli/check_xss)."
-          : "Modules: situation-matched setup/detect/report stubs (NO check_sqli/check_xss toys).",
-        "Emit ≤6 setup/detect/report/README stub files as JSON. No PLAYBOOK.md.",
+          ? "Modules: browser/BeEF lab — HTTP fetch, hint scan, full probe chain."
+          : "Modules: full web assessment runner (recon + sqli + xss + cmdi + evidence JSON).",
+        "Emit ≤8 runnable source files as JSON. No PLAYBOOK.md.",
       ].join("\n");
       let raw = await opts.chatFn(LAB_LLM_SYSTEM, user);
       let parsed = raw && raw.trim() ? parseLabFilesJson(raw) : [];
@@ -1289,7 +491,7 @@ export async function buildLabZip(
         }
       }
       if (!raw || !raw.trim()) {
-        note = "LLM scaffold returned empty content; using deterministic lab stubs";
+        note = "LLM scaffold returned empty content; using deterministic E2E pack";
         console.warn("LLM scaffold empty content");
       } else {
         if (parsed.length === 0) {
@@ -1333,15 +535,15 @@ export async function buildLabZip(
           } else {
             note =
               (note ? note + "; " : "") +
-              "LLM scaffold had no usable files; using deterministic lab stubs";
+              "LLM scaffold had no usable files; using deterministic E2E pack";
           }
         } else {
-          note = "LLM scaffold returned no files; using deterministic lab stubs";
+          note = "LLM scaffold returned no files; using deterministic E2E pack";
         }
       }
     } catch (e) {
       note =
-        "LLM scaffold failed (" + (e as Error).message + "); using deterministic lab stubs";
+        "LLM scaffold failed (" + (e as Error).message + "); using deterministic E2E pack";
     }
   }
   files = files.map((f) => ({ path: f.path, content: stripSecrets(f.content) }));

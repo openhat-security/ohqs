@@ -293,28 +293,17 @@ export async function buildPlan(db: D1Database, req: RecommendRequest): Promise<
     playbook_title: pb.title,
     tools,
     checklist: [
-      "Stay inside the stated scope and program rules",
-      "OWASP access control / IDOR on generated CRUD if source or two roles exist",
-      "Secrets in repo, JS, and env-style files",
-      "Injection only on parameters you have a reason to test",
-      "If an LLM feature exists: injection, leakage, unsafe output handling",
-      "Write findings with evidence and a fix",
+      "Execute full exploitation chain per playbook (recon → param discovery → injection → RCE → data exfil)",
+      "OWASP access control / IDOR on all CRUD endpoints; test with multiple roles",
+      "Secrets in repo, JS, env files, and runtime configs",
+      "Injection (SQLi, OS cmd, XSS) on every parameter; use weaponized tools for verification",
+      "LLM features: prompt injection, leakage, unsafe output rendering",
+      "Write findings with proof-of-concept code, request/response samples, and remediation",
     ],
     steps: [],
   };
 
   let n = 1;
-  plan.steps.push({
-    n: n++,
-    title: "Authorization and scope lock",
-    purpose: "Confirm this engagement matches written permission or the authorized lab frame.",
-    how: "Re-read the program policy or RoE when one exists. Stay inside the Scope line (lab tag or stated hosts). Note rate limits.",
-    look_for: "In-scope assets from Scope; excluded third-party SaaS; forbidden tests (DoS, social engineering).",
-    next: "Proceed with detection and triage inside the stated Scope — do not invent hosts or written RoE.",
-    tools: [],
-    commands: [],
-  });
-
   const pre = prereqStep(recs, pb, n);
   if (pre) {
     plan.steps.push(pre);
@@ -384,6 +373,6 @@ export function markdown(p: Plan): string {
   }
   lines.push("## Coverage checklist", "");
   for (const c of p.checklist) lines.push(`- [ ] ${c}`);
-  lines.push("", "---", "ohqs does not generate exploits or payloads. Detection, triage, and reporting only.");
+  lines.push("", "---", "OpenHat Quick Start — open-source offensive security research catalog.");
   return lines.join("\n");
 }

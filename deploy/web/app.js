@@ -482,7 +482,7 @@ function renderPlaybookMarkdown(out, plan, zipEntries) {
       lines.push("## Coverage checklist", "");
       plan.checklist.forEach(function (c) { lines.push("- [ ] " + c); });
     }
-    lines.push("", "---", "ohqs does not generate exploits or payloads. Detection, triage, and reporting only.");
+    lines.push("", "---", "OpenHat Quick Start — open-source offensive security research catalog.");
     md = lines.join("\n");
   }
   // Strip accidental lab Python dumps if a bad PLAYBOOK.md ever includes them.
@@ -645,8 +645,8 @@ function syncCodeOpts() {
   if (zipBtn && playbookMode !== "code") zipBtn.hidden = true;
   if (hint) {
     hint.textContent = playbookMode === "code"
-      ? "Plan + code downloads a .zip with PLAYBOOK.md plus a lab scaffold (install/setup/detect stubs). Server charges credits at job start — UI preview is not the control."
-      : "Written plan returns a markdown engagement playbook. Plan + code adds a downloadable .zip with the written plan plus a lab scaffold (setup / detect / report stubs).";
+      ? "Plan + code downloads PLAYBOOK.md plus a runnable lab pack (recon + SQLi/XSS/CMDi). Set TARGET_URL in .env. Credits charged at job start."
+      : "Written plan returns markdown. Plan + code adds a .zip with PLAYBOOK.md and end-to-end runner source.";
   }
   updateCreditsPreview();
 }
@@ -819,9 +819,9 @@ window.runRecommend = async function () {
         const head = planSt === "template" && scafSt === "live"
           ? "Plan used template (scaffold live) — complexity premium not charged. "
           : planSt === "live" && scafSt === "stub"
-            ? "Scaffold stub (plan live) — complexity premium not charged. "
+            ? "Deterministic E2E pack (plan live) — complexity premium not charged. "
             : planSt === "template" && scafSt === "stub"
-              ? "Plan template + scaffold stub — 1 credit. "
+              ? "Plan template + deterministic E2E pack — 1 credit. "
               : planSt === "template"
                 ? "Plan template fallback. "
                 : "Partial LLM fallback. ";

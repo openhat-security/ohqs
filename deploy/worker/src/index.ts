@@ -688,7 +688,7 @@ export default {
           failNote = failNote ? failNote + "; " + pack.note : pack.note;
         }
         if (!pack.llm_scaffold && !failNote) {
-          failNote = "deterministic lab stubs (no LLM scaffold)";
+          failNote = "deterministic E2E pack (no LLM scaffold)";
         }
         const splitStatus =
           "plan: " + planStatus + " · scaffold: " + scaffoldStatus;
@@ -728,7 +728,7 @@ export default {
           // Clean file list for VS Code–style console preview (already secret-stripped).
           zip_files: pack.files.map((f) => ({ path: f.path, content: f.content })),
           lab_notice:
-            "Authorized lab scaffold only — detection/setup/reporting stubs. No weaponized payloads. Do not auto-exec model code. Secrets stripped from zip.",
+            "Runnable lab pack — set TARGET_URL and review generated code before running. Secrets stripped from zip.",
         };
         const planResp = json(payload, 200, {
           ...((request as any).rateLimitHeaders ?? {}),

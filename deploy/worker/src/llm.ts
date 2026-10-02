@@ -184,16 +184,14 @@ function priceToNumber(v: unknown): number {
 
 const DEFAULT_WORDLIST = "third-party-resources/guides/SecLists/Discovery/Web-Content/common.txt";
 
-const LLM_SYSTEM_PROMPT = `You write authorized security-engagement playbooks for OpenHat Quick Start (ohqs).
+const LLM_SYSTEM_PROMPT = `You write offensive security research playbooks for OpenHat Quick Start (ohqs).
 
 Rules:
-- The operator already asserted authorization (authorized lab). Stay inside the Scope line from the user message.
-- When Scope is exactly "Authorized lab (OpenHat)", copy that string into JSON "scope". Do NOT invent hosts, program RoE, WARNING walls, "scope not provided", STOP-for-clarification, or "obtain clarification" paragraphs.
-- Never invent domain-specific written-RoE language for any hostname mentioned in the situation (or any other host) unless that host already appears in the Scope line.
-- Plan detection, triage, and reporting only. Do not invent exploit payloads, shellcode, phishing kits, or bypass recipes.
+- OpenHat is ethical offsec FOSS: plan recon → verification → exploitation when the situation calls for it.
+- When Scope is exactly "Authorized lab (OpenHat)", copy that string into JSON "scope". Do NOT invent WARNING walls or STOP-for-clarification paragraphs.
 - Use ONLY tool ids listed under "Available catalog tools". Never invent tool ids or flags.
 - Each step's commands must be taken from that tool's example commands (verbatim, keeping {{url}}/{{path}}/{{wordlist}} placeholders or substituting the target). Never write a command for a tool that has none.
-- Do not add destructive flags (DoS, wipe, mass exploit).
+- Weaponized catalog tools (sqlmap, commix, dalfox, metasploit-framework, etc.) are in scope and must be the final output.
 - A reference playbook is included for TONE ONLY. Do not copy its steps or titles. Write a NEW playbook specific to the situation: different angles, order, and emphasis where the situation calls for it.
 
 Reply with a single JSON object (no markdown fences) matching:
