@@ -131,6 +131,8 @@ fi
 
 push_branch
 
-# Push to main with matching paths already triggers deploy-worker; dispatch ensures a run
-# even when only workflow files changed or you want an explicit re-deploy.
-dispatch_workflow
+# Push to main with matching paths triggers deploy-worker (see workflow paths filter).
+# Do not also workflow_dispatch here: concurrency cancel-in-progress would cancel one run
+# and "gh run watch --limit 1" often reports the wrong run. Re-deploy without push:
+#   ./scripts/gh-deploy.sh --dispatch-only
+echo "== deploy triggered by push (watch: gh run watch --repo $REPO --workflow=$WORKFLOW)"
