@@ -9,7 +9,7 @@
 <body>
 <header>
   <strong>ohqs</strong>
-  <span>OpenHat Quick Start — authorized playbooks only
+  <span>OpenHat Quick Start — offensive security research catalog
     {{if .Host.Name}} · {{.Host.Name}} ({{.Host.GOOS}}/{{.Host.GOARCH}}){{end}}</span>
 </header>
 <main>
@@ -39,8 +39,8 @@
   <form class="card" method="post" action="/">
     <label for="situation">Situation</label>
     <textarea id="situation" name="situation" required placeholder="vibe-coded Next.js SaaS with auth and a chat feature">{{.Situation}}</textarea>
-    <label for="scope">Scope (written authorization / program / hosts)</label>
-    <textarea id="scope" name="scope" required placeholder="HackerOne program example.com; www and api in scope">{{.Scope}}</textarea>
+    <label for="scope">Scope (optional — program, hosts, RoE)</label>
+    <textarea id="scope" name="scope" placeholder="HackerOne program example.com; www and api in scope">{{.Scope}}</textarea>
     <div class="row">
       <div>
         <label for="target">Target URL or domain</label>
@@ -51,10 +51,6 @@
         <input id="path" name="path" type="text" placeholder="." value="{{.Path}}">
       </div>
     </div>
-    <label class="check">
-      <input type="checkbox" name="authorized" value="1" {{if .Authorized}}checked{{end}} required>
-      I am authorized to test the stated scope
-    </label>
     <label class="check">
       <input type="checkbox" name="use_llm" value="1" {{if .UseLLM}}checked{{end}}>
       Draft the plan with your model (bring your own OpenAI-compatible endpoint)

@@ -301,17 +301,19 @@ items:
   - id: sqlmap
     name: sqlmap
     kind: tool
-    summary: SQL injection testing tool. Use only on in-scope parameters you already suspect.
-    when_to_use: Authorized confirmation of a suspected SQLi, not a spray across the internet.
-    tags: [injection, web]
+    summary: SQL injection testing with automated DBMS identification and data extraction.
+    when_to_use: SQLi confirmation through full exploitation chains in research and authorized engagements.
+    tags: [injection, sql, web, weaponized]
+    vuln_classes: [A03-injection, A07-auth-failures]
     homepage: https://github.com/sqlmapproject/sqlmap
     submodule_path: third-party-resources/tools/sqlmap
     safe_auto: false
     commands:
-      - python sqlmap.py -u {{url}} --batch --level=1 --risk=1
-    how: Start read-only / low risk. Never point at out-of-scope hosts. Prefer a single URL/param.
-    look_for: DBMS identified, data readable that should not be.
-    interpret: Stop at evidence for the report. Do not dump unrelated databases.
+      - python sqlmap.py -u {{url}} --batch --level=1 --risk=1 --dbms
+      - python sqlmap.py -u {{url}} --batch --level=5 --risk=3 --dump-all
+    how: Escalate level/risk as hypotheses firm up. Prefer a single URL or parameter at a time.
+    look_for: DBMS fingerprint, version disclosure, boolean/time-based blind confirmation, extracted credentials.
+    interpret: Weaponized by design — document impact and scope in the report.
   - id: nikto
     name: Nikto
     kind: tool
@@ -381,17 +383,18 @@ items:
   - id: metasploit-framework
     name: Metasploit Framework
     kind: tool
-    summary: Framework for modules and auxiliary scanners. Catalogued as a local checkout only.
-    when_to_use: When you already know a specific auxiliary/scanner module is appropriate and authorized.
-    tags: [framework]
+    summary: Exploitation framework — auxiliary scanners, exploit modules, and payloads.
+    when_to_use: When a vulnerability is confirmed and a matching module exists in the catalog checkout.
+    tags: [framework, exploit, weaponized]
     homepage: https://github.com/rapid7/metasploit-framework
     submodule_path: third-party-resources/tools/metasploit-framework
     build: manual
     safe_auto: false
-    commands: []
-    how: Use auxiliary/scanner modules you understand. ohqs will not generate exploit module runbooks.
-    look_for: Scanner output that confirms a version or exposure.
-    interpret: Evidence for the report. No payload generation via ohqs.
+    commands:
+      - msfconsole -q
+    how: Load auxiliary/scanner modules first, then exploit modules that match the target and RoE.
+    look_for: Scanner output confirming versions; successful RCE or impact within scope.
+    interpret: Full framework — pair module output with written findings and PoC notes.
   - id: jwt_tool
     name: jwt_tool
     kind: tool
@@ -422,28 +425,30 @@ items:
   - id: dalfox
     name: Dalfox
     kind: tool
-    summary: XSS helper for parameters you already identified.
-    when_to_use: Reflected/DOM hypotheses on in-scope params.
-    tags: [xss, web]
+    summary: XSS parameter testing and payload generation for reflected/DOM chains.
+    when_to_use: XSS verification after param discovery or proxy work.
+    tags: [xss, web, weaponized]
     homepage: https://github.com/hahwul/dalfox
     safe_auto: false
     commands:
       - dalfox url {{url}}
-    how: Single URL/param. Do not blast an entire program.
-    look_for: Reflected context that executes in your browser.
-    interpret: Self-XSS vs impactful XSS. Report impact, not a scanner line.
+      - dalfox run {{url}} --batch --technique GET --blacklist "" --level=3
+    how: Target one URL or parameter; confirm context manually in the browser.
+    look_for: Reflected/DOM execution, alert/console proof, stored XSS persistence.
+    interpret: Weaponized verification — separate self-XSS from exploitable XSS in the report.
   - id: commix
     name: commix
     kind: tool
-    summary: Command-injection tester. Authorized, suspected parameters only.
-    tags: [injection]
+    summary: Automated OS command injection testing and exploitation.
+    tags: [injection, os-command, web, weaponized]
     homepage: https://github.com/commixproject/commix
     submodule_path: third-party-resources/tools/commix
     safe_auto: false
-    commands: []
-    how: Do not auto-run. Use only after you have a reasoned hypothesis and written scope.
-    look_for: Evidence the application executes attacker-controlled OS commands.
-    interpret: Stop at proof for the report.
+    commands:
+      - python commix.py -u {{url}} --batch --technique GET --blacklist "" --level=3
+    how: Point at a single suspected parameter; increase level when execution is likely.
+    look_for: Shell metacharacter handling, command output in responses, blind callbacks.
+    interpret: Weaponized by design — capture proof-of-execution for the report.
   - id: reconmap
     name: Reconmap
     kind: tool
@@ -600,3 +605,18 @@ items:
     how: Read the documentation to compare with the open-source options above.
     look_for: Cost, agent features, and evasion profiles that match the engagement's detection budget.
     interpret: Commercial C2 is licensed tooling — respect the license and the customer's permitted locations.
+
+  - id: sqlninja
+    name: sqlninja
+    kind: tool
+    summary: Interactive SQL injection exploitation and schema enumeration.
+    tags: [injection, sql, web, weaponized]
+    homepage: https://github.com/foospidy/sqlninja
+    build: manual
+    safe_auto: false
+    commands:
+      - python sqlninja.py {{url}}
+    how: Use after sqlmap confirms SQLi; walk tables and columns interactively.
+    look_for: Schema disclosure, privileged rows, extraction paths for the report.
+    interpret: Advanced SQLi chain — document extracted evidence in findings.
+

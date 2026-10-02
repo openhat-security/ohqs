@@ -24,7 +24,8 @@ SCRIPT     ?= $(OUT)/commands.sh
 	setup configure search show recommend commands run \
 	start serve up stop deps install-tools install-cli \
 	build-index-pack \
-	submodules convert-submodules clean
+	submodules convert-submodules clean \
+	deploy deploy-web deploy-worker deploy-portal
 
 .DEFAULT_GOAL := start
 
@@ -33,7 +34,7 @@ all: build index setup
 	@echo "Ready. Next:"
 	@echo "  make start"
 	@echo "  make search Q=\"ai slop\""
-	@echo "  make recommend AUTHORIZED=1 SCOPE=\"...\" SITUATION=\"...\" TARGET=https://in-scope.example"
+	@echo "  make recommend SITUATION=\"...\" [SCOPE=] [TARGET=https://in-scope.example]"
 	@echo "  make help"
 
 help:
@@ -61,11 +62,11 @@ help:
 		'  tidy                go mod tidy (in ohqs/)' \
 		'  check               fmt + vet + test' \
 		'' \
-		'Use (authorized work only)' \
+		'Use' \
 		'  serve / up          aliases for start' \
 		'  search Q=nuclei' \
 		'  show ID=gitleaks' \
-		'  recommend AUTHORIZED=1 SCOPE="..." SITUATION="..." [TARGET=] [SRC=] [WORDLIST=] [EXPORT=]' \
+		'  recommend SITUATION="..." [SCOPE=] [TARGET=] [SRC=] [WORDLIST=] [EXPORT=]' \
 		'  (CLI) ohqs recommend --llm   OpenAI-compatible plan (OHQS_OPENAI_* or --openai-*)' \
 		'  commands            recommend and write commands.sh (OUT=./ohqs-out/example)' \
 		'  deps                 host OS + which plan tools are already installed' \
@@ -78,6 +79,12 @@ help:
 		'  submodules          shallow-fetch ALL third-party submodules' \
 		'  (CLI) ohqs submodules [id|path]   same, optionally one catalog id' \
 		'  convert-submodules  absorb nested clones into .gitmodules (maintainers)' \
+		'' \
+		'Deploy' \
+		'  deploy-portal       Vercel prod — openhat-www (portal + marketing)' \
+		'  deploy-web          Vercel prod — static ohqs console (deploy/web)' \
+		'  deploy-worker       GitHub Actions — Cloudflare Worker (scripts/gh-deploy.sh)' \
+		'  deploy              deploy-portal + deploy-web + deploy-worker' \
 		'' \
 		'  clean               remove bin/ohqs and the sqlite index'
 
@@ -144,22 +151,24 @@ show: $(BIN)
 	$(BIN) show $(ID)
 
 recommend: $(BIN)
-	@test "$(AUTHORIZED)" = "1" && test -n "$(SCOPE)" && test -n "$(SITUATION)" || { \
-		echo 'usage: make recommend AUTHORIZED=1 SCOPE="..." SITUATION="..." [TARGET=] [SRC=] [WORDLIST=] [EXPORT=]'; \
+	@test -n "$(SITUATION)" || { \
+		echo 'usage: make recommend SITUATION="..." [SCOPE=] [TARGET=] [SRC=] [WORDLIST=] [EXPORT=]'; \
 		exit 1; \
 	}
-	$(BIN) recommend --authorized --scope "$(SCOPE)" --situation "$(SITUATION)" \
+	$(BIN) recommend --situation "$(SITUATION)" \
+		$(if $(SCOPE),--scope "$(SCOPE)") \
 		$(if $(TARGET),--target "$(TARGET)") \
 		$(if $(SRC),--path "$(SRC)") \
 		$(if $(WORDLIST),--wordlist "$(WORDLIST)") \
 		$(if $(EXPORT),--export "$(EXPORT)")
 
 commands: $(BIN)
-	@test "$(AUTHORIZED)" = "1" && test -n "$(SCOPE)" && test -n "$(SITUATION)" || { \
-		echo 'usage: make commands AUTHORIZED=1 SCOPE="..." SITUATION="..." [TARGET=] [SRC=] [OUT=$(OUT)]'; \
+	@test -n "$(SITUATION)" || { \
+		echo 'usage: make commands SITUATION="..." [SCOPE=] [TARGET=] [SRC=] [OUT=$(OUT)]'; \
 		exit 1; \
 	}
-	$(BIN) recommend --authorized --scope "$(SCOPE)" --situation "$(SITUATION)" \
+	$(BIN) recommend --situation "$(SITUATION)" \
+		$(if $(SCOPE),--scope "$(SCOPE)") \
 		$(if $(TARGET),--target "$(TARGET)") \
 		$(if $(SRC),--path "$(SRC)") \
 		$(if $(WORDLIST),--wordlist "$(WORDLIST)") \
@@ -167,18 +176,19 @@ commands: $(BIN)
 
 deps: $(BIN)
 	@if [ -n "$(SITUATION)" ]; then \
-		test "$(AUTHORIZED)" = "1" && test -n "$(SCOPE)" || { echo 'usage: make deps AUTHORIZED=1 SCOPE="..." SITUATION="..."'; exit 1; }; \
-		$(BIN) deps --authorized --scope "$(SCOPE)" --situation "$(SITUATION)" $(if $(TARGET),--target "$(TARGET)") $(if $(SRC),--path "$(SRC)"); \
+		test -n "$(SITUATION)" || { echo 'usage: make deps SITUATION="..." [SCOPE=]'; exit 1; }; \
+		$(BIN) deps --situation "$(SITUATION)" $(if $(SCOPE),--scope "$(SCOPE)") $(if $(TARGET),--target "$(TARGET)") $(if $(SRC),--path "$(SRC)"); \
 	else \
 		$(BIN) deps; \
 	fi
 
 install-tools: $(BIN)
-	@test "$(AUTHORIZED)" = "1" && test -n "$(SCOPE)" && test -n "$(SITUATION)" || { \
-		echo 'usage: make install-tools AUTHORIZED=1 SCOPE="..." SITUATION="..." [TARGET=]'; \
+	@test -n "$(SITUATION)" || { \
+		echo 'usage: make install-tools SITUATION="..." [SCOPE=] [TARGET=]'; \
 		exit 1; \
 	}
-	$(BIN) install --authorized --scope "$(SCOPE)" --situation "$(SITUATION)" \
+	$(BIN) install --situation "$(SITUATION)" \
+		$(if $(SCOPE),--scope "$(SCOPE)") \
 		$(if $(TARGET),--target "$(TARGET)") \
 		$(if $(SRC),--path "$(SRC)")
 
@@ -207,3 +217,20 @@ clean:
 .PHONY: console
 console:
 	@$(MAKE) -C deploy/console run
+
+# Portal + marketing → https://openhat-website.vercel.app (openhat-www checkout)
+deploy-portal:
+	@chmod +x scripts/deploy-portal.sh
+	@./scripts/deploy-portal.sh
+
+# Static catalog/playbook UI → https://web-ukryty-6366.vercel.app (see deploy/web)
+deploy-web:
+	@chmod +x scripts/deploy-web.sh
+	@./scripts/deploy-web.sh
+
+# Worker + bundled web assets on Cloudflare (repo secrets CLOUDFLARE_*)
+deploy-worker:
+	@chmod +x scripts/gh-deploy.sh
+	@./scripts/gh-deploy.sh
+
+deploy: deploy-portal deploy-web deploy-worker

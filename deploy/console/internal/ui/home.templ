@@ -17,7 +17,7 @@ templ Home(d HomeData) {
 					<span class="mark" aria-hidden="true"></span>
 					<div>
 						<strong>OpenHat</strong>
-						<span class="sub">ohqs console · authorized playbooks only</span>
+						<span class="sub">ohqs console · FOSS offsec research</span>
 					</div>
 				</div>
 				<nav class="nav" aria-label="Primary">
@@ -94,7 +94,7 @@ templ Home(d HomeData) {
 						id="situation"
 						name="situation"
 						form="rec-form"
-						placeholder="Describe the authorized target and context — e.g. Next.js SaaS invoices page where IDs leak via IDOR…"
+						placeholder="Describe the target and context — e.g. Next.js SaaS with IDOR on invoice IDs, SQLi on search…"
 						required
 					></textarea>
 
@@ -124,7 +124,7 @@ templ Home(d HomeData) {
 								</div>
 								<p class="meta" id="mode-hint">
 									Written plan returns a markdown engagement playbook. Plan + code adds a downloadable
-									<code>.zip</code> with PLAYBOOK.md plus an authorized lab scaffold (setup / detect / report stubs only — never weaponized).
+									<code>.zip</code> with PLAYBOOK.md plus a runnable lab pack (Python/Go/Rust/JS) — recon, SQLi/XSS/CMDi probes, and evidence JSON.
 								</p>
 							</div>
 							<div>
@@ -186,7 +186,7 @@ templ Home(d HomeData) {
 					<p class="meta" id="api-token-hint">Mint in openhat-portal → Tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.</p>
 					<p class="meta">
 						Need a token?
-						<a href="http://localhost:3210/dashboard/tokens">Register and create one in the OpenHat portal</a>, then paste it here.
+						<a href="https://openhat-website.vercel.app/dashboard/tokens" rel="noopener noreferrer">Sign in and mint one on OpenHat</a>, then paste it here.
 					</p>
 					<p class="meta muted">Console listen: <code>{ d.ListenTip }</code> · Worker: <code>{ d.APIBase }</code> · Stack: templ v0.3.1020 + HTMX 2.0.11 (vendored)</p>
 				</section>

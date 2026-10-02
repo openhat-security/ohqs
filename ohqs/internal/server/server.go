@@ -532,7 +532,7 @@ func pageFromForm(req *http.Request) web.Page {
 		Scope:         req.FormValue("scope"),
 		Target:        req.FormValue("target"),
 		Path:          req.FormValue("path"),
-		Authorized:    req.FormValue("authorized") == "1" || req.FormValue("authorized") == "on" || req.FormValue("authorized") == "true",
+		Authorized:    true,
 		UseLLM:        req.FormValue("use_llm") == "1" || req.FormValue("use_llm") == "on" || req.FormValue("use_llm") == "true",
 		OpenAIBaseURL: req.FormValue("openai_base_url"),
 		OpenAIModel:   req.FormValue("openai_model"),

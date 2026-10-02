@@ -68,8 +68,8 @@ func FindingsTemplate(p *planner.Plan) string {
 func Script(p *planner.Plan, toolBin string) string {
 	var b strings.Builder
 	b.WriteString("#!/usr/bin/env bash\n")
-	b.WriteString("# Review every command. Only run against the authorized scope.\n")
-	b.WriteString("# ohqs does not generate exploits.\n")
+	b.WriteString("# Review every command before execution.\n")
+	b.WriteString("# OpenHat Quick Start — FOSS offsec research catalog.\n")
 	fmt.Fprintf(&b, "#\n# Playbook: %s (%s)\n", p.PlaybookTitle, p.Playbook)
 	fmt.Fprintf(&b, "# Goal: %s\n", commentEscape(p.Goal))
 	fmt.Fprintf(&b, "# Scope: %s\n", commentEscape(p.Scope))

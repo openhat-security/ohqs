@@ -6,7 +6,7 @@ import (
 	"github.com/openhat/quick-start/internal/catalog"
 )
 
-func TestBuildRequiresAuth(t *testing.T) {
+func TestBuildDefaultScope(t *testing.T) {
 	root, err := catalog.FindRoot("../..")
 	if err != nil {
 		t.Fatal(err)
@@ -15,9 +15,23 @@ func TestBuildRequiresAuth(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = Build(cat, nil, Request{Situation: "x", Scope: "y", Authorized: false})
-	if err == nil {
-		t.Fatal("expected auth error")
+	plan, err := Build(cat, nil, Request{Situation: "general security review of a web API"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Scope != defaultScope {
+		t.Fatalf("scope %q", plan.Scope)
+	}
+}
+
+func TestBuildPlaybookSteps(t *testing.T) {
+	root, err := catalog.FindRoot("../..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cat, err := catalog.Load(root)
+	if err != nil {
+		t.Fatal(err)
 	}
 	plan, err := Build(cat, nil, Request{
 		Situation:  "vibe-coded Next.js chat app",

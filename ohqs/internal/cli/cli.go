@@ -35,8 +35,8 @@ import (
 func New() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "ohqs",
-		Short: "OpenHat Quick Start — catalog search and authorized engagement playbooks",
-		Long:  "ohqs is the OpenHat quick-start CLI. It is not named OpenHat. It does not generate exploits.",
+		Short: "OpenHat Quick Start — catalog search and offensive security playbooks",
+		Long:  "ohqs is the OpenHat quick-start CLI — FOSS catalog, playbooks, and tool orchestration for ethical offsec research.",
 	}
 	root.AddCommand(searchCmd(), showCmd(), recommendCmd(), indexCmd(), modelsCmd(), ingestCmd(), serveCmd(), setupCmd(), configureCmd(), authCmd(), runCmd(), depsCmd(), installCmd(), installCLICmd(), jobWorkerCmd(), browserCmd(), submodulesCmd())
 	return root
@@ -164,8 +164,8 @@ func recommendCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "recommend",
-		Short: "Build a step-by-step playbook (requires --authorized and --scope)",
-		Long:  "Build an authorized engagement playbook from catalog playbooks. --llm calls an OpenAI-compatible endpoint (recommend Unsloth: https://github.com/openhat/unsloth).",
+		Short: "Build a step-by-step playbook from the catalog",
+		Long:  "Build an engagement playbook from catalog playbooks. --llm calls an OpenAI-compatible endpoint (recommend Unsloth: https://github.com/openhat/unsloth).",
 		RunE: func(_ *cobra.Command, _ []string) error {
 			cfg, err := appconfig.Resolve()
 			if err != nil {
@@ -220,14 +220,14 @@ func recommendCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&situation, "situation", "", "what you are doing (stack, bounty vs audit, AI-built, …)")
-	cmd.Flags().StringVar(&scope, "scope", "", "written authorization / program / hosts")
-	cmd.Flags().BoolVar(&authorized, "authorized", false, "you have permission to test the stated scope")
+	cmd.Flags().StringVar(&scope, "scope", "", "optional scope line (program, hosts, RoE)")
+	cmd.Flags().BoolVar(&authorized, "authorized", false, "deprecated; ignored (kept for script compatibility)")
 	cmd.Flags().StringVar(&target, "target", "", "primary URL or domain for command placeholders")
 	cmd.Flags().StringVar(&path, "path", ".", "local source path for SAST/secrets")
 	cmd.Flags().StringVar(&wordlist, "wordlist", "", "wordlist path")
 	cmd.Flags().StringVar(&exportDir, "export", "", "write a commented commands.sh (directory or .sh path)")
 	cmd.Flags().BoolVar(&doInstall, "install", false, "clone/build only missing tools this playbook uses")
-	cmd.Flags().BoolVar(&useLLM, "llm", false, "draft the plan via an OpenAI-compatible model (still requires --authorized/--scope)")
+	cmd.Flags().BoolVar(&useLLM, "llm", false, "draft the plan via an OpenAI-compatible model")
 	cmd.Flags().StringVar(&oaBase, "openai-base-url", "", "OpenAI-compatible base URL (env OHQS_OPENAI_BASE_URL)")
 	cmd.Flags().StringVar(&oaKey, "openai-api-key", "", "API key (env OHQS_OPENAI_API_KEY or OPENAI_API_KEY)")
 	cmd.Flags().StringVar(&oaModel, "openai-model", "", "model name (optional for single-model endpoints; env OHQS_OPENAI_MODEL)")
@@ -693,8 +693,8 @@ func depsCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&situation, "situation", "", "playbook situation (omit to print host only)")
-	cmd.Flags().StringVar(&scope, "scope", "", "written authorization / program / hosts")
-	cmd.Flags().BoolVar(&authorized, "authorized", false, "you have permission to test the stated scope")
+	cmd.Flags().StringVar(&scope, "scope", "", "optional scope line (program, hosts, RoE)")
+	cmd.Flags().BoolVar(&authorized, "authorized", false, "deprecated; ignored (kept for script compatibility)")
 	cmd.Flags().StringVar(&target, "target", "", "primary URL or domain")
 	cmd.Flags().StringVar(&path, "path", ".", "local source path")
 	return cmd
@@ -721,8 +721,8 @@ func installCmd() *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&situation, "situation", "", "what you are doing")
-	cmd.Flags().StringVar(&scope, "scope", "", "written authorization / program / hosts")
-	cmd.Flags().BoolVar(&authorized, "authorized", false, "you have permission to test the stated scope")
+	cmd.Flags().StringVar(&scope, "scope", "", "optional scope line (program, hosts, RoE)")
+	cmd.Flags().BoolVar(&authorized, "authorized", false, "deprecated; ignored (kept for script compatibility)")
 	cmd.Flags().StringVar(&target, "target", "", "primary URL or domain")
 	cmd.Flags().StringVar(&path, "path", ".", "local source path")
 	return cmd
@@ -827,8 +827,8 @@ func browserCmd() *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&noOpen, "no-open", false, "prepare the sandbox only; do not launch")
 	cmd.Flags().StringVar(&situation, "situation", "", "optional playbook situation to pick extra extensions")
-	cmd.Flags().StringVar(&scope, "scope", "", "required with --situation")
-	cmd.Flags().BoolVar(&authorized, "authorized", false, "required with --situation")
+	cmd.Flags().StringVar(&scope, "scope", "", "optional scope with --situation")
+	cmd.Flags().BoolVar(&authorized, "authorized", false, "deprecated; ignored")
 	cmd.Flags().StringVar(&target, "target", "", "")
 	cmd.Flags().StringVar(&path, "path", ".", "")
 	return cmd
@@ -1016,8 +1016,8 @@ func authLoginCmd() *cobra.Command {
 			_ = email
 			_ = noBrowser
 			fmt.Println("OHQS console has no login.")
-			fmt.Println("1. Sign in at openhat-portal (local http://localhost:3210)")
-			fmt.Println("2. Open /dashboard/tokens → Mint client token")
+			fmt.Println("1. Sign in at https://openhat-website.vercel.app/dashboard/tokens")
+			fmt.Println("2. Mint client token (shown once)")
 			fmt.Println("3. export OHQS_API_TOKEN=ohqs_c_…   # never an ai_admin token")
 			fmt.Println("   or: ohqs configure --save --api-token <token>")
 			if apiURL != "" {

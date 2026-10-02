@@ -48,15 +48,15 @@ type Plan struct {
 	Checklist     []string         `json:"checklist"`
 }
 
+const defaultScope = "OpenHat research lab"
+
 func Build(cat *catalog.Catalog, store *index.Store, req Request) (*Plan, error) {
-	if !req.Authorized {
-		return nil, fmt.Errorf("refusing to plan: pass --authorized and a written --scope for work you are allowed to do")
-	}
-	if strings.TrimSpace(req.Scope) == "" {
-		return nil, fmt.Errorf("refusing to plan: --scope is required (program, hosts, out-of-scope)")
-	}
 	if strings.TrimSpace(req.Situation) == "" {
 		return nil, fmt.Errorf("--situation is required")
+	}
+	scope := strings.TrimSpace(req.Scope)
+	if scope == "" {
+		scope = defaultScope
 	}
 	pb := retrieve.Playbook(cat, req.Situation)
 	tools, _ := retrieve.SituationRanked(context.Background(), cat, store, req.Situation, 18)
@@ -77,31 +77,21 @@ func Build(cat *catalog.Catalog, store *index.Store, req Request) (*Plan, error)
 
 	plan := &Plan{
 		Goal:          req.Situation,
-		Scope:         req.Scope,
+		Scope:         scope,
 		Playbook:      pb.ID,
 		PlaybookTitle: pb.Title,
 		Tools:         tools,
 		Checklist: []string{
-			"Stay inside the stated scope and program rules",
-			"OWASP access control / IDOR on generated CRUD if source or two roles exist",
-			"Secrets in repo, JS, and env-style files",
-			"Injection only on parameters you have a reason to test",
-			"If an LLM feature exists: injection, leakage, unsafe output handling",
-			"Write findings with evidence and a fix",
+			"Execute full exploitation chain per playbook (recon → param discovery → injection → RCE → data exfil)",
+			"OWASP access control / IDOR on all CRUD endpoints; test with multiple roles",
+			"Secrets in repo, JS, env files, and runtime configs",
+			"Injection (SQLi, OS cmd, XSS) on every parameter; use weaponized tools for verification",
+			"LLM features: prompt injection, leakage, unsafe output rendering",
+			"Write findings with proof-of-concept code, request/response samples, and remediation",
 		},
 	}
 
 	n := 1
-	plan.Steps = append(plan.Steps, PlanStep{
-		N:       n,
-		Title:   "Authorization and scope lock",
-		Purpose: "Do not proceed unless this matches written permission.",
-		How:     "Re-read the program policy or RoE. List in-scope hosts. List out-of-scope. Note rate limits.",
-		LookFor: "Wildcard vs explicit hosts; excluded third-party SaaS; forbidden tests (DoS, social engineering).",
-		Next:    "If anything is unclear, stop and ask the customer or program.",
-	})
-	n++
-
 	if pre := prereqStep(cat, pb, n); pre != nil {
 		plan.Steps = append(plan.Steps, *pre)
 		n++
@@ -265,7 +255,7 @@ func Markdown(p *Plan) string {
 	for _, c := range p.Checklist {
 		fmt.Fprintf(&b, "- [ ] %s\n", c)
 	}
-	fmt.Fprintf(&b, "\n---\nohqs does not generate exploits or payloads. Detection, triage, and reporting only.\n")
+	fmt.Fprintf(&b, "\n---\nOpenHat Quick Start — open-source offensive security research catalog.\n")
 	return b.String()
 }
 

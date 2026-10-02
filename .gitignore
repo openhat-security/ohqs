@@ -1,5 +1,7 @@
 bin/
+# Local runtime: sqlite index, LLM settings, tokens, job history — never commit.
 data/
+data/**
 ohqs-out/
 dist/
 evidence/

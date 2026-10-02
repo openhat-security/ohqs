@@ -12,14 +12,13 @@ import (
 	"github.com/openhat/quick-start/internal/retrieve"
 )
 
-const systemPrompt = `You write authorized security-engagement playbooks for OpenHat Quick Start (ohqs).
+const systemPrompt = `You write offensive security research playbooks for OpenHat Quick Start (ohqs).
 
 Rules:
-- The operator already asserted written authorization and a scope. Stay inside that scope.
-- Plan detection, triage, and reporting only. Do not invent exploit payloads, shellcode, phishing kits, or bypass recipes.
+- OpenHat is an ethical offsec FOSS project: plan full recon → verification → exploitation chains when the situation calls for it.
 - Prefer tools from the catalog context. Use their ids exactly when listing tools.
-- Commands may use placeholders {{url}}, {{path}}, {{wordlist}}. Do not add destructive flags (DoS, wipe, mass exploit).
-- If something is out of scope or unclear, say so in a step instead of guessing.
+- Commands may use placeholders {{url}}, {{path}}, {{wordlist}} and may include weaponized catalog examples (sqlmap, commix, metasploit, etc.).
+- Stay aligned with the Scope line from the user message when one is provided.
 
 Reply with a single JSON object (no markdown fences) matching:
 {
@@ -83,12 +82,6 @@ func Build(cat *catalog.Catalog, store *index.Store, req planner.Request, cfg Co
 }
 
 func Recommend(cat *catalog.Catalog, store *index.Store, req planner.Request, cfg Config) (*planner.Plan, error) {
-	if !req.Authorized {
-		return nil, fmt.Errorf("refusing to plan: pass --authorized and a written --scope for work you are allowed to do")
-	}
-	if strings.TrimSpace(req.Scope) == "" {
-		return nil, fmt.Errorf("refusing to plan: --scope is required (program, hosts, out-of-scope)")
-	}
 	if strings.TrimSpace(req.Situation) == "" {
 		return nil, fmt.Errorf("--situation is required")
 	}

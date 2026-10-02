@@ -231,7 +231,7 @@ func Format(r Report) string {
 		b.WriteString(line + "\n")
 	}
 	b.WriteString("\nOnly missing plan tools are cloned (shallow) into third-party-resources/ and built into bin/tools.\n")
-	b.WriteString("Add bin/tools to PATH. ohqs does not generate exploits.\n")
+	b.WriteString("Add bin/tools to PATH.\n")
 	return b.String()
 }
 

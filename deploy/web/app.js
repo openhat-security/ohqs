@@ -1,6 +1,7 @@
 // Local demo default; optional override via localStorage (ohqs.apiBase).
 // When the console is served from the local worker (wrangler assets), prefer same origin.
 const API_BASE_DEFAULT = "http://127.0.0.1:8788";
+const PORTAL_TOKENS_URL = "https://openhat-website.vercel.app/dashboard/tokens";
 const LS_KEY = "ohqs.apiBase";
 const TOKEN_SS_KEY = "ohqs.apiToken";
 
@@ -53,7 +54,7 @@ function syncTokenUI() {
   if (hint) {
     hint.textContent = tok
       ? "Portal API token set for this tab (sessionStorage). Clear to remove."
-      : "Mint in openhat-portal → Tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.";
+      : "Mint at openhat-website → API tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.";
   }
 }
 

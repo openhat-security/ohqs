@@ -56,8 +56,8 @@
     if (opts) opts.hidden = mode !== "code";
     if (hint) {
       hint.textContent = mode === "code"
-        ? "Plan + code downloads a .zip with PLAYBOOK.md plus an authorized lab scaffold (install/setup/detect stubs). Never weaponized. Server charges credits at job start — UI preview is not the control."
-        : "Written plan returns a markdown engagement playbook. Plan + code adds a downloadable .zip with PLAYBOOK.md plus an authorized lab scaffold (setup / detect / report stubs only — never weaponized payloads).";
+        ? "Plan + code downloads PLAYBOOK.md plus a runnable lab pack (recon + SQLi/XSS/CMDi probes). Set TARGET_URL in .env. Credits charged at job start."
+        : "Written plan returns markdown. Plan + code adds a .zip with PLAYBOOK.md and end-to-end runner source (Python/Go/Rust/JS).";
     }
     if (credits) {
       var n = creditsPreview(mode, complexity);

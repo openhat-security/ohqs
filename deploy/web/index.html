@@ -155,23 +155,23 @@
     <p class="label">Index</p>
     <p id="index-status" class="meta">loading…</p>
     <p class="meta">
-      <label class="inline">Paste your portal API token
-        <input id="api-token" type="password" placeholder="ohqs_…" autocomplete="off" spellcheck="false">
-      </label>
-      <button type="button" class="btn ghost" id="api-token-clear" hidden>Clear token</button>
-      <span class="hint" id="api-token-hint">Mint in openhat-portal → Tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.</span>
-      <span class="hint" id="api-token-helper">Need a token? <a href="http://localhost:3210/dashboard/tokens">Register and create one in the OpenHat portal</a>, then paste it here.</span>
-    </p>
-    <p class="meta">
       <label class="inline">API base override
         <input id="api-base" type="text" placeholder="https://…">
       </label>
       <button type="button" class="btn ghost" id="api-base-reset" hidden>reset to default</button>
       <span class="hint">Optional. Only set if you run your own API. Searches run as you type.</span>
     </p>
+    <p class="meta">
+      <label class="inline">Portal API token
+        <input id="api-token" type="password" placeholder="ohqs_…" autocomplete="off" spellcheck="false">
+      </label>
+      <button type="button" class="btn ghost" id="api-token-clear" hidden>Clear token</button>
+      <span class="hint" id="api-token-hint">Mint in openhat-portal → Tokens. Stored in this browser tab only (sessionStorage). Never put the token in the URL.</span>
+      <span class="hint" id="api-token-helper">Need a token? <a href="https://openhat-website.vercel.app/dashboard/tokens" rel="noopener noreferrer">Sign in and mint one on OpenHat</a>, then paste it here.</span>
+    </p>
   </section>
 
 </main>
-<script src="/app.js?v=20250926k" defer></script>
+<script src="/app.js?v=20261002b" defer></script>
 </body>
 </html>
