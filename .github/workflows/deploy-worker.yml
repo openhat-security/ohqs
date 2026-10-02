@@ -6,6 +6,7 @@ on:
     paths:
       - "deploy/worker/**"
       - "deploy/web/**"
+      - "catalog/**"
       - ".github/workflows/deploy-worker.yml"
   workflow_dispatch:
 

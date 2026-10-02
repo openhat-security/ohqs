@@ -15,7 +15,15 @@ Copy `.dev.vars.example` → `.dev.vars` for local secrets (never commit).
 
 Workflow: [`.github/workflows/deploy-worker.yml`](../../.github/workflows/deploy-worker.yml)
 
-Runs on push to `main` when `deploy/worker/**` or `deploy/web/**` change, or via **Actions → Deploy worker → Run workflow**.
+Runs on push to `main` when `deploy/worker/**`, `deploy/web/**`, or `catalog/**` change, or via **Actions → Deploy worker → Run workflow**.
+
+From the repo root:
+
+```bash
+./scripts/gh-deploy.sh              # check → commit deploy paths → push → run workflow
+./scripts/gh-deploy.sh --check-only
+./scripts/gh-deploy.sh --dispatch-only   # re-deploy without push
+```
 
 Set repo secrets once:
 
