@@ -25,14 +25,34 @@ From the repo root:
 ./scripts/gh-deploy.sh --dispatch-only   # re-deploy without push
 ```
 
-Set repo secrets once:
+**Account alignment (important):** In this repo, Worker **`ohqs`** and D1 **`ohqs`** (`database_id` in `wrangler.toml`) currently live in **Devrecated Solutions** — account ID `0e2e76e6a07a520ca302a94076f16139`. They are **not** in OpenHat Security (`06f4119e62016ec11568bb0558eaa7f3`) yet.
+
+GitHub Actions must use an API token **scoped to the same account** as `CLOUDFLARE_ACCOUNT_ID`. A token only allowed on OpenHat cannot deploy the Devrecated worker (Cloudflare `Authentication error [code: 10000]`).
+
+Set repo secrets once (must match the account where Worker `ohqs` and D1 `ohqs` live):
 
 ```bash
-# API token needs Workers Scripts:Edit (and related Workers permissions)
-gh secret set CLOUDFLARE_API_TOKEN
-gh secret set CLOUDFLARE_ACCOUNT_ID
+./scripts/verify-cloudflare-deploy.sh   # local check before updating GitHub
+gh secret set CLOUDFLARE_API_TOKEN --repo openhat-security/ohqs
+gh secret set CLOUDFLARE_ACCOUNT_ID --repo openhat-security/ohqs
 ```
 
-Account ID for this project’s Cloudflare account is shown by `npx wrangler whoami`.
+**API token permissions** (Custom token or “Edit Cloudflare Workers” template):
+
+| Permission | Access |
+| --- | --- |
+| Account → Workers Scripts | Edit |
+| Account → Workers Routes | Edit |
+| Account → D1 | Edit |
+| Account → Workers R2 Storage | Edit (if used) |
+| Account → Workers KV Storage | Edit (if used) |
+| Account → Account Settings | Read |
+| User → User Details | Read |
+
+Scope the token to the **same account** as `CLOUDFLARE_ACCOUNT_ID`. A valid token for account A with `ACCOUNT_ID` set to account B fails deploy with `Authentication error [code: 10000]`.
+
+Account ID: `cd deploy/worker && CLOUDFLARE_ACCOUNT_ID=0e2e76e6a07a520ca302a94076f16139 npx wrangler d1 list` — should list `ohqs`.
+
+To deploy into **OpenHat Security** instead, create D1 + first deploy there, then change `database_id` in `wrangler.toml` and point secrets at `06f4119e62016ec11568bb0558eaa7f3`.
 
 Worker secrets (LLM keys, etc.) stay in Cloudflare — set with `npx wrangler secret put …`, not in GitHub Actions env unless you intentionally sync them.

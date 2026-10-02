@@ -61,6 +61,7 @@ preflight() {
   if ! gh secret list --repo "$REPO" 2>/dev/null | grep -q CLOUDFLARE_ACCOUNT_ID; then
     echo "warn: CLOUDFLARE_ACCOUNT_ID not listed for $REPO" >&2
   fi
+  echo "hint: if deploy fails with Cloudflare code 10000, run ./scripts/verify-cloudflare-deploy.sh and refresh gh secrets" >&2
 }
 
 commit_deploy_paths() {
