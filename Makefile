@@ -25,7 +25,7 @@ SCRIPT     ?= $(OUT)/commands.sh
 	start serve up stop deps install-tools install-cli \
 	build-index-pack \
 	submodules convert-submodules clean \
-	deploy deploy-web deploy-worker deploy-portal
+	deploy deploy-web deploy-worker deploy-portal deploy-keycloak
 
 .DEFAULT_GOAL := start
 
@@ -81,6 +81,7 @@ help:
 		'  convert-submodules  absorb nested clones into .gitmodules (maintainers)' \
 		'' \
 		'Deploy' \
+		'  deploy-keycloak     GCE VM Keycloak in sandbox420 (scripts/gcp-deploy-keycloak.sh)' \
 		'  deploy-portal       Vercel prod — openhat-www (portal + marketing)' \
 		'  deploy-web          Vercel prod — static ohqs console (deploy/web)' \
 		'  deploy-worker       GitHub Actions — Cloudflare Worker (scripts/gh-deploy.sh)' \
@@ -217,6 +218,10 @@ clean:
 .PHONY: console
 console:
 	@$(MAKE) -C deploy/console run
+
+deploy-keycloak:
+	@chmod +x scripts/gcp-deploy-keycloak.sh
+	@./scripts/gcp-deploy-keycloak.sh
 
 # Portal + marketing → https://openhat-website.vercel.app (openhat-www checkout)
 deploy-portal:

@@ -1,0 +1,6 @@
+# Replace :443 site block host with KEYCLOAK_PUBLIC_HOST before deploy (vm-startup.sh does this).
+
+{$KEYCLOAK_PUBLIC_HOST} {
+	encode gzip
+	reverse_proxy keycloak:8080
+}

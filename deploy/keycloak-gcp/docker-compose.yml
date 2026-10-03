@@ -1,0 +1,67 @@
+# Keycloak + Postgres on a single VM (sandbox420). TLS via Caddy on :443.
+# Runtime config: /opt/openhat/keycloak-gcp/keycloak.env (from keycloak.env.example)
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: openhat-keycloak-db
+    env_file:
+      - keycloak.env
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+    volumes:
+      - openhat_keycloak_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U keycloak -d keycloak']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    networks: [openhat]
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.3
+    container_name: openhat-keycloak
+    env_file:
+      - keycloak.env
+    command: ['start', '--http-port=8080', '--http-enabled=true']
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_HOSTNAME: ${KEYCLOAK_PUBLIC_HOST}
+      KC_HOSTNAME_STRICT: 'true'
+      KC_PROXY_HEADERS: xforwarded
+      KC_HTTP_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [openhat]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: openhat-keycloak-caddy
+    env_file:
+      - keycloak.env
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - keycloak
+    restart: unless-stopped
+    networks: [openhat]
+
+networks:
+  openhat:
+
+volumes:
+  openhat_keycloak_pg:
+  caddy_data:
+  caddy_config:
