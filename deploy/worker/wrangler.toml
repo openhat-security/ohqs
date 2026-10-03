@@ -2,6 +2,7 @@ name = "ohqs"
 main = "src/index.ts"
 compatibility_date = "2024-11-27"
 compatibility_flags = ["nodejs_compat"]
+account_id = "0e2e76e6a07a520ca302a94076f16139"
 
 # D1: the catalog SQLite. `wrangler d1 create ohqs` prints an id; paste it here.
 # Then load the seed:  ohqs index d1 && wrangler d1 execute ohqs --remote --file=dist/d1/seed.sql
@@ -41,6 +42,7 @@ enabled = true
 # NOTE: vars in [vars] are sticky across plain `wrangler deploy`; --var overrides
 # only that deploy and are dropped on the next plain deploy.
 [vars]
+KEYCLOAK_ISSUER = "https://136.71.1.161.sslip.io/realms/openhat"
 LLM_BASE_URL = "https://openrouter.ai/api/v1"
 LLM_MODEL = "inclusionai/ling-3.0-flash-fin:free"
 # Flexprice optional (local: set FLEXPRICE_API_KEY in .dev.vars; never commit keys).
