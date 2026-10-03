@@ -38,7 +38,7 @@ if [[ ${#KC_SECRET} -lt 8 ]]; then
   exit 1
 fi
 
-AUTH_SECRET="$(openssl rand -base64 32)"
+OHQS_API_BASE="${OHQS_API_BASE:-https://ohqs.ukryty.workers.dev}"
 cd "$WWW"
 
 set_vercel() {
@@ -48,12 +48,23 @@ set_vercel() {
   printf '%s' "$val" | vercel env add "$name" production --force
 }
 
-set_vercel AUTH_SECRET "$AUTH_SECRET"
+# Only set AUTH_SECRET when missing (rotating it breaks in-flight OAuth / PKCE cookies).
+if ! vercel env ls production 2>/dev/null | grep -q ' AUTH_SECRET '; then
+  AUTH_SECRET="$(openssl rand -base64 32)"
+  set_vercel AUTH_SECRET "$AUTH_SECRET"
+  echo "set AUTH_SECRET (new)"
+else
+  echo "keep existing AUTH_SECRET"
+fi
+
 set_vercel AUTH_URL "$AUTH_URL"
 set_vercel NEXTAUTH_URL "$AUTH_URL"
 set_vercel KEYCLOAK_ISSUER "$ISSUER"
 set_vercel KEYCLOAK_CLIENT_ID "$CLIENT_ID"
 set_vercel KEYCLOAK_CLIENT_SECRET "$KC_SECRET"
 set_vercel AUTH_TRUST_HOST true
+set_vercel OHQS_API_BASE "$OHQS_API_BASE"
+printf '1' | vercel env add OHQS_PHONE_VERIFY_MOCK production --force 2>/dev/null || \
+  printf '1' | vercel env add OHQS_PHONE_VERIFY_MOCK production --force
 
-echo "ok: Vercel production env updated for openhat-website (6 vars)"
+echo "ok: Vercel production env updated for openhat-website"

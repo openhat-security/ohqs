@@ -36,6 +36,7 @@ In **Admin Console** → realm **`openhat`** (create if missing):
    - Post-logout: `https://openhat-website.vercel.app/*`
 4. **Mapper**: client scope / protocol mapper `roles` on ID token + userinfo (see `docs/auth-keycloak.md`).
 5. Copy client secret → Vercel `KEYCLOAK_CLIENT_SECRET`.
+6. **Authentication → Required actions**: disable **Verify profile** / **Update profile** as default (otherwise OIDC login stalls on “Update Account Information” before returning to the portal).
 
 ## Downstream env
 
