@@ -223,6 +223,14 @@ deploy-keycloak:
 	@chmod +x scripts/gcp-deploy-keycloak.sh
 	@./scripts/gcp-deploy-keycloak.sh
 
+sync-portal-env:
+	@chmod +x scripts/sync-portal-vercel-env.sh
+	@./scripts/sync-portal-vercel-env.sh
+
+sync-worker-keycloak:
+	@chmod +x scripts/sync-worker-keycloak-issuer.sh
+	@./scripts/sync-worker-keycloak-issuer.sh
+
 # Portal + marketing → https://openhat-website.vercel.app (openhat-www checkout)
 deploy-portal:
 	@chmod +x scripts/deploy-portal.sh
