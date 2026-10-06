@@ -25,7 +25,7 @@ SCRIPT     ?= $(OUT)/commands.sh
 	start serve up stop deps install-tools install-cli \
 	build-index-pack \
 	submodules convert-submodules clean \
-	deploy deploy-web deploy-worker deploy-portal deploy-keycloak
+	deploy deploy-web deploy-worker deploy-portal deploy-keycloak bootstrap-keycloak keycloak-tunnel
 
 .DEFAULT_GOAL := start
 
@@ -82,9 +82,11 @@ help:
 		'' \
 		'Deploy' \
 		'  deploy-keycloak     GCE VM Keycloak in sandbox420 (scripts/gcp-deploy-keycloak.sh)' \
+		'  bootstrap-keycloak  fix portal redirects/roles + promote SUPERUSER_EMAIL' \
+		'  keycloak-tunnel     SSH local 18090 -> GCE Keycloak HTTP (not local Docker)' \
 		'  deploy-portal       Vercel prod — openhat-www (portal + marketing)' \
 		'  deploy-web          Vercel prod — static ohqs console (deploy/web)' \
-		'  deploy-worker       GitHub Actions — Cloudflare Worker (scripts/gh-deploy.sh)' \
+		'  deploy-worker       Cloudflare Worker via private openhat-www (OPENHAT_WWW_DIR)' \
 		'  deploy              deploy-portal + deploy-web + deploy-worker' \
 		'' \
 		'  clean               remove bin/ohqs and the sqlite index'
@@ -223,6 +225,14 @@ deploy-keycloak:
 	@chmod +x scripts/gcp-deploy-keycloak.sh
 	@./scripts/gcp-deploy-keycloak.sh
 
+bootstrap-keycloak:
+	@chmod +x scripts/keycloak-bootstrap-realm.sh
+	@./scripts/keycloak-bootstrap-realm.sh
+
+keycloak-tunnel:
+	@chmod +x scripts/keycloak-tunnel.sh
+	@./scripts/keycloak-tunnel.sh
+
 sync-portal-env:
 	@chmod +x scripts/sync-portal-vercel-env.sh
 	@./scripts/sync-portal-vercel-env.sh
@@ -241,9 +251,11 @@ deploy-web:
 	@chmod +x scripts/deploy-web.sh
 	@./scripts/deploy-web.sh
 
-# Worker + bundled web assets on Cloudflare (repo secrets CLOUDFLARE_*)
+# Worker lives in private openhat-www (deploy/worker). Override OPENHAT_WWW_DIR if needed.
+OPENHAT_WWW_DIR ?= ../../production/openhat-www
 deploy-worker:
-	@chmod +x scripts/gh-deploy.sh
-	@./scripts/gh-deploy.sh
+	@test -d "$(OPENHAT_WWW_DIR)/deploy/worker" || { echo "missing $(OPENHAT_WWW_DIR)/deploy/worker — clone private openhat-www"; exit 1; }
+	@chmod +x "$(OPENHAT_WWW_DIR)/scripts/gh-deploy.sh"
+	@"$(OPENHAT_WWW_DIR)/scripts/gh-deploy.sh"
 
 deploy: deploy-portal deploy-web deploy-worker
