@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "maxNodeModuleJsDepth": 0,
+    "skipLibCheck": true,
+    "module": "esnext",
+    "target": "esnext",
+    "moduleResolution": "bundler"
+  },
+  "include": [
+    "deploy/web/**/*.js",
+    "deploy/console/internal/ui/assets/js/**/*.js"
+  ],
+  "exclude": [
+    "third-party-resources",
+    "bin",
+    "data",
+    "ohqs-out",
+    "dist",
+    "evidence",
+    "node_modules",
+    ".git",
+    ".opencode"
+  ]
+}

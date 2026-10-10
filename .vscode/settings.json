@@ -1,0 +1,52 @@
+{
+  "files.exclude": {
+    "third-party-resources": true,
+    "bin": true,
+    "data": true,
+    "ohqs-out": true,
+    "dist": true,
+    "evidence": true,
+    "**/.git": true,
+    "**/node_modules": true
+  },
+  "search.exclude": {
+    "third-party-resources": true,
+    "bin": true,
+    "data": true,
+    "ohqs-out": true,
+    "dist": true,
+    "evidence": true,
+    "**/.git": true,
+    "**/node_modules": true
+  },
+  "files.watcherExclude": {
+    "**/third-party-resources/**": true,
+    "**/bin/**": true,
+    "**/data/**": true,
+    "**/ohqs-out/**": true,
+    "**/dist/**": true,
+    "**/evidence/**": true,
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true
+  },
+  "javascript.validate.enable": true,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "typescript.tsserver.maxTsServerMemory": 2048,
+  "typescript.tsserver.watchOptions": {
+    "watchFile": "useFsEvents",
+    "watchDirectory": "useFsEvents",
+    "fallbackPolling": "dynamicPriority",
+    "synchronousWatchDirectory": false,
+    "excludeDirectories": [
+      "**/third-party-resources",
+      "**/bin",
+      "**/data",
+      "**/ohqs-out",
+      "**/dist",
+      "**/evidence",
+      "**/node_modules",
+      "**/.git"
+    ]
+  }
+}

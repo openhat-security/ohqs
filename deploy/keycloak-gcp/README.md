@@ -21,19 +21,30 @@ Admin password: on the VM only:
 
 ```bash
 gcloud compute ssh openhat-keycloak --zone=us-central1-a --project=sandbox420 \
-  --command='sudo grep KC_ADMIN_PASSWORD /opt/openhat/keycloak-gcp/keycloak.env'
+  --command='sudo grep KC_BOOTSTRAP_ADMIN_PASSWORD /opt/openhat/keycloak-gcp/keycloak.env'
 ```
+
+Master-realm `/admin` uses that bootstrap admin. Day-to-day role promotions use `realm-admin` on the openhat user (see bootstrap).
 
 ## Realm bootstrap (once)
 
-In **Admin Console** → realm **`openhat`** (create if missing):
+```bash
+make bootstrap-keycloak
+# SUPERUSER_EMAIL=you@example.com make bootstrap-keycloak
+```
+
+That sets portal redirect + **post-logout** URIs (sign-out fails with `invalid_redirect_uri` if post-logout is empty), default role `client` for new users, composite `superuser`, and promotes `SUPERUSER_EMAIL` to `superuser` + `realm-admin` so they can assign roles in the Keycloak console:
+
+`https://136.71.1.161.sslip.io/admin/openhat/console/` (sign in with the **openhat** realm user, not master).
+
+Manual equivalent (Admin Console → realm **`openhat`**):
 
 1. **Realm settings → Login**: Registration allowed; email as username.
-2. **Realm roles**: `client`, `operator`, `admin`. Default composite for new users includes `client`.
+2. **Realm roles**: `client`, `operator`, `admin`, `superuser` (composite of the first three). Default composite for new users includes `client`.
 3. **Client `openhat-portal`**: confidential, standard flow, PKCE.
-   - Redirect: `https://openhat-website.vercel.app/api/auth/callback/keycloak`
+   - Redirect: `https://openhat-website.vercel.app/api/auth/callback/keycloak` and `https://openhat-website.vercel.app/*`
    - Web origins: `https://openhat-website.vercel.app`
-   - Post-logout: `https://openhat-website.vercel.app/*`
+   - Post-logout: `https://openhat-website.vercel.app/login` and `https://openhat-website.vercel.app/*`
 4. **Mapper**: client scope / protocol mapper `roles` on ID token + userinfo (see `docs/auth-keycloak.md`).
 5. Copy client secret → Vercel `KEYCLOAK_CLIENT_SECRET`.
 6. **Authentication → Required actions**: disable **Verify profile** / **Update profile** as default (otherwise OIDC login stalls on “Update Account Information” before returning to the portal).
@@ -48,6 +59,19 @@ In **Admin Console** → realm **`openhat`** (create if missing):
 | Vercel | `AUTH_URL` / `NEXTAUTH_URL` | `https://openhat-website.vercel.app` |
 | Vercel | `AUTH_SECRET` | `openssl rand -base64 32` |
 | Cloudflare Worker | `KEYCLOAK_ISSUER` | same issuer (JWKS mint path) |
+
+## Local laptop → this VM (not Docker on the laptop)
+
+`localhost:8080` on the laptop is often some other app. Do not start
+`openhat-www` `docker compose` Keycloak.
+
+```bash
+make keycloak-tunnel
+# http://127.0.0.1:18090  →  openhat-keycloak container :8080
+```
+
+Portal OIDC must still use `KEYCLOAK_ISSUER=https://136.71.1.161.sslip.io/realms/openhat`
+because the VM Keycloak is hostname-strict.
 
 ## Ops
 

@@ -1,0 +1,9 @@
+# Vendored clones and runtime blobs — keep Cursor index/Agent off ~67k extra files.
+third-party-resources/
+bin/
+data/
+ohqs-out/
+dist/
+evidence/
+.opencode/node_modules/
+**/node_modules/

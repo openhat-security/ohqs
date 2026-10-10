@@ -1,0 +1,9 @@
+# Semantic index only. Same heavy trees as .cursorignore.
+third-party-resources/
+bin/
+data/
+ohqs-out/
+dist/
+evidence/
+.opencode/node_modules/
+**/node_modules/

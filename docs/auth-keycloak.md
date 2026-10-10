@@ -1,7 +1,9 @@
 # OHQS auth (Keycloak + API tokens)
 
-Local-first auth for OpenHat Quick Start. Reuses the existing Keycloak realm
-`openhat` (same Docker stack as openhat-portal).
+Local-first auth for OpenHat Quick Start. Reuses realm `openhat` on the
+**GCP Keycloak VM** (not a laptop Docker compose). Portal OIDC issuer is
+`https://136.71.1.161.sslip.io/realms/openhat`. Optional HTTP debug tunnel:
+`make keycloak-tunnel` → `http://127.0.0.1:18090`.
 
 **Product rule:** OHQS web console (`:8788`) has **no login**. Clients mint
 opaque `ohqs_*` API tokens in **openhat-portal** (`:3210` → `/dashboard/tokens`),
@@ -47,7 +49,7 @@ cp .dev.vars.example .dev.vars
 ```
 
 ```
-KEYCLOAK_ISSUER=http://localhost:8080/realms/openhat
+KEYCLOAK_ISSUER=https://136.71.1.161.sslip.io/realms/openhat
 # Optional (legacy ohqs-api client — not required for JWKS mint path):
 # KEYCLOAK_CLIENT_ID=ohqs-api
 # KEYCLOAK_CLIENT_SECRET=…
@@ -63,8 +65,11 @@ KEYCLOAK_ISSUER=http://localhost:8080/realms/openhat
 
 ## Run locally
 
-1. Start Keycloak (from openhat-portal): `npm run keycloak:up` → http://localhost:8080
+1. Do **not** run local Docker Keycloak. SSH to the GCE VM:
+   `make keycloak-tunnel` → `http://127.0.0.1:18090`.
+   Browser OIDC still uses `https://136.71.1.161.sslip.io` (hostname-strict).
 2. Start portal: `npm run dev` → http://localhost:3210
+   (`AUTH_URL=http://localhost:3210`, `KEYCLOAK_ISSUER` = the sslip.io URL).
 3. Apply D1 migrations + run worker:
 
 ```bash
