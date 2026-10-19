@@ -409,14 +409,14 @@ Run `./bin/ohqs ingest --help` for all available options.
 
 ## Deploy (Cloudflare Worker)
 
-Hosted edge API + static UI deploy from GitHub Actions on push to `main` when `deploy/worker` or `deploy/web` change. Setup: [`deploy/worker/README.md`](deploy/worker/README.md).
+The hosted edge API (Cloudflare Worker) now lives in [openhat-security/openhat-www](https://github.com/openhat-security/openhat-www) under `deploy/worker/` and deploys from that repo's Actions. See [`deploy/worker/README.md`](deploy/worker/README.md).
 
 ## Project layout
 
 ```
 ohqs/                    Go application
 catalog/                 YAML catalog
-deploy/worker/           Cloudflare Worker (API + web assets)
+deploy/worker/           Pointer to the Worker in openhat-www
 deploy/web/              Static console served by the Worker
 third-party-resources/   Optional upstream repositories
 REFERENCES.md            Catalog inventory
